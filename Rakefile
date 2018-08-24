@@ -99,3 +99,19 @@ desc 'load alternate_products table for this month to allow customers to switch 
 task :load_alternate_products do |t|
   DetermineInfo::InfoGetter.new.load_alternate_products
 end
+
+desc 'setup EllieStaging subscription_update table for updating EllieStaging Subscriptions next month'
+task :setup_ellie_staging_subs do |t|
+  FixStagingSubs::RechargeStaging.new.create_subs_for_updating
+end
+
+desc 'send to resque job EllieStaging subscription update table to update all active subs to next month'
+task :resque_send_ellie_staging_subs do |t|
+  FixStagingSubs::RechargeStaging.new.update_ellie_staging_subs_next_month
+end
+
+desc 'setup next month subscriber info'
+task :elliestaging_setup_next_month_info do |t|
+  FixStagingSubs::RechargeStaging.new.setup_staging_next_month_info
+
+end

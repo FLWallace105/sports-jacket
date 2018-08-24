@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180806195812) do
+ActiveRecord::Schema.define(version: 20180824184715) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -184,6 +184,26 @@ ActiveRecord::Schema.define(version: 20180806195812) do
     t.string "subscription_id"
     t.index ["shopify_id"], name: "index_customer_info_on_shopify_id"
     t.index ["subscription_id"], name: "index_customer_info_on_subscription_id"
+  end
+
+  create_table "customer_tag_subscriptions", force: :cascade do |t|
+    t.string "subscription_id"
+    t.string "customer_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "next_charge_scheduled_at"
+    t.datetime "cancelled_at"
+    t.string "product_title"
+    t.decimal "price", precision: 10, scale: 2
+    t.integer "quantity"
+    t.string "status"
+    t.string "shopify_product_id"
+    t.string "shopify_variant_id"
+    t.string "sku"
+    t.string "shopify_customer_id"
+    t.string "shopify_tags"
+    t.datetime "tag_updated_at"
+    t.boolean "is_tag_updated", default: false
   end
 
   create_table "customers", force: :cascade do |t|
@@ -366,6 +386,15 @@ ActiveRecord::Schema.define(version: 20180806195812) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "shopify_customers", force: :cascade do |t|
+    t.string "shopify_customer_id"
+    t.string "email"
+    t.string "first_name"
+    t.string "last_name"
+    t.datetime "created_at"
+    t.string "shopify_tags"
+  end
+
   create_table "skip_reasons", force: :cascade do |t|
     t.string "customer_id", null: false
     t.string "shopify_customer_id", null: false
@@ -396,6 +425,27 @@ ActiveRecord::Schema.define(version: 20180806195812) do
     t.string "size"
     t.string "sku"
     t.index ["product_id"], name: "index_sku_sizes_on_product_id"
+  end
+
+  create_table "staging_next_month", force: :cascade do |t|
+    t.integer "sub_type"
+    t.string "product_title"
+    t.string "shopify_product_id"
+    t.string "shopify_variant_id"
+    t.string "sku"
+    t.string "product_collection"
+  end
+
+  create_table "staging_subscriptions_update", force: :cascade do |t|
+    t.string "subscription_id"
+    t.string "product_title"
+    t.decimal "price", precision: 10, scale: 2
+    t.string "shopify_product_id"
+    t.string "shopify_variant_id"
+    t.string "sku"
+    t.jsonb "raw_line_item_properties"
+    t.boolean "is_updated", default: false
+    t.datetime "updated_at"
   end
 
   create_table "sub_line_items", force: :cascade do |t|
