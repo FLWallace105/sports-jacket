@@ -24,36 +24,6 @@ ActiveRecord::Schema.define(version: 20180806195812) do
     t.index ["product_id"], name: "index_alternate_products_on_product_id"
   end
 
-  create_table "bad_monthly_box", force: :cascade do |t|
-    t.string "subscription_id"
-    t.boolean "updated", default: false
-    t.datetime "updated_at"
-  end
-
-  create_table "bad_recurring_subs", force: :cascade do |t|
-    t.string "subscription_id"
-    t.string "customer_id"
-    t.datetime "next_charge_scheduled_at"
-    t.decimal "price", precision: 10, scale: 2
-    t.string "status"
-    t.string "product_title"
-    t.string "product_id"
-    t.string "variant_id"
-    t.string "sku"
-    t.jsonb "line_item_properties"
-    t.boolean "updated", default: false
-    t.datetime "updated_at"
-    t.integer "expire_after_specific_number_charges"
-  end
-
-  create_table "bad_subs", id: false, force: :cascade do |t|
-    t.serial "id", null: false
-    t.bigint "customer_id"
-    t.string "first_name", limit: 125
-    t.string "last_name", limit: 125
-    t.string "email", limit: 125
-  end
-
   create_table "charge_billing_address", force: :cascade do |t|
     t.string "address1"
     t.string "address2"
@@ -174,7 +144,6 @@ ActiveRecord::Schema.define(version: 20180806195812) do
     t.string "prod_id_key"
     t.string "prod_id_value"
     t.string "next_month_prod_id"
-    t.boolean "prepaid", default: false
     t.index ["prod_id_key"], name: "index_current_products_on_prod_id_key"
     t.index ["prod_id_value"], name: "index_current_products_on_prod_id_value"
   end
@@ -210,34 +179,12 @@ ActiveRecord::Schema.define(version: 20180806195812) do
     t.index ["shopify_customer_id"], name: "index_customers_on_shopify_customer_id"
   end
 
-  create_table "fix_three_months", force: :cascade do |t|
-    t.string "subscription_id"
-    t.string "customer_id"
-    t.datetime "next_charge_scheduled_at"
-    t.decimal "price", precision: 10, scale: 2
-    t.string "status"
-    t.string "product_title"
-    t.string "product_id"
-    t.string "variant_id"
-    t.string "sku"
-    t.jsonb "line_item_properties"
-    t.boolean "updated", default: false
-    t.datetime "updated_at"
-  end
-
   create_table "matching_products", force: :cascade do |t|
     t.string "new_product_title"
     t.string "incoming_product_id"
     t.boolean "threepk", default: false
     t.string "outgoing_product_id"
     t.index ["incoming_product_id"], name: "index_matching_products_on_incoming_product_id"
-  end
-
-  create_table "multi_line_item_products", force: :cascade do |t|
-    t.string "product_id"
-    t.string "product_title"
-    t.string "sku"
-    t.index ["product_id"], name: "index_multi_line_item_products_on_product_id"
   end
 
   create_table "order_billing_address", force: :cascade do |t|
@@ -330,13 +277,6 @@ ActiveRecord::Schema.define(version: 20180806195812) do
     t.index ["transaction_id"], name: "index_orders_on_transaction_id"
   end
 
-  create_table "pending_people", id: false, force: :cascade do |t|
-    t.serial "id", null: false
-    t.string "first_name", limit: 125
-    t.string "last_name", limit: 125
-    t.string "email", limit: 125
-  end
-
   create_table "product_tags", force: :cascade do |t|
     t.string "product_id", null: false
     t.string "tag", null: false
@@ -387,15 +327,6 @@ ActiveRecord::Schema.define(version: 20180806195812) do
     t.string "product_id"
     t.boolean "threepk", default: false
     t.index ["product_id"], name: "index_skippable_products_on_product_id"
-  end
-
-  create_table "sku_sizes", force: :cascade do |t|
-    t.string "product_id"
-    t.string "product_item"
-    t.string "item_name"
-    t.string "size"
-    t.string "sku"
-    t.index ["product_id"], name: "index_sku_sizes_on_product_id"
   end
 
   create_table "sub_line_items", force: :cascade do |t|
@@ -473,29 +404,11 @@ ActiveRecord::Schema.define(version: 20180806195812) do
     t.boolean "updated", default: false
   end
 
-  create_table "update_prepaid", force: :cascade do |t|
-    t.string "customer_id"
-    t.string "order_id"
-    t.string "title"
-    t.datetime "scheduled_at"
-    t.boolean "is_updated", default: false
-    t.datetime "updated_at"
-    t.text "properties"
-  end
-
-  create_table "update_prepaid_config", force: :cascade do |t|
-    t.string "title"
-    t.string "product_id"
-    t.string "variant_id"
-    t.string "product_collection"
-  end
-
   create_table "update_products", force: :cascade do |t|
     t.string "sku"
     t.string "product_title"
     t.string "shopify_product_id"
     t.string "shopify_variant_id"
-    t.string "product_collection"
     t.index ["product_title"], name: "index_update_products_on_product_title"
     t.index ["shopify_product_id"], name: "index_update_products_on_shopify_product_id"
     t.index ["shopify_variant_id"], name: "index_update_products_on_shopify_variant_id"

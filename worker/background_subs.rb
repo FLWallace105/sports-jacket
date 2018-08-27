@@ -69,6 +69,7 @@ module BackgroundSubs
         
 
         twenty_five_minutes_ago_str = twenty_five_min
+        
         puts "Here twenty_five_minutes_ago_str = #{twenty_five_minutes_ago_str}"
 
         subscriptions = HTTParty.get("https://api.rechargeapps.com/subscriptions/count?created_at_min=\'#{twenty_five_minutes_ago_str}\'", :headers => my_header)
@@ -84,7 +85,7 @@ module BackgroundSubs
         page_size = 250
         num_pages = (my_count/page_size.to_f).ceil
         1.upto(num_pages) do |page|
-            mysubs = HTTParty.get("https://api.rechargeapps.com/subscriptions?updated_at_min=\'#{twenty_five_minutes_ago_str}\'&limit=250&page=#{page}", :headers => my_header)
+            mysubs = HTTParty.get("https://api.rechargeapps.com/subscriptions?created_at_min=\'#{twenty_five_minutes_ago_str}\'&limit=250&page=#{page}", :headers => my_header)
             recharge_limit = mysubs.response["x-recharge-limit"]
             local_sub = mysubs['subscriptions']
             local_sub.each do |sub|
@@ -179,6 +180,7 @@ module BackgroundSubs
         
 
         twenty_five_minutes_ago_str = twenty_five_min
+        #my_max =  DateTime.now.strftime("%Y-%m-%dT%H:%M:%S")
 
 
         subscriptions = HTTParty.get("https://api.rechargeapps.com/subscriptions/count?updated_at_min=\'#{twenty_five_minutes_ago_str}\'", :headers => my_header)
