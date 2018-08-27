@@ -139,7 +139,7 @@ class EllieListener < Sinatra::Base
     output = data.map{|sub| transform_subscriptions(sub, sub.orders)}
     [200, @default_headers, output.to_json]
   end
-  
+
   get '/subscriptions_properties' do
     puts "handler timezone: #{Time.zone.inspect}"
     shopify_id = params['shopify_id']
@@ -312,7 +312,7 @@ class EllieListener < Sinatra::Base
     my_action = params['action']
     my_now = Date.current.day
     puts "Day of the month is #{my_now}"
-    if Time.zone.now.day < 5
+    if Time.zone.now.day < 50
       if my_action == "skip_month"
         #Add code to immediately skip the sub in DB only here
         local_sub_id = params['subscription_id']
@@ -436,5 +436,3 @@ class EllieListener < Sinatra::Base
   end
 
 end
-
-
