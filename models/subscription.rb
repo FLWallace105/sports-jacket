@@ -19,7 +19,8 @@ class Subscription < ActiveRecord::Base
   # * :time - a valid datetime string / object
   # * :theme_id - the theme the product tag is associated with
   def self.current_products(options = {})
-    where(shopify_product_id: ProductTag.active(options).where(tag: 'current').pluck(:product_id))
+    # where(shopify_product_id: ProductTag.active(options).where(tag: ['current', 'prepaid']).pluck(:product_id))
+    where(shopify_product_id: ProductTag.active(options).where("tag = ? or tag = ?", 'current', 'prepaid').pluck(:product_id))
   end
 
   # the options this method takes are:
@@ -190,6 +191,26 @@ class Subscription < ActiveRecord::Base
     ProductTag.active.where(tag: 'prepaid').pluck(:product_id).include? shopify_product_id
   end
 
+  def prepaid_skippable?
+    today = Time.zone.now.day
+    order_check = check_prepaid_orders(subscription_id)
+    skip_conditions = [
+      prepaid?,
+      order_check,
+      today < 5,
+    ]
+    skip_conditions.all?
+  end
+
+  def prepaid_switchable?
+    order_check = check_prepaid_orders(subscription_id)
+    skip_conditions = [
+      prepaid?,
+      order_check,
+    ]
+    skip_conditions.all?
+  end
+
   def active?(time = nil)
     time ||= Time.current
     next_charge_scheduled_at.try('>', time) &&
@@ -199,6 +220,9 @@ class Subscription < ActiveRecord::Base
   # evaluated options are:
   #   time: the time of the skip action
   #   theme_id: the theme_id for checking appropriate ProductTags
+
+  # if prepaid created at date needs to be at least 1 month in past to day
+  # inside skip_conditions
   def skippable?(options = {})
     now = options[:time] || Time.zone.now
     skip_conditions = [
@@ -309,6 +333,24 @@ class Subscription < ActiveRecord::Base
         sub.save!
       end
     end
+  end
+
+  def check_prepaid_orders(sub_id)
+    now = Time.zone.now
+    sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{sub_id}}]' AND status = 'QUEUED' AND scheduled_at > '#{now.beginning_of_month.strftime('%F %T')}' AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}';"
+    this_months_orders = Order.find_by_sql(sql_query)
+    puts "CHECK PREPAID ORDERS SUB METHOD BLOCK"
+    order_check = false
+
+    if this_months_orders != nil
+      this_months_orders.each do |order|
+        if order.scheduled_at > now
+          order_check = true
+        end
+      end
+    end
+
+    return order_check
   end
 
 end

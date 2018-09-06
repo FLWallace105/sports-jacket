@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180806195812) do
+ActiveRecord::Schema.define(version: 20180815221707) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -179,6 +179,58 @@ ActiveRecord::Schema.define(version: 20180806195812) do
     t.index ["shopify_customer_id"], name: "index_customers_on_shopify_customer_id"
   end
 
+  create_table "ellie_collects", force: :cascade do |t|
+    t.bigint "collect_id"
+    t.bigint "collection_id"
+    t.bigint "product_id"
+    t.boolean "featured", default: false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.bigint "position"
+    t.string "sort_value"
+  end
+
+  create_table "ellie_custom_collections", force: :cascade do |t|
+    t.bigint "collection_id"
+    t.string "handle"
+    t.string "title"
+    t.datetime "updated_at"
+    t.text "body_html"
+    t.datetime "published_at"
+    t.string "sort_order"
+    t.string "template_suffix"
+    t.string "published_scope"
+  end
+
+  create_table "ellie_variants", force: :cascade do |t|
+    t.bigint "variant_id"
+    t.string "title"
+    t.decimal "price", precision: 10, scale: 2
+    t.bigint "sku"
+    t.integer "position"
+    t.string "inventory_policy"
+    t.decimal "compare_at_price", precision: 10, scale: 2
+    t.bigint "product_id"
+    t.string "fulfillment_service"
+    t.string "inventory_management"
+    t.string "option1"
+    t.string "option2"
+    t.string "option3"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.boolean "taxable"
+    t.string "barcode"
+    t.decimal "weight", precision: 10, scale: 2
+    t.string "weight_unit"
+    t.integer "inventory_quantity"
+    t.bigint "image_id"
+    t.integer "grams"
+    t.bigint "inventory_item_id"
+    t.string "tax_code"
+    t.integer "old_inventory_quantity"
+    t.boolean "requires_shipping"
+  end
+
   create_table "matching_products", force: :cascade do |t|
     t.string "new_product_title"
     t.string "incoming_product_id"
@@ -306,6 +358,93 @@ ActiveRecord::Schema.define(version: 20180806195812) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "shopify_customers", force: :cascade do |t|
+    t.boolean "accepts_marketing"
+    t.jsonb "addresses"
+    t.datetime "created_at"
+    t.jsonb "default_address"
+    t.string "email"
+    t.string "first_name"
+    t.string "customer_id"
+    t.string "last_name"
+    t.string "last_order_id"
+    t.string "last_order_name"
+    t.jsonb "metafield"
+    t.string "multipass_identifier"
+    t.string "note"
+    t.integer "orders_count"
+    t.string "phone"
+    t.string "state"
+    t.string "tags"
+    t.boolean "tax_exempt"
+    t.string "total_spent"
+    t.datetime "updated_at"
+    t.boolean "verified_email"
+  end
+
+  create_table "shopify_orders", id: :bigint, default: nil, force: :cascade do |t|
+    t.bigint "app_id"
+    t.json "billing_address"
+    t.string "browser_ip"
+    t.boolean "buyer_accepts_marketing"
+    t.datetime "cancelled_at"
+    t.string "cancel_reason"
+    t.string "cart_token"
+    t.bigint "checkout_id"
+    t.string "checkout_token"
+    t.datetime "closed_at"
+    t.boolean "confirmed"
+    t.string "contact_email"
+    t.datetime "created_at"
+    t.float "currency"
+    t.json "customer"
+    t.string "customer_locale"
+    t.bigint "device_id"
+    t.json "discount_codes"
+    t.string "email"
+    t.string "financial_status"
+    t.json "fulfillments"
+    t.string "fulfillment_status"
+    t.string "gateway"
+    t.string "landing_site"
+    t.string "landing_site_ref"
+    t.json "line_items"
+    t.bigint "location_id"
+    t.string "name"
+    t.text "note"
+    t.json "note_attributes"
+    t.integer "number"
+    t.integer "order_number"
+    t.string "order_status_url"
+    t.json "payment_gateway_names"
+    t.string "phone"
+    t.datetime "processed_at"
+    t.string "processing_method"
+    t.string "reference"
+    t.string "referring_site"
+    t.json "refunds"
+    t.json "shipping_address"
+    t.json "shipping_lines"
+    t.string "source_identifier"
+    t.string "source_name"
+    t.string "source_url"
+    t.float "subtotal_price"
+    t.string "tags"
+    t.boolean "taxes_included"
+    t.json "tax_lines"
+    t.boolean "test"
+    t.string "token"
+    t.float "total_discounts"
+    t.float "total_line_items_price"
+    t.float "total_price"
+    t.float "total_price_usd"
+    t.float "total_tax"
+    t.integer "total_weight"
+    t.datetime "updated_at"
+    t.bigint "user_id"
+    t.datetime "sent_to_acs_at"
+  end
+
   create_table "skip_reasons", force: :cascade do |t|
     t.string "customer_id", null: false
     t.string "shopify_customer_id", null: false
@@ -320,13 +459,6 @@ ActiveRecord::Schema.define(version: 20180806195812) do
     t.index ["customer_id"], name: "index_skip_reasons_on_customer_id"
     t.index ["shopify_customer_id"], name: "index_skip_reasons_on_shopify_customer_id"
     t.index ["subscription_id"], name: "index_skip_reasons_on_subscription_id"
-  end
-
-  create_table "skippable_products", force: :cascade do |t|
-    t.string "product_title"
-    t.string "product_id"
-    t.boolean "threepk", default: false
-    t.index ["product_id"], name: "index_skippable_products_on_product_id"
   end
 
   create_table "sub_line_items", force: :cascade do |t|
@@ -396,6 +528,13 @@ ActiveRecord::Schema.define(version: 20180806195812) do
     t.jsonb "raw_line_items"
     t.index ["customer_id"], name: "index_subscriptions_updated_on_customer_id"
     t.index ["subscription_id"], name: "index_subscriptions_updated_on_subscription_id"
+  end
+
+  create_table "switchable_products", force: :cascade do |t|
+    t.string "product_title"
+    t.string "product_id"
+    t.boolean "threepk", default: false
+    t.index ["product_id"], name: "index_skippable_products_on_product_id"
   end
 
   create_table "update_line_items", force: :cascade do |t|
