@@ -325,6 +325,7 @@ class Subscription < ActiveRecord::Base
     sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{subscription_id}}]'
                 AND status = 'QUEUED' AND is_prepaid = 1;"
     my_orders = Order.find_by_sql(sql_query)
+    begin
     my_orders.each do |order|
       if order.scheduled_at < now.end_of_month.strftime('%F %T')
         @my_res = line_item_parse(order)
@@ -332,6 +333,10 @@ class Subscription < ActiveRecord::Base
         @my_res = line_item_parse(order)
       end
     end
+  rescue StandardError => e
+    puts "get_order_props couldnt find orders on sub_id: #{subscription_id}"
+    next
+  end
     return @my_res
   end
 
