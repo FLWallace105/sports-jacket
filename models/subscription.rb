@@ -333,11 +333,11 @@ class Subscription < ActiveRecord::Base
         @my_res = line_item_parse(order)
       end
     end
+    return @my_res
   rescue StandardError => e
     puts "get_order_props couldnt find orders on sub_id: #{subscription_id}"
     next
-  end
-    return @my_res
+    end
   end
 
   private
