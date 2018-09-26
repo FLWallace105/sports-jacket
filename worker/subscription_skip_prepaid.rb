@@ -2,7 +2,7 @@ require_relative 'resque_helper'
 
 class SubscriptionSkipPrepaid
   extend ResqueHelper
-  @queue = 'skip_product'
+  @queue = 'skip_product_prepaid'
   def self.perform(params)
     Resque.logger = Logger.new("#{Dir.getwd}/logs/prepaid_skip_resque.log")
     puts "Got this: #{params.inspect}"
@@ -13,7 +13,7 @@ class SubscriptionSkipPrepaid
     my_customer = Customer.find_by(shopify_customer_id: shopify_customer_id)
     recharge_customer_id = my_customer.customer_id
     recharge_change_header = params['recharge_change_header']
-    orders = HTTParty.get("https://api.rechargeapps.com/orders?subscription_id=#{sub_id}&status=SUCCESS", :headers => recharge_change_header, :timeout => 80)
+    orders = HTTParty.get("https://api.rechargeapps.com/orders?subscription_id=#{sub_id}&status=QUEUED", :headers => recharge_change_header, :timeout => 80)
     queued_orders = orders.parsed_response['orders']
 
     queued_orders.each do |order|

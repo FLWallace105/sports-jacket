@@ -346,7 +346,7 @@ class EllieListener < Sinatra::Base
     my_action = params['action']
     my_now = Date.current.day
     puts "Day of the month is #{my_now}"
-    if Time.zone.now.day < 5
+    if Time.zone.now.day < 55
       if my_action == "skip_month"
         #Add code to immediately skip the sub in DB only here
         local_sub_id = params['subscription_id']
@@ -367,7 +367,7 @@ class EllieListener < Sinatra::Base
             temp_order.save
           end
 
-          Resque.enqueue_to(:skip_product, 'SubscriptionSkipPrepaid', params)
+          Resque.enqueue_to(:skip_product_prepaid, 'SubscriptionSkipPrepaid', params)
 
         elsif temp_subscription.skippable?
           puts "temp_subscription = #{temp_subscription.inspect}"
