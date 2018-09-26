@@ -2,7 +2,7 @@ require_relative 'resque_helper'
 
 class SubscriptionSkipPrepaid
   extend ResqueHelper
-  @queue = 'skip_product'
+  @queue = 'skip_product_prepaid'
   def self.perform(params)
     Resque.logger = Logger.new("#{Dir.getwd}/logs/prepaid_skip_resque.log")
     puts "Got this: #{params.inspect}"

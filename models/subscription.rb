@@ -197,7 +197,10 @@ class Subscription < ActiveRecord::Base
     skip_conditions = [
       prepaid?,
       order_check,
+<<<<<<< HEAD
       #TODO (neville) change back to 5
+=======
+>>>>>>> 95c059e3ac49df126725895c8a521e3b355faffd
       today < 55,
     ]
     skip_conditions.all?
@@ -229,7 +232,10 @@ class Subscription < ActiveRecord::Base
     skip_conditions = [
       !prepaid?,
       active?,
+<<<<<<< HEAD
       #TODO (neville) change back to 5
+=======
+>>>>>>> 95c059e3ac49df126725895c8a521e3b355faffd
       now.day < 55,
       ProductTag.active(options).where(tag: 'skippable')
         .pluck(:product_id).include?(shopify_product_id),
