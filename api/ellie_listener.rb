@@ -346,7 +346,8 @@ class EllieListener < Sinatra::Base
     my_action = params['action']
     my_now = Date.current.day
     puts "Day of the month is #{my_now}"
-    if Time.zone.now.day < 5
+    #TODO (neville) change back to 5
+    if Time.zone.now.day < 55
       if my_action == "skip_month"
         #Add code to immediately skip the sub in DB only here
         local_sub_id = params['subscription_id']
