@@ -11,8 +11,11 @@ early_tag = { active_start: nil, active_end: month_end }
 ProductTag.where(active_end: nil).update_all(active_end: month_start - 1.second)
 
 # main: prepaid products (CURRENTLY TEST VALUES)
-prepaid_3 = 614485950496
-# prepaid_5 = 614485950496
+# prepaid_3 = 614485950496
+prepaid_3 = 1421100974131
+prepaid_3_autorenew = 1421105004595
+prepaid_5_autorenew = 1421098450995
+
 ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_3, tag: 'prepaid').update(early_tag)
 # ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_5, tag: 'prepaid').update(early_tag)
 
