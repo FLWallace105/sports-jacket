@@ -193,14 +193,13 @@ class Subscription < ActiveRecord::Base
 
   def prepaid_skippable?
     today = Time.zone.now.day
-    order_check = check_prepaid_orders(subscription_id)
+    order_check = check_prepaid_orders(customer_id)
     skip_conditions = [
       prepaid?,
       order_check,
-      # TODO(N lee): switch back to 5
-      today < 55,
+      today < 5,
     ]
-    puts "prepaid: #{prepaid?}, order_check: #{order_check}, today < 55: #{today < 55}"
+    puts "prepaid: #{prepaid?}, order_check: #{order_check}, today < 5: #{today < 5}"
     skip_conditions.all?
   end
 
@@ -230,8 +229,7 @@ class Subscription < ActiveRecord::Base
     skip_conditions = [
       !prepaid?,
       active?,
-      # TODO(N lee): switch back to 5 
-      now.day < 55,
+      now.day < 5,
       ProductTag.active(options).where(tag: 'skippable')
         .pluck(:product_id).include?(shopify_product_id),
       next_charge_scheduled_at.try('>', now.beginning_of_month),
@@ -323,16 +321,16 @@ class Subscription < ActiveRecord::Base
   end
 
   def get_order_props
-    now = Time.zone.now
-    next_mon = Date.today >> 1
-    sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{subscription_id}}]'
+    next_mon = Date.today.end_of_month >> 1
+    sql_query = "SELECT * FROM orders WHERE customer_id = '#{customer_id}'
+                AND scheduled_at < '#{next_mon.strftime('%F %T')}'
                 AND status = 'QUEUED' AND is_prepaid = 1;"
     my_orders = Order.find_by_sql(sql_query)
-    if my_orders != nil
+    puts "GET ORDER PROPS =====>  #{my_orders.inspect}"
+    if my_orders.empty? == false
+
       my_orders.each do |order|
-        if order.scheduled_at < now.end_of_month.strftime('%F %T')
-          @my_res = line_item_parse(order)
-        elsif order.scheduled_at < next_mon.strftime('%F %T')
+        if order.scheduled_at > Date.today.strftime('%F %T')
           @my_res = line_item_parse(order)
         end
       end
@@ -346,15 +344,28 @@ class Subscription < ActiveRecord::Base
   private
 
   def line_item_parse(order)
-      order.line_items.each do |item|
-        item['properties'].each do |prop|
-          if prop['name'] == "product_collection"
-            return {
-             my_title: prop['value'],
-             ship_date: order.shipping_date,
-            }
+    if order.line_items.kind_of?(String)
+      my_line_item_hash = JSON.parse(order.line_items)
+    else
+      my_line_item_hash = order.line_items
+    end
+
+      my_line_item_hash.each do |item|
+        # puts "INSIDE LINE_ITEM_HASH ORDER = #{item.inspect}"
+          if item['properties'].empty? == false
+            item['properties'].each do |prop|
+              if prop['name'] == "product_collection"
+                return {
+                 my_title: prop['value'],
+                 ship_date: order.shipping_date,
+                }
+              end
+            end
           end
-        end
+          return {
+           my_title: order['title'],
+           ship_date: order['shipping_date'],
+          }
       end
     end
 
@@ -372,24 +383,25 @@ class Subscription < ActiveRecord::Base
     end
   end
 
-  def check_prepaid_orders(sub_id)
+  def check_prepaid_orders(cust_id)
+
     now = Time.zone.now
-    sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{sub_id}}]'
+    sql_query = "SELECT * FROM orders WHERE customer_id ='#{cust_id}'
                 AND status = 'QUEUED' AND scheduled_at > '#{now.beginning_of_month.strftime('%F %T')}'
                 AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}'
                 AND is_prepaid = 1;"
     this_months_orders = Order.find_by_sql(sql_query)
-    puts "CHECK PREPAID ORDERS SUB METHOD BLOCK"
     order_check = false
 
-    if this_months_orders != nil
-      this_months_orders.each do |order|
-        if order.scheduled_at > now
+      if this_months_orders != nil
+        this_months_orders.each do |order|
+        if order.scheduled_at > now.strftime('%F %T')
           order_check = true
           break
         end
       end
     end
+    puts "================order_check = #{order_check}"
     return order_check
   end
 

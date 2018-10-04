@@ -32,11 +32,8 @@ class MonthlySetup
     current_array.each do |x|
       product_title = x.title
       product_id = x.id
-      # variant_id = x.variants[0]['id']
       variant_id = EllieVariant.find_by(product_id: x.id).variant_id
-      # sku = x.variants[0]['sku']
       sku = EllieVariant.find_by(product_id: x.id).sku
-      # TODO(Neville): adjust for edge cases i.e. Items => Item etc..
       product_collection = x.title
       @conn.exec_prepared('statement1', [product_title, product_id, variant_id, sku, product_collection])
     end
@@ -66,7 +63,6 @@ class MonthlySetup
       # if threepk true, assign 3 item prod id to outgoing_product_id
       outgoing_product_id = (threepk)? prod.shopify_id : incoming_product_id
       @conn.exec_prepared('statement1', [new_product_title, incoming_product_id, threepk, outgoing_product_id])
-      # TODO(Neville): adjust for edge cases i.e. Items => Item etc..
     end
       logger.info "matching_config done"
       @conn.close

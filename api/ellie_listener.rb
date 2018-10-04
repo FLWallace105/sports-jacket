@@ -5,7 +5,6 @@ require_relative '../lib/logging'
 class EllieListener < Sinatra::Base
   register Sinatra::ActiveRecordExtension
   include Logging
-
   PAGE_LIMIT = 250
 
   register Sinatra::CrossOrigin
@@ -339,15 +338,13 @@ class EllieListener < Sinatra::Base
   end
 
   post '/subscription_skip' do
-    # json = JSON.parse request.body
     puts "Received skip request"
     puts params.inspect
     params['recharge_change_header'] = @recharge_change_header
     my_action = params['action']
     my_now = Date.current.day
     puts "Day of the month is #{my_now}"
-    # TODO(N Lee) change time back to 5
-    if Time.zone.now.day < 55
+    if my_now < 5
       if my_action == "skip_month"
         #Add code to immediately skip the sub in DB only here
         local_sub_id = params['subscription_id']
@@ -370,7 +367,6 @@ class EllieListener < Sinatra::Base
             temp_order.save
           end
           temp_subscription.save!
-          puts "made it here "
           Resque.enqueue_to(:skip_product_prepaid, 'SubscriptionSkipPrepaid', params)
 
         elsif temp_subscription.skippable?
@@ -520,6 +516,7 @@ class EllieListener < Sinatra::Base
       switch_value = sub.prepaid_switchable?
       if sub.get_order_props
         res = sub.get_order_props
+        puts "=====> VALUES FROM GET_ORDER PROPS IN TRANFORM_SUBS: TITLE=#{res[:my_title]} SHIP DATE: #{res[:ship_date]}"
         title_value = res[:my_title]
         shipping_date = res[:ship_date].strftime('%F')
       else

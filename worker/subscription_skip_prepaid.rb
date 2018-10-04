@@ -29,6 +29,7 @@ class SubscriptionSkipPrepaid
       puts "We will change the next_charge_scheduled_at to: #{next_charge_str}"
       sub_body = {"date" => next_charge_str}.to_json
       puts "Pushing new charge_date to ReCharge: #{sub_body}"
+      sleep 3
       my_update_sub = HTTParty.post("https://api.rechargeapps.com/subscriptions/#{sub_id}/set_next_charge_date", :headers => recharge_change_header, :body => sub_body, :timeout => 80)
       update_success = my_update_sub.success?
       puts my_update_sub.inspect
