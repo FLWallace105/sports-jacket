@@ -322,13 +322,14 @@ class Subscription < ActiveRecord::Base
 
   def get_order_props
     next_mon = Date.today.end_of_month >> 1
-    sql_query = "SELECT * FROM orders WHERE customer_id = '#{customer_id}'
-                AND scheduled_at < '#{next_mon.strftime('%F %T')}'
+    mon_end = Date.today.end_of_month
+    sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{subscription_id}}]'
+                AND scheduled_at < '#{mon_end.strftime('%F %T')}'
                 AND status = 'QUEUED' AND is_prepaid = 1;"
     my_orders = Order.find_by_sql(sql_query)
     puts "GET ORDER PROPS =====>  #{my_orders.inspect}"
-    if my_orders.empty? == false
 
+    if my_orders.empty? == false
       my_orders.each do |order|
         if order.scheduled_at > Date.today.strftime('%F %T')
           @my_res = line_item_parse(order)
@@ -338,7 +339,23 @@ class Subscription < ActiveRecord::Base
     else
       return false
     end
+  end
 
+  def current_order_ptitle
+    # returns most recent shipped prepaid order
+    sql_query = "select  * from orders where line_items @> '[{\"subscription_id\": #{subscription_id}}]' and status = 'SUCCESS' and is_prepaid = 0 and scheduled_at < '#{Date.today.strftime('%F %T')}' "
+    my_order = Order.find_by_sql(sql_query).first
+    puts "+++++++++++++++++FOUND MY ORDER CURRENT = #{my_order.inspect}"
+    puts "my sub id : #{subscription_id} and date: #{Date.today.strftime('%F %T')}"
+    my_title = ""
+    my_order.line_items.each do |item|
+      if item["subscription_id"].to_s == subscription_id
+        item["properties"].each do |prop|
+          my_title = prop["value"] if prop["name"] == "product_collection"
+        end
+      end
+    end
+    return my_title
   end
 
   private
@@ -350,24 +367,23 @@ class Subscription < ActiveRecord::Base
       my_line_item_hash = order.line_items
     end
 
-      my_line_item_hash.each do |item|
-        # puts "INSIDE LINE_ITEM_HASH ORDER = #{item.inspect}"
-          if item['properties'].empty? == false
-            item['properties'].each do |prop|
-              if prop['name'] == "product_collection"
-                return {
-                 my_title: prop['value'],
-                 ship_date: order.shipping_date,
-                }
-              end
-            end
+    my_line_item_hash.each do |item|
+      if item['properties'].empty? == false
+        item['properties'].each do |prop|
+          if prop['name'] == "product_collection"
+            return {
+             my_title: prop['value'],
+             ship_date: order.shipping_date,
+            }
           end
-          return {
-           my_title: order['title'],
-           ship_date: order['shipping_date'],
-          }
+        end
       end
+      return {
+       my_title: order.title,
+       ship_date: order.shipping_date,
+      }
     end
+  end
 
   def update_line_items
     return unless saved_change_to_attribute? :raw_line_item_properties
@@ -384,17 +400,24 @@ class Subscription < ActiveRecord::Base
   end
 
   def check_prepaid_orders(cust_id)
-
     now = Time.zone.now
-    sql_query = "SELECT * FROM orders WHERE customer_id ='#{cust_id}'
-                AND status = 'QUEUED' AND scheduled_at > '#{now.beginning_of_month.strftime('%F %T')}'
-                AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}'
-                AND is_prepaid = 1;"
-    this_months_orders = Order.find_by_sql(sql_query)
+    # sql_query = "SELECT * FROM orders WHERE customer_id ='#{cust_id}'
+    #             AND status = 'QUEUED' AND scheduled_at > '#{now.beginning_of_month.strftime('%F %T')}'
+    #             AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}'
+    #             AND is_prepaid = 1;"
+    # this_months_orders = Order.find_by_sql(sql_query)
+    this_months_orders = Order.where(
+      "line_items @> ? AND status = ? AND is_prepaid = ? AND scheduled_at < ? AND scheduled_at > ?",
+      [{subscription_id: subscription_id}].to_json,
+      "QUEUED",
+      1,
+      now.end_of_month.strftime('%F %T'),
+      now.beginning_of_month.strftime('%F %T')
+    )
     order_check = false
 
-      if this_months_orders != nil
-        this_months_orders.each do |order|
+    if this_months_orders != nil
+      this_months_orders.each do |order|
         if order.scheduled_at > now.strftime('%F %T')
           order_check = true
           break

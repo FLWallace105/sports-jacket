@@ -1777,7 +1777,8 @@ module EllieHelper
         created_at = order_hash['created_at']
         updated_at = order_hash['updated_at']
         email = order_hash['email']
-        line_items = order_hash['line_items'].to_json
+        # TODO(Neville Lee) parses line_items to ensure array object in pgsql for querying 
+        line_items = JSON.parse(order_hash['line_items'].to_json)
         total_price = order_hash['total_price'].to_f
         total_price = total_price.round(2)
         shipping_address = order_hash['shipping_address'].to_json

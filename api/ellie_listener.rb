@@ -1,6 +1,7 @@
 require_relative 'config/environment'
 require_relative '../lib/recharge_active_record'
 require_relative '../lib/logging'
+# require 'pry'
 
 class EllieListener < Sinatra::Base
   register Sinatra::ActiveRecordExtension
@@ -8,7 +9,7 @@ class EllieListener < Sinatra::Base
   PAGE_LIMIT = 250
 
   register Sinatra::CrossOrigin
-
+  # binding.pry
   configure do
     enable :logging
     set :server, :puma
@@ -520,7 +521,7 @@ class EllieListener < Sinatra::Base
         title_value = res[:my_title]
         shipping_date = res[:ship_date].strftime('%F')
       else
-        title_value = sub.product_title
+        title_value = sub.current_order_ptitle
         shipping_date = "1990-21-31"
       end
     else
