@@ -306,7 +306,7 @@ class EllieListener < Sinatra::Base
             
           end
       end
-
+      local_sub.raw_line_item_properties = my_properties
       local_sub.save!
 
 
