@@ -521,8 +521,8 @@ class EllieListener < Sinatra::Base
         title_value = res[:my_title]
         shipping_date = res[:ship_date].strftime('%F')
       else
-        title_value = sub.current_order_ptitle
-        shipping_date = "1990-21-31"
+        title_value = sub.current_order_data[:my_title]
+        shipping_date = sub.current_order_data[:ship_date].strftime('%F')
       end
     else
       skip_value = sub.skippable?

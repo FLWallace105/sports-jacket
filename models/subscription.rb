@@ -331,7 +331,7 @@ class Subscription < ActiveRecord::Base
 
     if my_orders.empty? == false
       my_orders.each do |order|
-        if order.scheduled_at > Date.today.strftime('%F %T')
+        if order.scheduled_at >= Date.today.strftime('%F %T')
           @my_res = line_item_parse(order)
         end
       end
@@ -341,21 +341,26 @@ class Subscription < ActiveRecord::Base
     end
   end
 
-  def current_order_ptitle
+  def current_order_data
     # returns most recent shipped prepaid order
-    sql_query = "select  * from orders where line_items @> '[{\"subscription_id\": #{subscription_id}}]' and status = 'SUCCESS' and is_prepaid = 0 and scheduled_at < '#{Date.today.strftime('%F %T')}' "
+    sql_query = "select  * from orders where line_items @> '[{\"subscription_id\": #{subscription_id}}]' and status = 'SUCCESS' and is_prepaid = 0 and scheduled_at <= '#{Date.today.strftime('%F %T')}' "
     my_order = Order.find_by_sql(sql_query).first
     puts "+++++++++++++++++FOUND MY ORDER CURRENT = #{my_order.inspect}"
     puts "my sub id : #{subscription_id} and date: #{Date.today.strftime('%F %T')}"
     my_title = ""
+    my_date = ""
     my_order.line_items.each do |item|
       if item["subscription_id"].to_s == subscription_id
         item["properties"].each do |prop|
           my_title = prop["value"] if prop["name"] == "product_collection"
+          my_date = my_order.shipping_date
         end
       end
     end
-    return my_title
+    return {
+        my_title: my_title,
+        ship_date: my_order.shipping_date,
+      }
   end
 
   private
