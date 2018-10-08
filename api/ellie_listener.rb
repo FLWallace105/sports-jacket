@@ -295,6 +295,18 @@ class EllieListener < Sinatra::Base
       local_sub.shopify_variant_id = my_new_product.variant_id
       local_sub.sku = my_new_product.sku
       local_sub.product_title = my_new_product.product_title
+
+      #add saving for product_collection in these lines so that saves as well.
+      #product_collection = my_new_product.product_collection
+      my_properties = local_sub.raw_line_item_properties
+      my_properties.map do |mystuff|
+        #puts "#{key}, #{value}"
+        if mystuff['name'] == 'product_collection'
+            mystuff['value'] = my_new_product.product_collection
+            
+          end
+      end
+
       local_sub.save!
 
 
