@@ -5,7 +5,7 @@ class SubscriptionSkipPrepaid
   @queue = 'skip_product_prepaid'
   def self.perform(params)
     Resque.logger = Logger.new("#{Dir.getwd}/logs/prepaid_skip_resque.log")
-    puts "Got this: #{params.inspect}"
+    logger.info "Got this: #{params.inspect}"
     # PUTS /subscription_skip
     sub_id = params['subscription_id']
     shopify_customer_id = params['shopify_customer_id']

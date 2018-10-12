@@ -1492,7 +1492,7 @@ module EllieHelper
             created_at = order['created_at']
             updated_at = order['updated_at']
             email = order['email']
-            line_items = order['line_items'].to_json
+            line_items = order['line_items']
             raw_line_items = order['line_items'][0]
 
             shopify_variant_id = raw_line_items['shopify_variant_id']
@@ -1777,8 +1777,8 @@ module EllieHelper
         created_at = order_hash['created_at']
         updated_at = order_hash['updated_at']
         email = order_hash['email']
-        # TODO(Neville Lee) parses line_items to ensure array object in pgsql for querying 
-        line_items = JSON.parse(order_hash['line_items'].to_json)
+        # TODO(Neville Lee) change back to line_items = JSON.parse(order_hash['line_items'].to_json)
+        line_items = order_hash['line_items'].to_json
         total_price = order_hash['total_price'].to_f
         total_price = total_price.round(2)
         shipping_address = order_hash['shipping_address'].to_json

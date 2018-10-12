@@ -285,6 +285,7 @@ class EllieListener < Sinatra::Base
       old_product = Product.find_by(shopify_id: myjson['product_id'])
       my_new_product = AlternateProduct.find_by_product_id(my_real_product_id)
       puts "my_new_product = #{my_new_product.inspect}"
+      puts "my_old_product = #{old_product.inspect}"
       local_sub = Subscription.find_by_subscription_id(local_sub_id)
       puts "local_sub = #{local_sub.inspect}"
       if local_sub.prepaid_switchable?
@@ -293,11 +294,14 @@ class EllieListener < Sinatra::Base
                     AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}'
                     AND is_prepaid = 1;"
         my_orders = Order.find_by_sql(sql_query)
-        updated = false
+        updated = ""
         my_orders.each do |temp_order|
+          updated = false
           temp_order.line_items.each do |my_hash|
-            if my_hash["product_title"].include?(old_product.title)
-              puts "FOUND MATCHING Line Item based on title: #{old_product.title}"
+            # if my_hash["product_title"].include?(old_product.title)
+              if my_hash["subscription_id"] == local_sub_id.to_s
+                puts "FOUND MATCHING Line Item based on sub id: #{local_sub_id}"
+              # puts "FOUND MATCHING Line Item based on title: #{old_product.title}"
               my_hash['shopify_product_id'] = my_new_product.product_id
               my_hash['shopify_variant_id'] = my_new_product.variant_id
               my_hash['sku'] = my_new_product.sku
@@ -324,7 +328,7 @@ class EllieListener < Sinatra::Base
           [500, @default_headers, {message: "error within orders, see logs"}.to_json]
         end
 
-      elsif !local_sub.prepaid_switchable?
+      elsif local_sub.switchable? && !local_sub.prepaid?
         local_sub.shopify_product_id = my_new_product.product_id
         local_sub.shopify_variant_id = my_new_product.variant_id
         local_sub.sku = my_new_product.sku
@@ -333,7 +337,7 @@ class EllieListener < Sinatra::Base
 
         Resque.enqueue_to(:switch_product, 'SubscriptionSwitch', myjson)
       else
-        puts "Can't switch product, action must be switch product not #{my_action}"
+        return [400, @default_headers, {message: "not switchable"}.to_json]
       end
     end
   end
@@ -345,7 +349,8 @@ class EllieListener < Sinatra::Base
     my_action = params['action']
     my_now = Date.current.day
     puts "Day of the month is #{my_now}"
-    if my_now < 5
+    # TODO(Neville) change back to 5
+    if my_now < 55
       if my_action == "skip_month"
         #Add code to immediately skip the sub in DB only here
         local_sub_id = params['subscription_id']

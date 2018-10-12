@@ -58,10 +58,16 @@ module ResqueHelper
   # myprod_id - product id of the current product collection user is subscribed to
   # new_product_id - product id of the users desired product
   def provide_current_orders(myprod_id, subscription_id, new_product_id)
+    Resque.logger = Logger.new("#{Dir.getwd}/logs/prepaid_switch_helper.log")
+
     now = Time.zone.now
     old_product = Product.find_by(shopify_id: myprod_id)
     my_new_product = Product.find_by(shopify_id: new_product_id)
     my_new_variant = EllieVariant.find_by(product_id: new_product_id)
+    Resque.logger.info "new_variant = #{my_new_variant.inspect}"
+    Resque.logger.info "my_new_product = #{my_new_product.inspect}"
+    Resque.logger.info "my_old_product = #{old_product.inspect}"
+
     updated_line_item = []
     sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{subscription_id}}]'
                 AND status = 'QUEUED' AND scheduled_at > '#{now.strftime('%F %T')}'
@@ -74,15 +80,20 @@ module ResqueHelper
       temp_order.line_items.each do |l_item|
         begin
         # being switched in event customer has multiple products in one order
+        # "variant_title" => l_item['variant_title'],
         # i.e. '3 - Item collection' and 'yoga pant'
-        if l_item["subscription_id"] == subscription_id
-          puts "updating l_item with new: #{my_new_product.title} data"
+        Resque.logger.info "l_item['subscription_id'] == subscription_id: #{l_item["subscription_id"].to_s == subscription_id}"
+        if l_item["subscription_id"].to_s == subscription_id
+          Resque.logger.info "updating l_item with new: #{my_new_product.title} data"
           l_item['shopify_product_id'] = my_new_product.shopify_id
           l_item['shopify_variant_id'] = my_new_variant.variant_id
           l_item['sku'] = my_new_variant.sku
           l_item['product_title'] = my_new_product.title
           l_item['title'] = my_new_product.title
-
+          l_item['price'] = my_new_variant.price
+          l_item['product_id'] = my_new_product.shopify_id
+          l_item['variant_title'] = my_new_variant.title
+          l_item['variant_id'] = my_new_variant.variant_id
           l_item['properties'].each do |prop|
             prop['value'] = my_new_product.title if (prop['name'] == "product_collection")
           end
@@ -91,13 +102,13 @@ module ResqueHelper
           updated_line_item.push(l_item)
         end
         rescue => e
-          puts "error: #{e}"
+          Resque.logger.info "error: #{e}"
         end
       end
       my_order_id = temp_order.order_id
     end
 
-    puts "PROVIDE CURRENT ORDERS WORKER DONE"
+    Resque.logger.info "PROVIDE CURRENT ORDERS WORKER DONE"
     response_hash = {
       "my_order_id" => my_order_id,
       "o_array" => updated_line_item,
