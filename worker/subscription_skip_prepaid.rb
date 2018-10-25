@@ -29,9 +29,28 @@ class SubscriptionSkipPrepaid
       puts "We will change the next_charge_scheduled_at to: #{next_charge_str}"
       sub_body = {"date" => next_charge_str}.to_json
       puts "Pushing new charge_date to ReCharge: #{sub_body}"
-      sleep 3
+      # add unique id subscription props to piush to recharge and trigger update
+      # so new next_charge_date value is pulled into db by cronjob
+      found_unique_id = false
+      my_unique_id = SecureRandom.uuid
+      my_sub.raw_line_item_properties.map do |mystuff|
+        if mystuff['name'] == 'unique_identifier'
+          mystuff['value'] = my_unique_id
+          found_unique_id = true
+        end
+      end
+      if found_unique_id == false
+        Resque.logger.info "We are adding the unique_identifier to the line item properties"
+        my_sub.raw_line_item_properties << { "name" => "unique_identifier", "value" => my_unique_id }
+      end
+      my_line_items = my_sub.raw_line_item_properties
+      sub_body2 = { "properties" => my_line_items }.to_json
+      Resque.logger.info "line_items with uuid: #{sub_body2}"
+      sleep 2
       my_update_sub = HTTParty.post("https://api.rechargeapps.com/subscriptions/#{sub_id}/set_next_charge_date", :headers => recharge_change_header, :body => sub_body, :timeout => 80)
-      update_success = my_update_sub.success?
+      my_update_sub2 = HTTParty.put("https://api.rechargeapps.com/subscriptions/#{sub_id}", :headers => recharge_change_header, :body => sub_body2, :timeout => 80)
+      Resque.logger.info "update2 success = #{my_update_sub2.inspect}"
+      update_success = my_update_sub.success? && my_update_sub2.success?
       puts my_update_sub.inspect
       Resque.logger.info(my_update_sub.inspect)
 

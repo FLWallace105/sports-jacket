@@ -196,4 +196,29 @@ class Order < ActiveRecord::Base
     line_items.subscription_id
   end
 
+  def sizes(sub_id)
+    line_items.each do |item|
+      if item["subscription_id"].to_s == sub_id
+      return item["properties"].select{|p| SubLineItem::SIZE_PROPERTIES.include? p['name'] }
+      .map{|p| [p['name'], p['value']]}
+      .to_h
+      end
+    end
+  end
+
+  def sizes_change(new_sizes, sub_id)
+    line_items.each do |item|
+      if item["subscription_id"].to_s == sub_id
+        prop_hash = item["properties"].map{|prop| [prop['name'], prop['value']]}.to_h
+        merged_hash = prop_hash.merge new_sizes
+        puts "merged_hash = #{merged_hash}"
+        item["properties"] = merged_hash.map{|k, v| {'name' => k, 'value' => v}}
+      end
+    end
+    # prop_hash = raw_line_item_properties.map{|prop| [prop['name'], prop['value']]}.to_h
+    # merged_hash = prop_hash.merge new_sizes
+    # puts "merged_hash = #{merged_hash}"
+    # self[:raw_line_item_properties] = merged_hash.map{|k, v| {'name' => k, 'value' => v}}
+  end
+
 end

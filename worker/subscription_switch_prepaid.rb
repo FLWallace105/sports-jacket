@@ -30,14 +30,16 @@ class SubscriptionSwitchPrepaid
 
     updated_order_data.each do |l_item|
       my_line_item = {
-        "price" => l_item['price'],
+        "price" => l_item['price'].to_i,
         "properties" => l_item['properties'],
         "quantity" => l_item['quantity'].to_i,
         "sku" => l_item['sku'],
         "title" => l_item['product_title'],
         "variant_title" => l_item['variant_title'],
         "product_id" => l_item['product_id'].to_i,
+        # "product_id" => product_id.to_i,
         "variant_id" => l_item['variant_id'].to_i,
+        "subscription_id" => l_item['subscription_id'].to_i,
       }
       updated_line_items.push(my_line_item)
     end

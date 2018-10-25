@@ -197,8 +197,10 @@ class Subscription < ActiveRecord::Base
     skip_conditions = [
       prepaid?,
       order_check,
+      can_skip_hasnt_switched?,
       # TODO (Neville) change back to 5
       today < 55,
+      # next_charge_scheduled_at.try('<=', Date.today >> 3),
     ]
     puts "prepaid: #{prepaid?}, order_check: #{order_check}, today < 5: #{today < 55}"
     skip_conditions.all?
@@ -209,6 +211,7 @@ class Subscription < ActiveRecord::Base
     skip_conditions = [
       prepaid?,
       order_check,
+      !prepaid_switched?,
     ]
     skip_conditions.all?
   end
@@ -323,11 +326,10 @@ class Subscription < ActiveRecord::Base
   end
 
   def get_order_props
-    # next_mon = Date.today.end_of_month >> 1
     next_mon = Time.zone.today.end_of_month >> 1
     mon_end = Time.zone.today.end_of_month
     sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{subscription_id}}]'
-                AND scheduled_at < '#{mon_end.strftime('%F %T')}'
+                AND scheduled_at <= '#{mon_end.strftime('%F %T')}'
                 AND status = 'QUEUED' AND is_prepaid = 1;"
     my_orders = Order.find_by_sql(sql_query)
     puts "queued orders this month for sub: #{subscription_id} =====>  #{my_orders.inspect}"
@@ -352,6 +354,7 @@ class Subscription < ActiveRecord::Base
     puts "my sub id : #{subscription_id} and date today: #{Date.today.strftime('%F %T')}"
     my_title = ""
     my_date = ""
+
     begin
       my_order.line_items.each do |item|
         if item["subscription_id"].to_s == subscription_id
@@ -363,16 +366,20 @@ class Subscription < ActiveRecord::Base
       end
     rescue StandardError => e
       puts "Current order not found for subscription_id: #{subscription_id}"
+      next_order = Order.where(
+        "line_items @> ? AND status = ? AND is_prepaid = ? AND scheduled_at <= ?",
+        [{subscription_id: subscription_id}].to_json, "QUEUED", 1, Time.zone.today.end_of_month.strftime('%F %T')
+      ).first
+      next_order_prop = line_item_parse(next_order)
       return {
-          my_title: my_title,
-          ship_date: Time.zone.now.day,
+          my_title: next_order_prop[:my_title],
+          ship_date: next_order_prop[:ship_date],
         }
     end
     return {
         my_title: my_title,
         ship_date: my_order.shipping_date,
       }
-
   end
 
   private
@@ -436,5 +443,57 @@ class Subscription < ActiveRecord::Base
     puts "================order_check = #{order_check}"
     return order_check
   end
+
+  def prepaid_switched?(options = {})
+    now = Time.zone.now
+    sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{subscription_id}}]'
+                AND status = 'QUEUED' AND scheduled_at > '#{now.beginning_of_month.strftime('%F %T')}'
+                AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}'
+                AND is_prepaid = 1;"
+    this_months_orders = Order.find_by_sql(sql_query)
+    switched_this_month = true
+
+    if this_months_orders != nil
+      # If order_prod_id is a ProductTag(tag: switchable or prepaid) id, user hasnt switched yet
+      this_months_orders.each do |order|
+        order_prod_id = order.line_items[0]["shopify_product_id"]
+        if ProductTag.active(options).where(tag: 'switchable')
+          .or(ProductTag.active(options).where(tag: 'prepaid'))
+          .pluck(:product_id).include?(order_prod_id)
+
+          switched_this_month = false
+          break
+        end
+      end
+    end
+    puts "================Has switched this month = #{switched_this_month}"
+    return switched_this_month
+  end
+
+  def can_skip_hasnt_switched?(options = {})
+    now = Time.zone.now
+    sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{subscription_id}}]'
+                AND status = 'QUEUED' AND scheduled_at > '#{now.beginning_of_month.strftime('%F %T')}'
+                AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}'
+                AND is_prepaid = 1;"
+    this_months_orders = Order.find_by_sql(sql_query)
+    can_skip = false
+
+    if this_months_orders != nil
+      # If order_prod_id is a ProductTag(tag: skippable or prepaid) id, user hasnt switched yet and can still skip
+      this_months_orders.each do |order|
+        order_prod_id = order.line_items[0]["shopify_product_id"]
+        if ProductTag.active(options).where(tag: 'skippable')
+          .or(ProductTag.active(options).where(tag: 'prepaid'))
+          .pluck(:product_id).include?(order_prod_id)
+          can_skip = true
+          break
+        end
+      end
+    end
+    puts "==============Can skip and hasnt switched? = #{can_skip}"
+    return can_skip
+  end
+
 
 end
