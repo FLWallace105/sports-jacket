@@ -63,6 +63,7 @@ module ResqueHelper
     now = Time.zone.now
     old_product = Product.find_by(shopify_id: myprod_id)
     my_new_product = Product.find_by(shopify_id: new_product_id)
+    my_old_variant = EllieVariant.find_by(product_id: old_product.shopify_id)
     my_new_variant = EllieVariant.find_by(product_id: new_product_id)
     Resque.logger.info "new_variant = #{my_new_variant.inspect}"
     Resque.logger.info "my_new_product = #{my_new_product.inspect}"
@@ -82,15 +83,13 @@ module ResqueHelper
         Resque.logger.info "l_item['subscription_id'] == subscription_id: #{l_item["subscription_id"].to_s == subscription_id}"
         if l_item["subscription_id"].to_s == subscription_id
           Resque.logger.info "updating l_item with new: #{my_new_product.title} data"
-          l_item['shopify_product_id'] = my_new_product.shopify_id
-          l_item['shopify_variant_id'] = my_new_variant.variant_id
-          l_item['sku'] = my_new_variant.sku
-          l_item['product_title'] = my_new_product.title
-          l_item['title'] = my_new_product.title
-          l_item['price'] = my_new_variant.price
-          l_item['product_id'] = my_new_product.shopify_id
-          l_item['variant_title'] = my_new_variant.title
-          l_item['variant_id'] = my_new_variant.variant_id
+          # l_item['shopify_product_id'] = old_product.shopify_id
+          # l_item['shopify_variant_id'] = my_old_variant.variant_id
+          # l_item['sku'] = my_old_variant.sku
+          # l_item['product_title'] = my_new_product.title
+          # l_item['title'] = my_new_product.title
+          # l_item['product_id'] = my_new_product.shopify_id
+          # l_item['variant_id'] = my_old_variant.variant_id
           l_item['properties'].each do |prop|
             prop['value'] = my_new_product.title if (prop['name'] == "product_collection")
             prop['value'] = my_new_product.shopify_id if (prop['name'] == "product_id")
@@ -273,14 +272,14 @@ module ResqueHelper
     res = []
     prop_array.each do |l_item|
       new_line_item = {
-        "price" => l_item['price'].to_i,
         "properties" => l_item['properties'],
         "quantity" => l_item['quantity'].to_i,
         "sku" => l_item['sku'],
-        "title" => l_item['product_title'],
+        "title" => l_item['title'],
         "variant_title" => l_item['variant_title'],
         "product_id" => l_item['shopify_product_id'].to_i,
         "variant_id" => l_item['shopify_variant_id'].to_i,
+        "subscription_id" => l_item['subscription_id'].to_i,
       }
       res.push(new_line_item)
     end

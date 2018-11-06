@@ -14,8 +14,10 @@ class ChangePrepaidSizes
     sub = Subscription.find subscription_id
     Resque.logger.info(sub.inspect)
     # Update subscription through REcharge api (propriatary method used)
-    res = Recharge::Subscription.update(sub.subscription_id, properties: sub.raw_line_item_properties)
-    sub.save! if res
+    sub_litems = {"properties" => sub.raw_line_item_properties}.to_json
+    res1 = HTTParty.put("https://api.rechargeapps.com/subscriptions/#{subscription_id}", :headers => @recharge_change_header, :body => sub_litems, :timeout => 80)
+    Resque.logger.info(res1.inspect)
+    sub.save! if res1.code ==200
 
     queued_orders = Order.where("line_items @> ? AND status = ? AND is_prepaid = ?", [{subscription_id: subscription_id.to_i}].to_json, "QUEUED", 1)
     Resque.logger.info(queued_orders.inspect)

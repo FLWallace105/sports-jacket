@@ -15,7 +15,7 @@ class SubscriptionSwitchPrepaid
     incoming_product_id = params['alt_product_id']
     new_product_id = AlternateProduct.find_by_product_id(params['real_alt_product_id']).product_id
     new_product = Product.find_by(shopify_id: new_product_id)
-    new_variant = EllieVariant.find_by(product_id: new_product_id)
+    my_variant = EllieVariant.find_by(product_id: product_id)
 
     puts "We are working on subscription #{subscription_id}"
     Resque.logger.info "my new product id : #{new_product_id}"
@@ -30,15 +30,13 @@ class SubscriptionSwitchPrepaid
 
     updated_order_data.each do |l_item|
       my_line_item = {
-        "price" => l_item['price'].to_i,
         "properties" => l_item['properties'],
         "quantity" => l_item['quantity'].to_i,
         "sku" => l_item['sku'],
-        "title" => l_item['product_title'],
+        "title" => l_item['title'],
         "variant_title" => l_item['variant_title'],
-        "product_id" => l_item['product_id'].to_i,
-        # "product_id" => product_id.to_i,
-        "variant_id" => l_item['variant_id'].to_i,
+        "product_id" => l_item['shopify_product_id'].to_i,
+        "variant_id" => l_item['shopify_variant_id'].to_i,
         "subscription_id" => l_item['subscription_id'].to_i,
       }
       updated_line_items.push(my_line_item)
@@ -46,10 +44,10 @@ class SubscriptionSwitchPrepaid
 
     my_hash = { "line_items" => updated_line_items }
     body = my_hash.to_json
-    my_details = { "sku" => new_variant.sku,
+    my_details = { "sku" => my_variant.sku,
                    "product_title" => new_product.title,
-                   "shopify_product_id" => new_product.shopify_id,
-                   "shopify_variant_id" => new_variant.variant_id,
+                   "shopify_product_id" => product_id,
+                   "shopify_variant_id" => my_variant.variant_id,
                    "properties" => updated_line_items,
                  }
     params = { "subscription_id" => subscription_id, "action" => "switching_product", "details" => my_details }

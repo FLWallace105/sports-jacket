@@ -216,6 +216,7 @@ class EllieListener < Sinatra::Base
 
         queued_orders.each do |my_order|
           my_order.sizes_change(sizes, subscription_id)
+          my_order.save!
         end
         # prepaid background worker
         queuedd = Resque.enqueue_to(:change_prepaid_sizes, 'ChangePrepaidSizes', subscription_id, sizes)
@@ -294,11 +295,9 @@ class EllieListener < Sinatra::Base
       puts "Updating customer record immediately!"
       my_real_product_id = myjson['real_alt_product_id']
       local_sub_id = myjson['subscription_id']
-      old_product = Product.find_by(shopify_id: myjson['product_id'])
       my_new_product = AlternateProduct.find_by_product_id(my_real_product_id)
-      puts "my_new_product = #{my_new_product.inspect}"
-      puts "my_old_product = #{old_product.inspect}"
       local_sub = Subscription.find_by_subscription_id(local_sub_id)
+      puts "my_new_product = #{my_new_product.inspect}"
       puts "local_sub = #{local_sub.inspect}"
 
       if local_sub.prepaid_switchable?
@@ -307,29 +306,24 @@ class EllieListener < Sinatra::Base
                     AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}'
                     AND is_prepaid = 1;"
         my_orders = Order.find_by_sql(sql_query)
-        updated = ""
         my_orders.each do |temp_order|
           @updated = false
           temp_order.line_items.each do |my_hash|
-            puts my_hash["product_title"]
-            # if my_hash["product_title"].include?(old_product.title)
+            puts my_hash["title"]
             puts "my_hash['subscription_id'] value and class = #{my_hash['subscription_id']}, #{my_hash['subscription_id'].class}"
-            puts "local_sub_id class and value and class = #{local_sub_id}, #{local_sub_id.class}"
+            puts "local_sub_id value and class = #{local_sub_id}, #{local_sub_id.class}"
             puts "do they match? #{my_hash["subscription_id"] == local_sub_id.to_i}"
 
             if my_hash["subscription_id"] == local_sub_id.to_i
               puts "FOUND MATCHING Line Item based on sub id: #{local_sub_id}"
-              my_hash['shopify_product_id'] = my_new_product.product_id
-              my_hash['shopify_variant_id'] = my_new_product.variant_id
-              my_hash['sku'] = my_new_product.sku
               my_hash['properties'].each do |prop|
                 if prop['name'] == "product_collection"
                   prop['value'] = my_new_product.product_title
-                  break
+                end
+                if prop['name'] == "product_id"
+                  prop['value'] = my_new_product.product_id
                 end
               end
-              my_hash['product_title'] = my_new_product.product_title
-              my_hash['title'] = my_new_product.product_title
               puts "updated line item:"
               puts temp_order.line_items.inspect
               @updated = true
@@ -561,7 +555,6 @@ class EllieListener < Sinatra::Base
       charge_date: sub.next_charge_scheduled_at.try{|time| time.strftime('%Y-%m-%d')},
       sizes: sub.sizes,
       prepaid: sub.prepaid?,
-      # prepaid_shipping_at: sub.shipping_at.try{|time| time.strftime('%Y-%m-%d')},
       skippable: skip_value,
       can_choose_alt_product: switch_value,
       next_ship_date: shipping_date,

@@ -5,7 +5,7 @@ require_relative 'application_record'
 class Order < ActiveRecord::Base
   include ApplicationRecord
   include Async
-  include RechargeActiveRecordInclude
+  # include RechargeActiveRecordInclude
   # The column 'type' uses a reserved word in active record. Calling this class
   # results in:
   #
@@ -215,10 +215,6 @@ class Order < ActiveRecord::Base
         item["properties"] = merged_hash.map{|k, v| {'name' => k, 'value' => v}}
       end
     end
-    # prop_hash = raw_line_item_properties.map{|prop| [prop['name'], prop['value']]}.to_h
-    # merged_hash = prop_hash.merge new_sizes
-    # puts "merged_hash = #{merged_hash}"
-    # self[:raw_line_item_properties] = merged_hash.map{|k, v| {'name' => k, 'value' => v}}
   end
 
 end
