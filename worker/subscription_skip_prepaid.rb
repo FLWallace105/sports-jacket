@@ -29,23 +29,26 @@ class SubscriptionSkipPrepaid
       puts "We will change the next_charge_scheduled_at to: #{next_charge_str}"
       sub_body = {"date" => next_charge_str}.to_json
       puts "Pushing new charge_date to ReCharge: #{sub_body}"
-      # add unique id subscription props to piush to recharge and trigger update
+      # add unique id subscription props to push to recharge and trigger update
       # so new next_charge_date value is pulled into db by cronjob
       found_unique_id = false
       my_unique_id = SecureRandom.uuid
+
       my_sub.raw_line_item_properties.map do |mystuff|
         if mystuff['name'] == 'unique_identifier'
           mystuff['value'] = my_unique_id
           found_unique_id = true
         end
       end
+
       if found_unique_id == false
         Resque.logger.info "We are adding the unique_identifier to the line item properties"
         my_sub.raw_line_item_properties << { "name" => "unique_identifier", "value" => my_unique_id }
       end
+
       my_line_items = my_sub.raw_line_item_properties
       sub_body2 = { "properties" => my_line_items }.to_json
-      Resque.logger.info "line_items with uuid: #{sub_body2}"
+      Resque.logger.debug "line_items with uuid: #{sub_body2}"
       sleep 2
       my_update_sub = HTTParty.post("https://api.rechargeapps.com/subscriptions/#{sub_id}/set_next_charge_date", :headers => recharge_change_header, :body => sub_body, :timeout => 80)
       my_update_sub2 = HTTParty.put("https://api.rechargeapps.com/subscriptions/#{sub_id}", :headers => recharge_change_header, :body => sub_body2, :timeout => 80)
@@ -67,15 +70,15 @@ class SubscriptionSkipPrepaid
       queued_orders.each do |order|
         Resque.logger.info("order id: #{order['id']}")
         temp_datetime = order['scheduled_at'].to_datetime
-        Resque.logger.info("scheduled_at BEFORE skip: #{temp_datetime.inspect}")
+        Resque.logger.debug("scheduled_at BEFORE skip: #{temp_datetime.inspect}")
         new_datetime = temp_datetime >> 1
-        Resque.logger.info("scheduled_at AFTER skip: #{new_datetime.inspect}")
+        Resque.logger.debug("scheduled_at AFTER skip: #{new_datetime.inspect}")
         @new_scheduled_at_str = new_datetime.strftime("%FT%T")
         body = {"scheduled_at" => @new_scheduled_at_str}.to_json
         puts "Pushing new scheduled_at date to ReCharge: #{body}"
         @my_update_order = HTTParty.post("https://api.rechargeapps.com/orders/#{order['id']}/change_date", :headers => recharge_change_header, :body => body, :timeout => 80)
         update_success = @my_update_order.success?
-        Resque.logger.info(@my_update_order.inspect)
+        Resque.logger.debug(@my_update_order.inspect)
       end
 
       #Email results to customer
@@ -83,7 +86,7 @@ class SubscriptionSkipPrepaid
       params = {"subscription_id" => sub_id, "action" => "skipping", "details" => new_date   }
       puts "params we are sending to SendEmailToCustomer = #{params.inspect}"
       Resque.enqueue(SendEmailToCustomer, params)
-      Resque.logger.info(@my_update_order.inspect)
+      Resque.logger.debug(@my_update_order.inspect)
 
     rescue Exception => e
       #send error email to Customer service

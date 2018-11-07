@@ -5,17 +5,15 @@ class SubscriptionSwitchPrepaid
   @queue = "switch_product"
 
   def self.perform(params)
-    puts "SUBSCRIPTIONSWITCHPREPAID BLOCK REACHED"
     puts params.inspect
     Resque.logger = Logger.new("#{Dir.getwd}/logs/prepaid_switch_resque.log")
     updated_line_items = []
 
     subscription_id = params['subscription_id']
     product_id = params['product_id']
-    incoming_product_id = params['alt_product_id']
-    new_product_id = AlternateProduct.find_by_product_id(params['real_alt_product_id']).product_id
-    new_product = Product.find_by(shopify_id: new_product_id)
     my_variant = EllieVariant.find_by(product_id: product_id)
+    new_product = Product.find_by(shopify_id: new_product_id)
+    new_product_id = AlternateProduct.find_by_product_id(params['real_alt_product_id']).product_id
 
     puts "We are working on subscription #{subscription_id}"
     Resque.logger.info "my new product id : #{new_product_id}"
@@ -24,7 +22,7 @@ class SubscriptionSwitchPrepaid
     response_hash = provide_current_orders(product_id, subscription_id, new_product_id)
     updated_order_data = response_hash['o_array']
     my_order_id = response_hash['my_order_id']
-    Resque.logger.info("new product info for subscription(#{subscription_id})'s orders are: #{updated_order_data.inspect}")
+    Resque.logger.debug("new product info for subscription(#{subscription_id})'s orders are: #{updated_order_data.inspect}")
     recharge_change_header = params['recharge_change_header']
     puts recharge_change_header
 
@@ -45,7 +43,7 @@ class SubscriptionSwitchPrepaid
     my_hash = { "line_items" => updated_line_items }
     body = my_hash.to_json
     my_details = { "sku" => my_variant.sku,
-                   "product_title" => new_product.title,
+                   "product_title" => Product.find_by(shopify_id: product_id).title,
                    "shopify_product_id" => product_id,
                    "shopify_variant_id" => my_variant.variant_id,
                    "properties" => updated_line_items,
@@ -56,7 +54,7 @@ class SubscriptionSwitchPrepaid
     my_update_order = HTTParty.put("https://api.rechargeapps.com/orders/#{my_order_id}", :headers => recharge_change_header, :body => body, :timeout => 80)
     Resque.logger.info "MY RECHARGE RESPONSE: #{my_update_order.parsed_response}"
 
-    Resque.logger.info(my_update_order.inspect)
+    Resque.logger.debug(my_update_order.inspect)
     # Below for email to customer
     update_success = false
     if my_update_order.code == 200
@@ -67,7 +65,7 @@ class SubscriptionSwitchPrepaid
     else
       Resque.enqueue(SendEmailToCS, params)
       puts "We were not able to update the subscription"
-      Resque.logger.info("We were not able to update the subscription")
+      Resque.logger.error("We were not able to update the subscription")
     end
 
   end

@@ -65,9 +65,9 @@ module ResqueHelper
     my_new_product = Product.find_by(shopify_id: new_product_id)
     my_old_variant = EllieVariant.find_by(product_id: old_product.shopify_id)
     my_new_variant = EllieVariant.find_by(product_id: new_product_id)
-    Resque.logger.info "new_variant = #{my_new_variant.inspect}"
-    Resque.logger.info "my_new_product = #{my_new_product.inspect}"
-    Resque.logger.info "my_old_product = #{old_product.inspect}"
+    Resque.logger.debug "new_variant = #{my_new_variant.inspect}"
+    Resque.logger.debug "my_new_product = #{my_new_product.inspect}"
+    Resque.logger.debug "my_old_product = #{old_product.inspect}"
 
     updated_line_item = []
     sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{subscription_id}}]'
@@ -99,7 +99,7 @@ module ResqueHelper
           updated_line_item.push(l_item)
         end
         rescue => e
-          Resque.logger.info "error: #{e}"
+          Resque.logger.error "error: #{e}"
         end
       end
       my_order_id = temp_order.order_id
