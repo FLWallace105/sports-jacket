@@ -198,10 +198,9 @@ class Subscription < ActiveRecord::Base
       prepaid?,
       order_check,
       can_skip_hasnt_switched?,
-      # TODO (Neville) change back to 5
-      today < 55,
+      today < 5,
     ]
-    puts "prepaid: #{prepaid?}, order_check: #{order_check}, today < 5: #{today < 55}"
+    puts "prepaid: #{prepaid?}, order_check: #{order_check}, today < 5: #{today < 5}"
     skip_conditions.all?
   end
 
@@ -232,8 +231,7 @@ class Subscription < ActiveRecord::Base
     skip_conditions = [
       !prepaid?,
       active?,
-      # TODO (Neville) change back to 5
-      now.day < 55,
+      now.day < 5,
       ProductTag.active(options).where(tag: 'skippable')
         .pluck(:product_id).include?(shopify_product_id),
       next_charge_scheduled_at.try('>', now.beginning_of_month),
@@ -346,7 +344,6 @@ class Subscription < ActiveRecord::Base
   end
 
   def current_order_data
-    # returns most recent shipped prepaid order
     sql_query = "select  * from orders where line_items @> '[{\"subscription_id\": #{subscription_id}}]' and status = 'SUCCESS' and is_prepaid = 0 and scheduled_at <= '#{Date.today.strftime('%F %T')}' "
     my_order = Order.find_by_sql(sql_query).first
     puts "++++current_order_data = #{my_order.inspect}"
@@ -383,15 +380,38 @@ class Subscription < ActiveRecord::Base
 
   private
 
+  def update_line_items
+    return unless saved_change_to_attribute? :raw_line_item_properties
+    Subscription.transaction do
+      raw_line_item_properties.each do |prop|
+        sub = SubLineItem.find_or_create_by(
+          subscription_id: subscription_id,
+          name: prop[:name],
+        )
+        sub.value = prop[:value]
+        sub.save!
+      end
+    end
+  end
+
+  # Internal: Parse order arguements line_items
+  #
+  # order - Order type object that represents subscriptions
+  # next queued order for this month
+  #
+  # Returns hash containing actual product title
+  # since prepaid orders parent data is the 3-Month "wrapper:" product
+  # and order shipping date or returns the orders first line_item's hash data
   def line_item_parse(order)
     if order.line_items.kind_of?(String)
       my_line_item_hash = JSON.parse(order.line_items)
+      # for edge cases where order_pull rake task saved line_items as a String type
     else
       my_line_item_hash = order.line_items
     end
 
     my_line_item_hash.each do |item|
-      puts "================= SUB ID IN LINEITEMPARSE: #{subscription_id} , class = #{subscription_id.class}"
+      puts "SUB ID IN LINE_ITEM_PARSE: #{subscription_id} , class = #{subscription_id.class}\n\n"
       puts "item['subscription_id'] =#{item['subscription_id']} , sub_id param=#{subscription_id} match?: #{item['subscription_id'].to_s == subscription_id}"
       if item['properties'].empty? == false
         item['properties'].each do |prop|
@@ -411,20 +431,10 @@ class Subscription < ActiveRecord::Base
     end
   end
 
-  def update_line_items
-    return unless saved_change_to_attribute? :raw_line_item_properties
-    Subscription.transaction do
-      raw_line_item_properties.each do |prop|
-        sub = SubLineItem.find_or_create_by(
-          subscription_id: subscription_id,
-          name: prop[:name],
-        )
-        sub.value = prop[:value]
-        sub.save!
-      end
-    end
-  end
-
+  # Internal: Query for queued orders scheduled to ship this month.
+  #
+  # Returns boolean based on whether or not subscription has
+  # an associated order with a status="QUEUED" shipping this month after today.
   def check_prepaid_orders
     now = Time.zone.now
     sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{subscription_id}}]'
@@ -446,8 +456,13 @@ class Subscription < ActiveRecord::Base
     return order_check
   end
 
+  # Internal: Validate whether a subscription can switch this month
+  #
+  # Returns a boolean value where true means customer cant switch
+  # and false means they cannot switch.
   def prepaid_switched?(options = {})
     now = Time.zone.now
+    options[:time] = now
     puts "beginning_of_month: #{now.beginning_of_month.strftime('%F %T')}"
     puts "end_of_month: #{now.end_of_month.strftime('%F %T')}"
 
@@ -459,7 +474,6 @@ class Subscription < ActiveRecord::Base
     switched_this_month = true
 
     if this_months_orders != nil
-      # If order_prod_id is a ProductTag(tag: switchable or prepaid) id, user hasnt switched yet
       this_months_orders.each do |order|
         order_prod_id = ""
         order.line_items.each do|item|
@@ -481,8 +495,13 @@ class Subscription < ActiveRecord::Base
     return switched_this_month
   end
 
+  # Internal: Validate whether a subscription can skip this month.
+  #
+  # Returns a boolean value where true means customer can skip
+  # and false means they cannot skip.
   def can_skip_hasnt_switched?(options = {})
     now = Time.zone.now
+    options[:time] = now
     sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{subscription_id}}]'
                 AND status = 'QUEUED' AND scheduled_at > '#{now.beginning_of_month.strftime('%F %T')}'
                 AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}'
@@ -491,7 +510,6 @@ class Subscription < ActiveRecord::Base
     can_skip = false
 
     if this_months_orders != nil
-      # If order_prod_id is a ProductTag(tag: skippable or prepaid) id, user hasnt switched yet and can still skip
       this_months_orders.each do |order|
         order_prod_id = ""
         order.line_items.each do|item|

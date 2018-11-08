@@ -359,8 +359,7 @@ class EllieListener < Sinatra::Base
     my_action = params['action']
     my_now = Date.current.day
     puts "Day of the month is #{my_now}"
-    # TODO(Neville) change back to 5
-    if my_now < 55
+    if my_now < 5
       if my_action == "skip_month"
         #Add code to immediately skip the sub in DB only here
         local_sub_id = params['subscription_id']
@@ -373,8 +372,6 @@ class EllieListener < Sinatra::Base
           my_queued_orders = Order.find_by_sql(sql_query)
 
           my_queued_orders.each do |order|
-            # TODO(NEville Lee) test syntax
-            temp_order = Order.find_by order_id: order.order_id
             my_time = order.scheduled_at
             puts "was scheduled_at: #{my_time}"
             order.scheduled_at = my_time + 1.month

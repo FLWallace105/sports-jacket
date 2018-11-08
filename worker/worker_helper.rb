@@ -1777,7 +1777,6 @@ module EllieHelper
         created_at = order_hash['created_at']
         updated_at = order_hash['updated_at']
         email = order_hash['email']
-        # TODO(Neville Lee) change back to line_items = JSON.parse(order_hash['line_items'].to_json)
         line_items = order_hash['line_items'].to_json
         total_price = order_hash['total_price'].to_f
         total_price = total_price.round(2)

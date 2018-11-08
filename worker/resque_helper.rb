@@ -80,16 +80,9 @@ module ResqueHelper
     my_orders.each do |temp_order|
       temp_order.line_items.each do |l_item|
         begin
-        Resque.logger.info "l_item['subscription_id'] == subscription_id: #{l_item["subscription_id"].to_s == subscription_id}"
+        Resque.logger.debug "l_item['subscription_id'] == subscription_id: #{l_item["subscription_id"].to_s == subscription_id}"
         if l_item["subscription_id"].to_s == subscription_id
           Resque.logger.info "updating l_item with new: #{my_new_product.title} data"
-          # l_item['shopify_product_id'] = old_product.shopify_id
-          # l_item['shopify_variant_id'] = my_old_variant.variant_id
-          # l_item['sku'] = my_old_variant.sku
-          # l_item['product_title'] = my_new_product.title
-          # l_item['title'] = my_new_product.title
-          # l_item['product_id'] = my_new_product.shopify_id
-          # l_item['variant_id'] = my_old_variant.variant_id
           l_item['properties'].each do |prop|
             prop['value'] = my_new_product.title if (prop['name'] == "product_collection")
             prop['value'] = my_new_product.shopify_id if (prop['name'] == "product_id")
