@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180806195812) do
+ActiveRecord::Schema.define(version: 20180815221707) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -179,6 +179,58 @@ ActiveRecord::Schema.define(version: 20180806195812) do
     t.index ["shopify_customer_id"], name: "index_customers_on_shopify_customer_id"
   end
 
+  create_table "ellie_collects", force: :cascade do |t|
+    t.bigint "collect_id"
+    t.bigint "collection_id"
+    t.bigint "product_id"
+    t.boolean "featured", default: false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.bigint "position"
+    t.string "sort_value"
+  end
+
+  create_table "ellie_custom_collections", force: :cascade do |t|
+    t.bigint "collection_id"
+    t.string "handle"
+    t.string "title"
+    t.datetime "updated_at"
+    t.text "body_html"
+    t.datetime "published_at"
+    t.string "sort_order"
+    t.string "template_suffix"
+    t.string "published_scope"
+  end
+
+  create_table "ellie_variants", force: :cascade do |t|
+    t.bigint "variant_id"
+    t.string "title"
+    t.decimal "price", precision: 10, scale: 2
+    t.bigint "sku"
+    t.integer "position"
+    t.string "inventory_policy"
+    t.decimal "compare_at_price", precision: 10, scale: 2
+    t.bigint "product_id"
+    t.string "fulfillment_service"
+    t.string "inventory_management"
+    t.string "option1"
+    t.string "option2"
+    t.string "option3"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.boolean "taxable"
+    t.string "barcode"
+    t.decimal "weight", precision: 10, scale: 2
+    t.string "weight_unit"
+    t.integer "inventory_quantity"
+    t.bigint "image_id"
+    t.integer "grams"
+    t.bigint "inventory_item_id"
+    t.string "tax_code"
+    t.integer "old_inventory_quantity"
+    t.boolean "requires_shipping"
+  end
+
   create_table "matching_products", force: :cascade do |t|
     t.string "new_product_title"
     t.string "incoming_product_id"
@@ -304,6 +356,30 @@ ActiveRecord::Schema.define(version: 20180806195812) do
     t.string "vendor"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "shopify_customers", force: :cascade do |t|
+    t.boolean "accepts_marketing"
+    t.jsonb "addresses"
+    t.datetime "created_at"
+    t.jsonb "default_address"
+    t.string "email"
+    t.string "first_name"
+    t.string "customer_id"
+    t.string "last_name"
+    t.string "last_order_id"
+    t.string "last_order_name"
+    t.jsonb "metafield"
+    t.string "multipass_identifier"
+    t.string "note"
+    t.integer "orders_count"
+    t.string "phone"
+    t.string "state"
+    t.string "tags"
+    t.boolean "tax_exempt"
+    t.string "total_spent"
+    t.datetime "updated_at"
+    t.boolean "verified_email"
   end
 
   create_table "skip_reasons", force: :cascade do |t|

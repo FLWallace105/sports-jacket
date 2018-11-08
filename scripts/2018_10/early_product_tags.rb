@@ -35,10 +35,17 @@ ProductTag.create_with(early_tag).find_or_create_by(product_id: main_5_autorenew
 
 
 # alt 1 Lounge Life
+<<<<<<< HEAD
 alt1_3 = 1918047453242
 alt1_5 = 1918045159482
 alt1_3_autorenew = 1924849664058
 alt1_5_autorenew = 1930396663866
+=======
+alt1_3 = 1452467978291
+alt1_5 = 1452468076595
+alt1_3_autorenew = 1452511920179
+alt1_5_autorenew = 1452512378931
+>>>>>>> prepaid_switch_skip
 
 ProductTag.create_with(early_tag).find_or_create_by(product_id: alt1_3, tag: 'current')
 ProductTag.create_with(early_tag).find_or_create_by(product_id: alt1_5, tag: 'current')
@@ -47,10 +54,17 @@ ProductTag.create_with(early_tag).find_or_create_by(product_id: alt1_5_autorenew
 
 
 # alt 2 Street Dreams
+<<<<<<< HEAD
 alt2_3 = 1918042636346
 alt2_5 = 1918039687226
 alt_2_3_autorenew = 1924806180922
 alt_2_5_autorenew = 1924801101882
+=======
+alt2_3 = 1452468731955
+alt2_5 = 1452468797491
+alt_2_3_autorenew = 1452512935987
+alt_2_5_autorenew = 1452513165363
+>>>>>>> prepaid_switch_skip
 
 ProductTag.create_with(early_tag).find_or_create_by(product_id: alt2_3, tag: 'current')
 ProductTag.create_with(early_tag).find_or_create_by(product_id: alt2_5, tag: 'current')

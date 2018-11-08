@@ -2,22 +2,17 @@ require_relative 'config/environment'
 require_relative '../lib/recharge_active_record'
 require_relative '../lib/logging'
 
-
-
 class EllieListener < Sinatra::Base
   register Sinatra::ActiveRecordExtension
   include Logging
-
   PAGE_LIMIT = 250
 
   register Sinatra::CrossOrigin
-
   configure do
     enable :logging
     set :server, :puma
     set :database, ENV['DATABASE_URL']
-    #set :protection, :except => [:json_csrf]
-    enable :cross_origin
+    set :protection, :except => [:json_csrf]
     mime_type :application_javascript, 'application/javascript'
     mime_type :application_json, 'application/json'
 
@@ -149,6 +144,7 @@ class EllieListener < Sinatra::Base
       return [400, @default_headers, JSON.generate(error: 'shopify_id required')]
     end
     customer_id = Customer.find_by!(shopify_customer_id: shopify_id).customer_id
+    puts "customer_id: #{customer_id}"
     time = Time.zone.parse params[:time] rescue Time.zone.now
     data = Subscription
       .current_products(time: time, theme_id: params[:theme_id])
@@ -157,10 +153,10 @@ class EllieListener < Sinatra::Base
         customer_id: customer_id,
       )
       .order(:next_charge_scheduled_at)
-    output = data.map{|sub| transform_subscriptions(sub, sub.orders)}
+      puts "data = #{data.inspect}"
+      output = data.map{|sub| transform_subscriptions(sub, sub.orders)}
     [200, @default_headers, output.to_json]
   end
-
 
   get '/subscription/:subscription_id/sizes' do |subscription_id|
     sub = Subscription.find subscription_id
@@ -210,11 +206,24 @@ class EllieListener < Sinatra::Base
       #Resque.logger.info(sub.inspect)
       sub.sizes = sizes
       sub.save!
+      if sub.prepaid?
+        # update orders locally
+        queued_orders = Order.where("line_items @> ? AND status = ? AND is_prepaid = ?", [{subscription_id: subscription_id.to_i}].to_json, "QUEUED", 1)
+        logger.info queued_orders.inspect
+        raise "Error updating sizes. Please try again later." unless queued_orders.any?
 
-
-      queued = Resque.enqueue_to(:change_sizes, 'ChangeSizes', subscription_id, sizes)
-      raise 'Error updating sizes. Please try again later.' unless queued
-      #line_items.each(&:save!)
+        queued_orders.each do |my_order|
+          my_order.sizes_change(sizes, subscription_id)
+          my_order.save!
+        end
+        # prepaid background worker
+        queuedd = Resque.enqueue_to(:change_prepaid_sizes, 'ChangePrepaidSizes', subscription_id, sizes)
+        raise "Error updating prepaid sizes. Please try again later." unless queuedd
+      else
+        queued = Resque.enqueue_to(:change_sizes, 'ChangeSizes', subscription_id, sizes)
+        raise "Error updating sizes. Please try again later." unless queued
+        #line_items.each(&:save!)
+      end
     rescue Exception => e
       logger.error e.inspect
       return [500, @default_headers, {error: e}.to_json]
@@ -241,7 +250,7 @@ class EllieListener < Sinatra::Base
     output = {subscription: subscription}
     [200, @default_headers, output.to_json]
   end
-
+  # /subscription/:subscription_id/skip is old code
   post '/subscription/:subscription_id/skip' do |subscription_id|
     sub = Subscription.find subscription_id
     return [404, @default_headers, {error: 'subscription not found'}.to_json] if sub.nil?
@@ -274,64 +283,120 @@ class EllieListener < Sinatra::Base
     puts 'Received stuff'
     puts params.inspect
     puts '----------'
-    myjson = params
-
     puts "recharge_change_header = #{@recharge_change_header}"
-
-    #myjson = JSON.parse(request.body.read)
+    myjson = params
     myjson['recharge_change_header'] = @recharge_change_header
-    puts myjson.inspect
     my_action = myjson['action']
+
     if my_action == 'switch_product'
-      #Add code to immediately update subscription switch here
+      now = Time.zone.now
       puts "Updating customer record immediately!"
       my_real_product_id = myjson['real_alt_product_id']
       local_sub_id = myjson['subscription_id']
       my_new_product = AlternateProduct.find_by_product_id(my_real_product_id)
-      puts "my_new_product = #{my_new_product.inspect}"
       local_sub = Subscription.find_by_subscription_id(local_sub_id)
+      puts "my_new_product = #{my_new_product.inspect}"
       puts "local_sub = #{local_sub.inspect}"
-      local_sub.shopify_product_id = my_new_product.product_id
-      local_sub.shopify_variant_id = my_new_product.variant_id
-      local_sub.sku = my_new_product.sku
-      local_sub.product_title = my_new_product.product_title
 
-      #add saving for product_collection in these lines so that saves as well.
-      #product_collection = my_new_product.product_collection
-      my_properties = local_sub.raw_line_item_properties
-      my_properties.map do |mystuff|
+      if local_sub.prepaid_switchable?
+        sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{local_sub_id}}]'
+                    AND status = 'QUEUED' AND scheduled_at > '#{now.strftime('%F %T')}'
+                    AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}'
+                    AND is_prepaid = 1;"
+        my_orders = Order.find_by_sql(sql_query)
+        my_orders.each do |temp_order|
+          @updated = false
+          temp_order.line_items.each do |my_hash|
+            puts my_hash["title"]
+            puts "my_hash['subscription_id'] value and class = #{my_hash['subscription_id']}, #{my_hash['subscription_id'].class}"
+            puts "local_sub_id value and class = #{local_sub_id}, #{local_sub_id.class}"
+            puts "do they match? #{my_hash["subscription_id"] == local_sub_id.to_i}"
+
+            if my_hash["subscription_id"] == local_sub_id.to_i
+              puts "FOUND MATCHING Line Item based on sub id: #{local_sub_id}"
+              my_hash['properties'].each do |prop|
+                if prop['name'] == "product_collection"
+                  prop['value'] = my_new_product.product_title
+                end
+                if prop['name'] == "product_id"
+                  prop['value'] = my_new_product.product_id
+                end
+              end
+              puts "updated line item:"
+              puts temp_order.line_items.inspect
+              @updated = true
+            end
+          end
+          if @updated == true
+            temp_order.save!
+            Resque.enqueue_to(:switch_product, 'SubscriptionSwitchPrepaid', myjson)
+            return [200, @default_headers, {message: "Prepaid subscription successfully updated"}.to_json]
+          else
+            return [500, @default_headers, {message: "error within orders, see logs"}.to_json]
+          end
+        end
+
+
+      elsif local_sub.switchable? && !local_sub.prepaid?
+        local_sub.shopify_product_id = my_new_product.product_id
+        local_sub.shopify_variant_id = my_new_product.variant_id
+        local_sub.sku = my_new_product.sku
+        local_sub.product_title = my_new_product.product_title
+
+        #add saving for product_collection in these lines so that saves as well.
+        #product_collection = my_new_product.product_collection
+        my_properties = local_sub.raw_line_item_properties
+        my_properties.map do |mystuff|
         #puts "#{key}, #{value}"
         if mystuff['name'] == 'product_collection'
             mystuff['value'] = my_new_product.product_collection
             
           end
+        end
+        local_sub.raw_line_item_properties = my_properties
+
+
+
+        local_sub.save!
+        Resque.enqueue_to(:switch_product, 'SubscriptionSwitch', myjson)
+      else
+        return [400, @default_headers, {message: 'not switchable'}.to_json]
       end
-      local_sub.raw_line_item_properties = my_properties
-      local_sub.save!
-
-
-      Resque.enqueue_to(:switch_product, 'SubscriptionSwitch', myjson)
-    else
-      puts "Can't switch product, action must be switch product not #{my_action}"
     end
   end
 
   post '/subscription_skip' do
-    #json = JSON.parse request.body
     puts "Received skip request"
     puts params.inspect
     params['recharge_change_header'] = @recharge_change_header
     my_action = params['action']
     my_now = Date.current.day
     puts "Day of the month is #{my_now}"
-    if Time.zone.now.day < 50
+    if my_now < 5
       if my_action == "skip_month"
         #Add code to immediately skip the sub in DB only here
         local_sub_id = params['subscription_id']
         temp_subscription = Subscription.find_by_subscription_id(local_sub_id)
-        #code here for checking if subscription is skippable
-        if temp_subscription.skippable?
+        if temp_subscription.prepaid_skippable?
+          my_next_charge = temp_subscription.try(:next_charge_scheduled_at).try('+', 1.month)
+          temp_subscription.next_charge_scheduled_at = my_next_charge
+          puts "temp_subscription w/ new charge date = #{temp_subscription.inspect}"
+          sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{local_sub_id}}]' AND status = 'QUEUED';"
+          my_queued_orders = Order.find_by_sql(sql_query)
 
+          my_queued_orders.each do |order|
+            my_time = order.scheduled_at
+            puts "was scheduled_at: #{my_time}"
+            order.scheduled_at = my_time + 1.month
+            puts "now scheduled for: #{order.scheduled_at}"
+            puts order.inspect
+            puts "============================================="
+            order.save
+          end
+          temp_subscription.save!
+          Resque.enqueue_to(:skip_product_prepaid, 'SubscriptionSkipPrepaid', params)
+
+        elsif temp_subscription.skippable?
           puts "temp_subscription = #{temp_subscription.inspect}"
           local_date = temp_subscription.next_charge_scheduled_at
           my_next_charge = temp_subscription.try(:next_charge_scheduled_at).try('+', 1.month)
@@ -352,6 +417,7 @@ class EllieListener < Sinatra::Base
           end
         else
           puts "Subscription #{temp_subscription.inspect} is not skippable!"
+          return [403, @default_headers, {error: "subscription: #{temp_subscription.subscription_id} is not skippable!"}.to_json]
         end
       else
         puts "Cannot skip this product, action must be skip_month not #{my_action}"
@@ -393,28 +459,68 @@ class EllieListener < Sinatra::Base
   end
 
   put '/customer/:customer_id' do
-    puts "Recieved Stuff"
-    puts params
-    my_json = params
-    my_tag = params['tags']
-    if my_tag.include?("terms_and_conditions_agreed")
-      Resque.enqueue_to(:update_customer_tag, 'CustomerTagUpdate', my_json)
-      [200, {message: "Customer Tag successfully updated"}.to_json]
+      puts "Recieved Stuff"
+      puts params
+      my_json = params
+      my_tag = params['tags']
+      if my_tag.include?("terms_and_conditions_agreed")
+        Resque.enqueue_to(:update_customer_tag, 'CustomerTagUpdate', my_json)
+        [200, {message: "Customer Tag successfully updated"}.to_json]
+      else
+        puts "Can't update customer tag, customertag must be terms_and_conditions_agreed not #{my_tag}"
+      end
+  end
+
+  put '/subscription/:subscription_id/upgrade' do |subscription_id|
+    puts 'Received stuff'
+    logger.debug params.inspect
+    myjson = params
+    puts '----------'
+    local_sub = Subscription.find(subscription_id)
+      return [404, @default_headers, {error: 'subscription not found'}.to_json] if local_sub.nil?
+      old_prod = Product.find_by shopify_id: myjson['product_id']
+      return [403, @default_headers,
+        { error: "5 Item products cannot be upgraded. received product id: #{myjson['product_id']}"}.to_json] if old_prod.title.include?("5 Item")
+    local_tags = old_prod.tags.split(",")
+    local_tags.each do |x|
+      if x.include? "#{Time.now.strftime('%m%y')}_"
+        @match_tag = x
+        @match_tag[-1] = '5'
+        break
+      end
+    end
+
+    new_product_data = Product.find_by_sql("SELECT * from products WHERE tags LIKE '%#{@match_tag}%';").first
+    my_action = myjson['action']
+    myjson['new_product_id'] = new_product_data.shopify_id
+    myjson['recharge_change_header'] = @recharge_change_header
+
+    if my_action == "upgrade_subscription"
+      #Add code to immediately update subscription upgrade here
+      puts "Updating customer record immediately!"
+      puts "local_sub = #{local_sub.inspect}"
+
+      my_variant = EllieVariant.find_by product_id: new_product_data.shopify_id
+      local_sub.shopify_product_id = new_product_data.shopify_id
+      local_sub.shopify_variant_id = my_variant.variant_id
+      local_sub.sku = my_variant.sku
+      local_sub.product_title = new_product_data.title
+      local_sub.price = my_variant.price
+      my_line_items = local_sub.raw_line_item_properties
+
+      my_line_items.map do |mystuff|
+          if mystuff['name'] == 'product_collection'
+            mystuff['value'] = new_product_data.title
+          end
+      end
+
+      logger.info "updated local sub data => #{local_sub.inspect}"
+      local_sub.save!
+      Resque.enqueue_to(:upgrade_sub, 'SubscriptionUpgrade', myjson)
     else
-      puts "Can't update customer tag, customertag must be terms_and_conditions_agreed not #{my_tag}"
+      puts "Can't upgrade subscription, action must be 'upgrade_subscription' not #{my_action}"
     end
   end
-
-
-
-
-  options "*" do
-    response.headers["Allow"] = "GET, POST, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, Accept, X-User-Email, X-Auth-Token"
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    200
-  end
-
 
   error ActiveRecord::RecordNotFound do
     details = env['sinatra.error'].message
@@ -433,18 +539,36 @@ class EllieListener < Sinatra::Base
 
   def transform_subscriptions(sub, orders)
     logger.debug "subscription: #{sub.inspect}"
-    {
+    if sub.prepaid?
+      skip_value = sub.prepaid_skippable?
+      switch_value = sub.prepaid_switchable?
+      # reutrn false if no queued orders scheduled in current month
+      if sub.get_order_props
+        res = sub.get_order_props
+        puts "=====> VALUES FROM GET_ORDER PROPS IN TRANFORM_SUBS: TITLE=#{res[:my_title]} SHIP DATE: #{res[:ship_date]}"
+        title_value = res[:my_title]
+        shipping_date = res[:ship_date].strftime('%F')
+      else
+        title_value = sub.current_order_data[:my_title]
+        shipping_date = sub.current_order_data[:ship_date].strftime('%F')
+      end
+    else
+      title_value = sub.product_title
+      skip_value = sub.skippable?
+      switch_value = sub.switchable?
+    end
+    result = {
       shopify_product_id: sub.shopify_product_id.to_i,
       subscription_id: sub.subscription_id.to_i,
-      product_title: sub.product_title,
+      product_title: title_value,
       next_charge: sub.next_charge_scheduled_at.try{|time| time.strftime('%Y-%m-%d')},
       charge_date: sub.next_charge_scheduled_at.try{|time| time.strftime('%Y-%m-%d')},
       sizes: sub.sizes,
       prepaid: sub.prepaid?,
-      prepaid_shipping_at: sub.shipping_at.try{|time| time.strftime('%Y-%m-%d')},
-      skippable: sub.skippable?,
-      can_choose_alt_product: sub.switchable?
+      skippable: skip_value,
+      can_choose_alt_product: switch_value,
+      next_ship_date: shipping_date,
     }
+    return result
   end
-
 end

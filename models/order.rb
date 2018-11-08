@@ -5,7 +5,7 @@ require_relative 'application_record'
 class Order < ActiveRecord::Base
   include ApplicationRecord
   include Async
-  include RechargeActiveRecordInclude
+  # include RechargeActiveRecordInclude
   # The column 'type' uses a reserved word in active record. Calling this class
   # results in:
   #
@@ -17,7 +17,7 @@ class Order < ActiveRecord::Base
   # column for that information.
   #
   # See: https://stackoverflow.com/questions/17879024/activerecordsubclassnotfound-the-single-table-inheritance-mechanism-failed-to
-  self.inheritance_column = nil
+  # self.inheritance_column = nil
   self.primary_key = :order_id
 
   has_one :line_items_fixed, class_name: 'OrderLineItemsFixed'
@@ -194,6 +194,27 @@ class Order < ActiveRecord::Base
 
   def subscription_id
     line_items.subscription_id
+  end
+
+  def sizes(sub_id)
+    line_items.each do |item|
+      if item["subscription_id"].to_s == sub_id
+      return item["properties"].select{|p| SubLineItem::SIZE_PROPERTIES.include? p['name'] }
+      .map{|p| [p['name'], p['value']]}
+      .to_h
+      end
+    end
+  end
+
+  def sizes_change(new_sizes, sub_id)
+    line_items.each do |item|
+      if item["subscription_id"].to_s == sub_id
+        prop_hash = item["properties"].map{|prop| [prop['name'], prop['value']]}.to_h
+        merged_hash = prop_hash.merge new_sizes
+        puts "merged_hash = #{merged_hash}"
+        item["properties"] = merged_hash.map{|k, v| {'name' => k, 'value' => v}}
+      end
+    end
   end
 
 end
