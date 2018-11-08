@@ -1,7 +1,6 @@
 require_relative 'config/environment'
 require_relative '../lib/recharge_active_record'
 require_relative '../lib/logging'
-# require 'pry'
 
 class EllieListener < Sinatra::Base
   register Sinatra::ActiveRecordExtension
@@ -9,7 +8,6 @@ class EllieListener < Sinatra::Base
   PAGE_LIMIT = 250
 
   register Sinatra::CrossOrigin
-  # binding.pry
   configure do
     enable :logging
     set :server, :puma

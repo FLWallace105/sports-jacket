@@ -19,7 +19,6 @@ class Subscription < ActiveRecord::Base
   # * :time - a valid datetime string / object
   # * :theme_id - the theme the product tag is associated with
   def self.current_products(options = {})
-    # where(shopify_product_id: ProductTag.active(options).where(tag: ['current', 'prepaid']).pluck(:product_id))
     where(shopify_product_id: ProductTag.active(options).where("tag = ? or tag = ?", 'current', 'prepaid').pluck(:product_id))
   end
 

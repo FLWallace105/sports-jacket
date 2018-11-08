@@ -9,3 +9,4 @@ puma.state
 elm-stuff
 *.csv
 *.xlsx
+.rvmrc
