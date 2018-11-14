@@ -75,6 +75,27 @@ task :test_subscription_pull_full do |t|
   DownloadRecharge::GetRechargeInfo.new.get_full_subscriptions
 end
 
+desc 'do new FULL order pull scheduled from yesterday to in the future'
+task :new_order_pull_full do |t|
+  DownloadRecharge::GetRechargeInfo.new.get_full_orders
+end
+
+
+desc 'do new partial order pull from everything updated twenty five minutes ago'
+task :new_order_pull_partial do |t|
+  DownloadRecharge::GetRechargeInfo.new.get_partial_orders
+end
+
+desc 'do new FULL customer pull of all customers'
+task :new_customer_pull_full do |t|
+  DownloadRecharge::GetRechargeInfo.new.get_full_customers
+end
+
+desc 'do PARTIAL customer pull of all customers modified last twenty minutes'
+task :new_customer_pull_partial do |t|
+  DownloadRecharge::GetRechargeInfo.new.get_partial_customers
+end
+
 
 desc 'run all tests'
 task :test do

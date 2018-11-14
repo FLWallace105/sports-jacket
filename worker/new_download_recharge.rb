@@ -1,6 +1,10 @@
 #new_download_recharge.rb
 require_relative 'background_subs'
 require_relative 'background_full_subs'
+require_relative 'background_full_orders'
+require_relative 'background_partial_orders'
+require_relative 'background_full_customers'
+require_relative 'background_partial_customers'
 
 
 
@@ -29,6 +33,68 @@ module DownloadRecharge
             params = {"uri" => @uri, "headers" => @my_header}
             Resque.enqueue(SubsFullBackground, params)
 
+          end
+
+          def get_full_orders
+            params = {"uri" => @uri, "headers" => @my_header}
+            Resque.enqueue(OrdersFullBackground, params)
+
+
+          end
+
+          def get_partial_orders
+            params = {"uri" => @uri, "headers" => @my_header}
+            Resque.enqueue(OrdersPartialBackground, params)
+
+          end
+
+
+          def get_full_customers
+            params = {"uri" => @uri, "headers" => @my_header}
+            Resque.enqueue(CustomersFullBackground, params)
+          end
+
+          def get_partial_customers
+            params = {"uri" => @uri, "headers" => @my_header}
+            Resque.enqueue(CustomersPartialBackground, params)
+
+          end
+
+          class CustomersPartialBackground
+            extend PartialBackgroundCustomers
+            @queue = "customers_partial_background"
+            def self.perform(params)
+              get_partial_customers(params)
+            end
+          end
+
+          class CustomersFullBackground
+            extend FullBackgroundCustomers
+            @queue = "customers_full_background"
+            def self.perform(params)
+              get_background_full_customers(params)
+            end 
+
+
+          end
+
+          class OrdersPartialBackground
+            extend PartialBackgroundOrders
+            @queue = "orders_partial_background"
+            def self.perform(params)
+              get_background_partial_orders(params)
+
+            end 
+
+          end
+
+          class OrdersFullBackground
+            extend FullBackgroundOrders
+            @queue = "orders_full_background"
+            def self.perform(params)
+              get_full_background_orders(params)
+
+            end 
           end
 
           class SubsBackground
