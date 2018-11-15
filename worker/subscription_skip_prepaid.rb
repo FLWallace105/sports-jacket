@@ -80,6 +80,7 @@ class SubscriptionSkipPrepaid
         update_success = @my_update_order.success?
         Resque.logger.debug(@my_update_order.inspect)
       end
+      apply_skip_tag(shopify_customer_id) if update_success
 
       #Email results to customer
       new_date = {"date" => next_charge_str}

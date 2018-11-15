@@ -1,6 +1,10 @@
+require 'shopify_api'
+require 'dotenv'
+Dotenv.load
 require_relative '../lib/logging'
 
 module ResqueHelper
+
   def provide_alt_products(myprod_id, incoming_product_id, subscription_id)
       #Fix this by doing: check current product_id, determine if three-pack true/false
       #use new_product_id and three-pack true/false to get outgoing product_id
@@ -277,6 +281,48 @@ module ResqueHelper
       res.push(new_line_item)
     end
     return res
+  end
+
+  # Internal: appends "skipped" tag to shopify customer via api request
+  #
+  # cust_id - shopify_customer_id of customer being tagged
+  def apply_skip_tag(shopify_customer_id)
+    Resque.logger = Logger.new("#{Dir.getwd}/logs/shopify_skip_tagging.log")
+
+    apikey = ENV['SHOPIFY_API_KEY']
+    shopname = ENV['SHOPIFY_SHOP_NAME']
+    password = ENV['SHOPIFY_PASSWORD']
+    ShopifyAPI::Base.site = "https://#{apikey}:#{password}@#{shopname}.myshopify.com/admin"
+
+    #{"tags"=>"['terms_and_conditions_agreed', etc..]", "captures"=>[], "customer_id"=>"14512370"}
+    cust_id = shopify_customer_id
+    puts "We are working on customer #{cust_id}"
+    Resque.logger.info("We are working on customer #{cust_id}")
+    shop = ShopifyAPI::Shop.current
+    Resque.logger.info("shop = #{shop.inspect}")
+
+    mycustomer = ShopifyAPI::Customer.find(cust_id)
+    # Resque.logger.info("Here is the shopify customer #{mycustomer.attributes.inspect}")
+    puts mycustomer.tags
+    Resque.logger.info("here are the shopify customer's tags #{mycustomer.tags.inspect}")
+    mytags = Array.new
+    mytags = mycustomer.tags.split(",")
+    mytags.map! {|x| x.strip}
+    puts mytags
+    Resque.logger.debug("my tags array: #{mytags.inspect}")
+
+    if mytags.include? "skipped"
+        puts "nothing to do, customer already has skipped tag"
+        Resque.logger.debug("nothing to do, customer already has skipped tag")
+    else
+        puts "Adding skip tags"
+        mytags << "skipped"
+        newtags = mytags.join(",")
+        mycustomer.tags = newtags
+        mycustomer.save
+        puts "Customer tags are now #{mycustomer.tags}"
+        Resque.logger.debug("Customer updated tags are now #{mycustomer.tags}")
+    end
   end
 
 end

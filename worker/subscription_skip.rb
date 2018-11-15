@@ -15,6 +15,7 @@ class SubscriptionSkip
     my_customer = Customer.find_by(shopify_customer_id: shopify_customer_id)
     my_customer_id = my_customer.customer_id
 
+
     begin
       my_now = Date.today
       puts my_sub.inspect
@@ -32,9 +33,11 @@ class SubscriptionSkip
       my_update_sub = HTTParty.post("https://api.rechargeapps.com/subscriptions/#{subscription_id}/set_next_charge_date", :headers => recharge_change_header, :body => body, :timeout => 80)
       update_success = my_update_sub.success?
       puts my_update_sub.inspect
+      apply_skip_tag(shopify_customer_id) if update_success
+
       #Email results to customer
       new_date = {"date" => next_charge_str}
-      params = {"subscription_id" => subscription_id, "action" => "skipping", "details" => new_date   }
+      params = {"subscription_id" => subscription_id, "action" => "skipping", "details" => new_date }
       puts "params we are sending to SendEmailToCustomer = #{params.inspect}"
       Resque.enqueue(SendEmailToCustomer, params)
 

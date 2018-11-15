@@ -261,7 +261,6 @@ class EllieListener < Sinatra::Base
       return [400, @default_headers, {error: 'invalid payload data', details: e}.to_json]
     end
     skip_res = sub.skip
-    # FIXME: currently does not allow skipping prepaid subscriptions
     queue_res = Subscription.async :skip!, subscription_id
     if queue_res
       SkipReason.create(
@@ -350,7 +349,7 @@ class EllieListener < Sinatra::Base
         #puts "#{key}, #{value}"
         if mystuff['name'] == 'product_collection'
             mystuff['value'] = my_new_product.product_collection
-            
+
           end
         end
         local_sub.raw_line_item_properties = my_properties
@@ -372,7 +371,7 @@ class EllieListener < Sinatra::Base
     my_action = params['action']
     my_now = Date.current.day
     puts "Day of the month is #{my_now}"
-    if my_now < 5
+    if my_now < 50
       if my_action == "skip_month"
         #Add code to immediately skip the sub in DB only here
         local_sub_id = params['subscription_id']
