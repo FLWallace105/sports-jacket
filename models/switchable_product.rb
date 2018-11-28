@@ -1,3 +1,3 @@
-class SwitchableProduct < ActiveRecord::Base
+class SkippableProduct < ActiveRecord::Base
 
 end

@@ -407,6 +407,8 @@ module EllieHelper
             email = mycust['email']
             created_at = mycust['created_at']
             updated_at = mycust['updated_at']
+
+
             first_name = mycust['first_name']
             last_name = mycust['last_name']
             billing_address1 = mycust['billing_address1']
@@ -436,7 +438,7 @@ module EllieHelper
       def background_count_yesterday_shopify_customers(my_yesterday, shopify_header)
         updated_at_min = my_yesterday.strftime("%Y-%m-%d")
         ShopifyAPI::Base.site = shopify_header
-        my_count = ShopifyAPI::Customer.count
+        my_count = ShopifyAPI::Customer.count({updated_at_min: updated_at_min})
         logger.debug "EllieHelper#background_count_yesterday_shopify_customers count: #{my_count}"
         return my_count
       end
@@ -459,7 +461,7 @@ module EllieHelper
         my_conn.prepare('statement1', "#{my_insert}")
 
         #Delete all customers from day before yesterday
-        my_temp_update = "update shopify_customers set accepts_marketing = $1, addresses = $2,  created_at = $3, default_address = $4, email = $5, first_name = $6, customer_id = $7, last_name = $8, last_order_id = $9, last_order_name = $10, metafield = $11, multipass_identifier = $12, note = $13, orders_count = $14, phone = $15, state = $16, tags = $17, tax_exempt = $18, total_spent = $19, updated_at = $20, verified_email = $21  where customer_id = $7"
+        my_temp_update = "update shopify_customers set accepts_marketing = $1, addresses = $2, created_at = $3, default_address = $4, email = $5, first_name = $6, customer_id = $7, last_name = $8, last_order_id = $9, last_order_name = $10, metafield = $11, multipass_identifier = $12, note = $13, orders_count = $14, phone = $15, state = $16, tags = $17, tax_exempt = $18, total_spent = $19, updated_at = $20, verified_email = $21  where customer_id = $7"
         my_conn.prepare('statement2', "#{my_temp_update}")
 
 
@@ -469,19 +471,19 @@ module EllieHelper
         1.upto(num_pages) do |page|
           customers = HTTParty.get(shopify_header + "/customers.json?limit=250&page=#{page}")
           my_customers = customers.parsed_response['customers']
-          #logger.debug "#{'#' * 5} CUSTOMERS #{'#' * 40}\n#{my_customers.pretty_inspect}"
+          logger.debug "#{'#' * 5} CUSTOMERS #{'#' * 40}\n#{my_customers.pretty_inspect}"
           my_customers.each do |mycust|
             customer_id = mycust['id']
             accepts_marketing = mycust['accepts_marketing']
-            addresses = mycust['addresses']
+            addresses = mycust['addresses'].to_json
             created_at = mycust['created_at']
-            default_address = mycust['default_address']
+            default_address = mycust['default_address'].to_json
             email = mycust['email']
             first_name = mycust['first_name']
             last_name = mycust['last_name']
             last_order_id = mycust['last_order_id']
             last_order_name = mycust['last_order_name']
-            metafield = mycust['metafield']
+            metafield = mycust['metafield'].to_json
             multipass_identifier = mycust['multipass_identifier']
             note = mycust['note']
             orders_count = mycust['orders_count']
@@ -505,9 +507,9 @@ module EllieHelper
             else
               logger.info "Need to insert a new record"
               logger.info "inserting #{customer_id}, #{first_name} #{last_name}"
-              ins_result = my_conn.exec_prepared('statement1', [accepts_marketing, addresses.to_json, created_at, default_address.to_json, email, first_name, customer_id, last_name, last_order_id, last_order_name, metafield.to_json, multipass_identifier, note, orders_count, phone, state, tags, tax_exempt, total_spent, updated_at, verified_email])
+              ins_result = my_conn.exec_prepared('statement1', [accepts_marketing, addresses, created_at, default_address, email, first_name, customer_id, last_name, last_order_id, last_order_name, metafield, multipass_identifier, note, orders_count, phone, state, tags, tax_exempt, total_spent, updated_at, verified_email])
               logger.debug ins_result.inspect
-              #sleep 4
+              sleep 4
             end
 
           end
