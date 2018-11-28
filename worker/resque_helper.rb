@@ -11,7 +11,7 @@ module ResqueHelper
       #use outgoing product_id to create the product info: sku, variant_id, product_id, product title
       #and return that hash value to the calling method.
 
-      my_three_pak = SkippableProduct.find_by_product_id(myprod_id)
+      my_three_pak = SwitchableProduct.find_by_product_id(myprod_id)
       puts "my_three_pak = #{my_three_pak.threepk}"
       puts "my incoming_product_id = #{incoming_product_id}"
       my_outgoing_product = MatchingProduct.where("incoming_product_id = ? and threepk = ?", incoming_product_id,  my_three_pak.threepk).first

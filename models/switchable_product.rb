@@ -1,3 +1,3 @@
-class SkippableProduct < ActiveRecord::Base
-
+class SwitchableProduct < ActiveRecord::Base
+    self.table_name = "switchable_products"
 end
