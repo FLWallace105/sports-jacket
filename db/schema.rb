@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180815221707) do
+ActiveRecord::Schema.define(version: 20181128214806) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -22,73 +22,6 @@ ActiveRecord::Schema.define(version: 20180815221707) do
     t.string "sku"
     t.string "product_collection"
     t.index ["product_id"], name: "index_alternate_products_on_product_id"
-  end
-
-  create_table "bad_monthly_box", force: :cascade do |t|
-    t.string "subscription_id"
-    t.boolean "updated", default: false
-    t.datetime "updated_at"
-  end
-
-  create_table "bad_prices", force: :cascade do |t|
-    t.string "bad_product_title"
-    t.string "bad_shopify_product_id"
-    t.string "bad_price"
-    t.string "good_product_title"
-    t.string "good_shopify_product_id"
-    t.string "good_shopify_variant_id"
-    t.string "good_sku"
-    t.string "good_product_collection"
-  end
-
-  create_table "bad_recurring_subs", force: :cascade do |t|
-    t.string "subscription_id"
-    t.string "customer_id"
-    t.datetime "next_charge_scheduled_at"
-    t.decimal "price", precision: 10, scale: 2
-    t.string "status"
-    t.string "product_title"
-    t.string "product_id"
-    t.string "variant_id"
-    t.string "sku"
-    t.jsonb "line_item_properties"
-    t.boolean "updated", default: false
-    t.datetime "updated_at"
-    t.integer "expire_after_specific_number_charges"
-  end
-
-  create_table "bad_subs", id: false, force: :cascade do |t|
-    t.serial "id", null: false
-    t.bigint "customer_id"
-    t.string "first_name", limit: 125
-    t.string "last_name", limit: 125
-    t.string "email", limit: 125
-  end
-
-  create_table "bad_switches", force: :cascade do |t|
-    t.string "subscription_id"
-    t.string "address_id"
-    t.string "customer_id"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "next_charge_scheduled_at"
-    t.datetime "cancelled_at"
-    t.string "product_title"
-    t.decimal "price", precision: 10, scale: 2
-    t.integer "quantity"
-    t.string "status"
-    t.string "shopify_product_id"
-    t.string "shopify_variant_id"
-    t.string "sku"
-    t.string "order_interval_unit"
-    t.integer "order_interval_frequency"
-    t.integer "charge_interval_frequency"
-    t.integer "order_day_of_month"
-    t.integer "order_day_of_week"
-    t.jsonb "raw_line_item_properties"
-    t.datetime "synced_at"
-    t.integer "expire_after_specific_number_charges"
-    t.boolean "is_updated", default: false
   end
 
   create_table "charge_billing_address", force: :cascade do |t|
@@ -207,18 +140,10 @@ ActiveRecord::Schema.define(version: 20180815221707) do
     t.datetime "updated_at", default: -> { "now()" }, null: false
   end
 
-  create_table "correct_prices", force: :cascade do |t|
-    t.string "product_name"
-    t.string "shopify_product_id"
-    t.decimal "good_price", precision: 10, scale: 2
-    t.string "product_collection"
-  end
-
   create_table "current_products", force: :cascade do |t|
     t.string "prod_id_key"
     t.string "prod_id_value"
     t.string "next_month_prod_id"
-    t.boolean "prepaid", default: false
     t.index ["prod_id_key"], name: "index_current_products_on_prod_id_key"
     t.index ["prod_id_value"], name: "index_current_products_on_prod_id_value"
   end
@@ -315,13 +240,6 @@ ActiveRecord::Schema.define(version: 20180815221707) do
     t.index ["incoming_product_id"], name: "index_matching_products_on_incoming_product_id"
   end
 
-  create_table "multi_line_item_products", force: :cascade do |t|
-    t.string "product_id"
-    t.string "product_title"
-    t.string "sku"
-    t.index ["product_id"], name: "index_multi_line_item_products_on_product_id"
-  end
-
   create_table "order_billing_address", force: :cascade do |t|
     t.string "order_id"
     t.string "province"
@@ -416,13 +334,6 @@ ActiveRecord::Schema.define(version: 20180815221707) do
     t.index ["transaction_id"], name: "index_orders_on_transaction_id"
   end
 
-  create_table "pending_people", id: false, force: :cascade do |t|
-    t.serial "id", null: false
-    t.string "first_name", limit: 125
-    t.string "last_name", limit: 125
-    t.string "email", limit: 125
-  end
-
   create_table "product_tags", force: :cascade do |t|
     t.string "product_id", null: false
     t.string "tag", null: false
@@ -499,15 +410,6 @@ ActiveRecord::Schema.define(version: 20180815221707) do
     t.index ["product_id"], name: "index_skippable_products_on_product_id"
   end
 
-  create_table "sku_sizes", force: :cascade do |t|
-    t.string "product_id"
-    t.string "product_item"
-    t.string "item_name"
-    t.string "size"
-    t.string "sku"
-    t.index ["product_id"], name: "index_sku_sizes_on_product_id"
-  end
-
   create_table "sub_line_items", force: :cascade do |t|
     t.string "subscription_id"
     t.string "name"
@@ -577,27 +479,17 @@ ActiveRecord::Schema.define(version: 20180815221707) do
     t.index ["subscription_id"], name: "index_subscriptions_updated_on_subscription_id"
   end
 
+  create_table "switchable_products", force: :cascade do |t|
+    t.string "product_title"
+    t.string "product_id"
+    t.boolean "threepk", default: false
+    t.index ["product_id"], name: "index_switchable_products_on_product_id"
+  end
+
   create_table "update_line_items", force: :cascade do |t|
     t.string "subscription_id"
     t.jsonb "properties"
     t.boolean "updated", default: false
-  end
-
-  create_table "update_prepaid", force: :cascade do |t|
-    t.string "customer_id"
-    t.string "order_id"
-    t.string "title"
-    t.datetime "scheduled_at"
-    t.boolean "is_updated", default: false
-    t.datetime "updated_at"
-    t.text "properties"
-  end
-
-  create_table "update_prepaid_config", force: :cascade do |t|
-    t.string "title"
-    t.string "product_id"
-    t.string "variant_id"
-    t.string "product_collection"
   end
 
   create_table "update_products", force: :cascade do |t|
@@ -605,7 +497,6 @@ ActiveRecord::Schema.define(version: 20180815221707) do
     t.string "product_title"
     t.string "shopify_product_id"
     t.string "shopify_variant_id"
-    t.string "product_collection"
     t.index ["product_title"], name: "index_update_products_on_product_title"
     t.index ["shopify_product_id"], name: "index_update_products_on_shopify_product_id"
     t.index ["shopify_variant_id"], name: "index_update_products_on_shopify_variant_id"
