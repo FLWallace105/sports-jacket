@@ -16,7 +16,7 @@ Resque.logger =
 namespace :auto_config do
   desc 'auto configures skippable table'
   task :skippable do
-    MonthlySetup.new.skippable_config
+    MonthlySetup.new.switchable_config
   end
 
   desc 'auto configures alternate table'

@@ -12,10 +12,10 @@ class MonthlySetup
     @next_mon = Date.today
 
   end
-  # configures skippable_products table --step 1
-  def skippable_config
+  # configures switchable_products table --step 1
+  def switchable_config
     current_array = Product.find_by_sql("SELECT * from products where tags NOT LIKE '%AR%' AND tags LIKE '%#{@next_mon.strftime('%m%y')}_main%';")
-    my_insert = "insert into skippable_products (product_title, product_id, threepk) values ($1, $2, $3)"
+    my_insert = "insert into switchable_products (product_title, product_id, threepk) values ($1, $2, $3)"
     @conn.prepare('statement1', "#{my_insert}")
     current_array.each do |x|
       product_title = x.title
@@ -23,7 +23,7 @@ class MonthlySetup
       threepk = x.title.include?('3 Item')? true : false
       @conn.exec_prepared('statement1', [product_title, product_id, threepk])
     end
-    logger.info "skippable_config done"
+    logger.info "switchable_config done"
     @conn.close
   end
   # configures alternate_products table --step 2

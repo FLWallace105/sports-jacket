@@ -358,6 +358,15 @@ ActiveRecord::Schema.define(version: 20181128214806) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "shopify_customer_tag_fixes", force: :cascade do |t|
+    t.string "customer_id"
+    t.string "email"
+    t.string "first_name"
+    t.string "last_name"
+    t.string "tags"
+    t.boolean "is_processed", default: false
+  end
+
   create_table "shopify_customers", force: :cascade do |t|
     t.boolean "accepts_marketing"
     t.jsonb "addresses"
