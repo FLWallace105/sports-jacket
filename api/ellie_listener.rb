@@ -303,38 +303,38 @@ class EllieListener < Sinatra::Base
                     AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}'
                     AND is_prepaid = 1;"
         my_orders = Order.find_by_sql(sql_query)
-        my_orders.each do |temp_order|
-          @updated = false
-          temp_order.line_items.each do |my_hash|
-            puts my_hash["title"]
-            puts "my_hash['subscription_id'] value and class = #{my_hash['subscription_id']}, #{my_hash['subscription_id'].class}"
-            puts "local_sub_id value and class = #{local_sub_id}, #{local_sub_id.class}"
-            puts "do they match? #{my_hash["subscription_id"] == local_sub_id.to_i}"
+        if my_orders != nil
+          my_orders.each do |temp_order|
+            @updated = false
+            temp_order.line_items.each do |my_hash|
+              puts my_hash["title"]
+              puts "my_hash['subscription_id'] value and class = #{my_hash['subscription_id']}, #{my_hash['subscription_id'].class}"
+              puts "local_sub_id value and class = #{local_sub_id}, #{local_sub_id.class}"
+              puts "do they match? #{my_hash["subscription_id"] == local_sub_id.to_i}"
 
-            if my_hash["subscription_id"] == local_sub_id.to_i
-              puts "FOUND MATCHING Line Item based on sub id: #{local_sub_id}"
-              my_hash['properties'].each do |prop|
-                if prop['name'] == "product_collection"
-                  prop['value'] = my_new_product.product_title
+              if my_hash["subscription_id"] == local_sub_id.to_i
+                puts "FOUND MATCHING Line Item based on sub id: #{local_sub_id}"
+                my_hash['properties'].each do |prop|
+                  if prop['name'] == "product_collection"
+                    prop['value'] = my_new_product.product_title
+                  end
+                  if prop['name'] == "product_id"
+                    prop['value'] = my_new_product.product_id
+                  end
                 end
-                if prop['name'] == "product_id"
-                  prop['value'] = my_new_product.product_id
-                end
+                puts "updated line item:"
+                puts temp_order.line_items.inspect
+                @updated = true
               end
-              puts "updated line item:"
-              puts temp_order.line_items.inspect
-              @updated = true
+            end
+            if @updated == true
+              temp_order.save!
+              Resque.enqueue_to(:switch_product, 'SubscriptionSwitchPrepaid', myjson)
+              return [200, @default_headers, {message: "Prepaid subscription successfully updated"}.to_json]
+            else
+              return [500, @default_headers, {message: "error within orders, see logs"}.to_json]
             end
           end
-          if @updated == true
-            temp_order.save!
-            Resque.enqueue_to(:switch_product, 'SubscriptionSwitchPrepaid', myjson)
-            return [200, @default_headers, {message: "Prepaid subscription successfully updated"}.to_json]
-          else
-            return [500, @default_headers, {message: "error within orders, see logs"}.to_json]
-          end
-        end
-
 
       elsif local_sub.switchable? && !local_sub.prepaid?
         local_sub.shopify_product_id = my_new_product.product_id
@@ -353,8 +353,6 @@ class EllieListener < Sinatra::Base
           end
         end
         local_sub.raw_line_item_properties = my_properties
-
-
 
         local_sub.save!
         Resque.enqueue_to(:switch_product, 'SubscriptionSwitch', myjson)

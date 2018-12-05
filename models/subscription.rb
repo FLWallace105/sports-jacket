@@ -1,6 +1,7 @@
 require_relative '../lib/recharge_active_record'
 require_relative '../lib/async'
 
+
 class Subscription < ActiveRecord::Base
   include ApplicationRecord
   include Async
@@ -20,6 +21,22 @@ class Subscription < ActiveRecord::Base
   # * :theme_id - the theme the product tag is associated with
   def self.current_products(options = {})
     where(shopify_product_id: ProductTag.active(options).where("tag = ? or tag = ?", 'current', 'prepaid').pluck(:product_id))
+  end
+
+  def self.main_product?(sub_id)
+    puts "main_product method started"
+    my_item = SubLineItem.find_by(
+      subscription_id: sub_id,
+      name: 'product_collection'
+    )
+    puts "line_item value found: #{my_item.inspect}"
+    puts "return value based on this db query: #{SwitchableProduct.find_by(product_title: my_item.value)}"
+    if SwitchableProduct.find_by(product_title: my_item.value)
+      return true
+    else
+      puts "returning false, no switchable record found for product_title: #{my_item.value}"
+      return false
+    end
   end
 
   # the options this method takes are:
@@ -491,6 +508,8 @@ class Subscription < ActiveRecord::Base
           switched_this_month = false
         end
       end
+    elsif main_product?(subscription_id)
+      return false
     end
     puts "================Has switched this month = #{switched_this_month}"
     return switched_this_month
@@ -531,6 +550,5 @@ class Subscription < ActiveRecord::Base
     puts "==============Can skip and hasnt switched? = #{can_skip}"
     return can_skip
   end
-
 
 end
