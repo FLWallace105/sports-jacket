@@ -341,7 +341,6 @@ class Subscription < ActiveRecord::Base
   end
 
   def get_order_props
-    next_mon = Time.zone.today.end_of_month >> 1
     mon_end = Time.zone.today.end_of_month
     sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{subscription_id}}]'
                 AND scheduled_at <= '#{mon_end.strftime('%F %T')}'

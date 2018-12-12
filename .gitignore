@@ -10,3 +10,4 @@ elm-stuff
 *.csv
 *.xlsx
 .rvmrc
+/lib/initializers/active_record_init.rb

@@ -1,6 +1,7 @@
 require_relative 'config/environment'
 require_relative '../lib/recharge_active_record'
 require_relative '../lib/logging'
+require 'pry'
 
 class EllieListener < Sinatra::Base
   register Sinatra::ActiveRecordExtension
@@ -18,7 +19,8 @@ class EllieListener < Sinatra::Base
 
     # on webserver startup set the current theme id
     Resque.enqueue_to(:default, 'Rollover', :set_current_theme_id)
-    puts "running configure timezone: #{Time.zone.inspect}"
+    # TODO(Neville lee) commented out. noisy in STDOUT when testing with rspec
+    # puts "running configure timezone: #{Time.zone.inspect}"
   end
 
   def initialize
@@ -335,7 +337,22 @@ class EllieListener < Sinatra::Base
               return [500, @default_headers, {message: "error within orders, see logs"}.to_json]
             end
           end
-
+        else
+          # edge case where all orders success, customer not re-billed yet
+          my_item = SubLineItem.find_by(
+            subscription_id: local_sub_id,
+            name: 'product_collection'
+          )
+          my_properties = local_sub.raw_line_item_properties
+          my_properties.map do |mystuff|
+            if mystuff['name'] == 'product_collection'
+              mystuff['value'] = my_item.value
+            end
+          end
+          local_sub.raw_line_item_properties = my_properties
+          local_sub.save!
+          Resque.enqueue_to(:switch_product, 'SubscriptionSwitch', myjson)
+        end
       elsif local_sub.switchable? && !local_sub.prepaid?
         local_sub.shopify_product_id = my_new_product.product_id
         local_sub.shopify_variant_id = my_new_product.variant_id
@@ -349,7 +366,6 @@ class EllieListener < Sinatra::Base
         #puts "#{key}, #{value}"
         if mystuff['name'] == 'product_collection'
             mystuff['value'] = my_new_product.product_collection
-
           end
         end
         local_sub.raw_line_item_properties = my_properties
@@ -569,4 +585,5 @@ class EllieListener < Sinatra::Base
     }
     return result
   end
+  # binding.pry
 end

@@ -26,6 +26,8 @@ group :development do
   gem 'pry'
   gem 'rack-test'
   gem 'rubocop'
+  # Added by Neville Lee 12/11/18
+  gem 'rspec'
 end
 
 # Added at 2017-12-08 11:42:19 -0800 by ryan:
