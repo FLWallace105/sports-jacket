@@ -351,7 +351,12 @@ class EllieListener < Sinatra::Base
           end
           local_sub.raw_line_item_properties = my_properties
           local_sub.save!
-          Resque.enqueue_to(:switch_product, 'SubscriptionSwitch', myjson)
+          #Nope, this will just over-ride the entire product information which we want to keep
+          #Instead we must just change the product_collection property
+          #Resque.enqueue_to(:switch_product, 'SubscriptionSwitch', myjson)
+
+          Resque.enqueue_to(:switch_collection, 'PrepaidCollectionSwitch', myjson)
+
         end
       elsif local_sub.switchable? && !local_sub.prepaid?
         local_sub.shopify_product_id = my_new_product.product_id
