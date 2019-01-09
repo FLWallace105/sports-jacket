@@ -300,12 +300,15 @@ class EllieListener < Sinatra::Base
       puts "local_sub = #{local_sub.inspect}"
 
       if local_sub.prepaid_switchable?
-        sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{local_sub_id}}]'
-                    AND status = 'QUEUED' AND scheduled_at > '#{now.strftime('%F %T')}'
-                    AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}'
+        sql_query = "SELECT * FROM orders WHERE line_items @>
+                    '[{\"subscription_id\": #{local_sub_id}}]'
+                    AND status = 'QUEUED' AND scheduled_at >
+                    '#{now.strftime('%F %T')}' AND scheduled_at <
+                    '#{now.end_of_month.strftime('%F %T')}'
                     AND is_prepaid = 1;"
         my_orders = Order.find_by_sql(sql_query)
         if my_orders != nil
+
           my_orders.each do |temp_order|
             @updated = false
             temp_order.line_items.each do |my_hash|
@@ -339,23 +342,26 @@ class EllieListener < Sinatra::Base
           end
         else
           # edge case where all orders success, customer not re-billed yet
+          puts "INSIDE EDGE CASE BLOCK"
           my_item = SubLineItem.find_by(
             subscription_id: local_sub_id,
             name: 'product_collection'
           )
-          my_properties = local_sub.raw_line_item_properties
-          my_properties.map do |mystuff|
-            if mystuff['name'] == 'product_collection'
-              mystuff['value'] = my_item.value
-            end
-          end
-          local_sub.raw_line_item_properties = my_properties
-          local_sub.save!
+          puts "my_item(sub line item) now: #{my_item.inspect}"
+          # my_properties = local_sub.raw_line_item_properties
+          # my_properties.map do |mystuff|
+          #   if mystuff['name'] == 'product_collection'
+          #     mystuff['value'] = my_item.value
+          #   end
+          # end
+          # puts
+          # local_sub.raw_line_item_properties = my_properties
+          # local_sub.save!
           #Nope, this will just over-ride the entire product information which we want to keep
           #Instead we must just change the product_collection property
           #Resque.enqueue_to(:switch_product, 'SubscriptionSwitch', myjson)
 
-          Resque.enqueue_to(:switch_collection, 'PrepaidCollectionSwitch', myjson)
+          # Resque.enqueue_to(:switch_collection, 'PrepaidCollectionSwitch', myjson)
 
         end
       elsif local_sub.switchable? && !local_sub.prepaid?

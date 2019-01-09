@@ -15,38 +15,32 @@ class PrepaidCollectionSwitch
     Resque.logger.info("We are working on subscription #{subscription_id}")
 
     #Here is where we do some things that make sure we only push the product_collection changes to
-    #the ReCharge endpoint for the prepaid subscription where there is no queued orders as the card 
+    #the ReCharge endpoint for the prepaid subscription where there is no queued orders as the card
     #has not yet charged
-    #temp_hash = provide_alt_products(product_id, incoming_product_id, subscription_id)
-    #puts temp_hash
-    
-
-
-
-
+    temp_hash = provide_no_queued_info(product_id, incoming_product_id, subscription_id)
+    puts temp_hash
     Resque.logger.info("new product info for subscription #{subscription_id} is #{temp_hash}")
-
     recharge_change_header = params['recharge_change_header']
     puts recharge_change_header
     body = temp_hash.to_json
-
     puts body
 
     #Below for email to customer
-    
-    params = {"subscription_id" => subscription_id, "action" => "switching_product", "details" => temp_hash   }
-
-
-    my_update_sub = HTTParty.put("https://api.rechargeapps.com/subscriptions/#{subscription_id}", :headers => recharge_change_header, :body => body, :timeout => 80)
+    params = { "subscription_id" => subscription_id,
+              "action" => "switching_product",
+              "details" => temp_hash
+    }
+    my_update_sub = HTTParty.put(
+      "https://api.rechargeapps.com/subscriptions/#{subscription_id}",
+      :headers => recharge_change_header, :body => body, :timeout => 80
+    )
     puts my_update_sub.inspect
 
     Resque.logger.info(my_update_sub.inspect)
 
-
     update_success = false
     if my_update_sub.code == 200
       Resque.enqueue(SendEmailToCustomer, params)
-
       #if 200 == 200
       update_success = true
       puts "****** Hooray We have no errors **********"

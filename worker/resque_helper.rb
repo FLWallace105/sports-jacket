@@ -45,7 +45,6 @@ module ResqueHelper
            #only if I did not find the product_collection property in the line items do I need to add it
           puts "We are adding the product collection to the line item properties"
           my_line_items << {"name" => "product_collection", "value" => my_new_product.product_collection}
-
       else
           puts "We have already updated the product_collection value!"
       end
@@ -56,10 +55,53 @@ module ResqueHelper
       return stuff_to_return
 
   end
-  # Internal: returns line_items of orders belonging to the subscription_id argument that
-  #           havent been shipped(status=QUEUED) and are scheduled to ship after today/same month
+
+  def provide_no_queued_info(myprod_id, incoming_product_id, subscription_id)
+      my_three_pak = SwitchableProduct.find_by_product_id(myprod_id)
+      puts "my_three_pak = #{my_three_pak.threepk}"
+      puts "my incoming_product_id = #{incoming_product_id}"
+      my_outgoing_product = MatchingProduct.where("incoming_product_id = ? and threepk = ?",
+                                                  incoming_product_id,
+                                                  my_three_pak.threepk).first
+      puts "got here"
+      puts my_outgoing_product.inspect
+      my_outgoing_product_id = my_outgoing_product.outgoing_product_id
+      puts "my outgoing_product_id = #{my_outgoing_product_id}"
+
+      my_new_product = AlternateProduct.find_by_product_id(my_outgoing_product_id)
+      puts "new product info is #{my_new_product.inspect}"
+      my_sub = Subscription.find_by_subscription_id(subscription_id)
+      puts my_sub.inspect
+      my_line_items = my_sub.raw_line_item_properties
+      puts my_line_items.inspect
+      found_collection = false
+
+      my_line_items.map do |mystuff|
+          #puts "#{key}, #{value}"
+          if mystuff['name'] == 'product_collection'
+              mystuff['value'] = my_new_product.product_collection
+              found_collection = true
+          end
+      end
+      puts "my_line_items = #{my_line_items.inspect}"
+
+      if found_collection == false
+           #only if I did not find the product_collection property in the line items do I need to add it
+          puts "We are adding the product collection to the line item properties"
+          my_line_items << {"name" => "product_collection", "value" => my_new_product.product_collection}
+      else
+          puts "We have already updated the product_collection value!"
+      end
+      
+      stuff_to_return = {"properties" => my_line_items }
+      return stuff_to_return
+  end
+
+  # Internal: returns line_items of orders belonging to the
+  # =>         subscription_id argument that havent been shipped(status=QUEUED)
+  #            and are scheduled to ship after today/same month
   #
-  # myprod_id - product id of the current product collection user is subscribed to
+  # myprod_id - product_id of the current prod collection user is subscribed to
   # new_product_id - product id of the users desired product
   def provide_current_orders(myprod_id, subscription_id, new_product_id)
     Resque.logger = Logger.new("#{Dir.getwd}/logs/prepaid_switch_helper.log")
@@ -67,7 +109,6 @@ module ResqueHelper
     now = Time.zone.now
     old_product = Product.find_by(shopify_id: myprod_id)
     my_new_product = Product.find_by(shopify_id: new_product_id)
-    my_old_variant = EllieVariant.find_by(product_id: old_product.shopify_id)
     my_new_variant = EllieVariant.find_by(product_id: new_product_id)
     Resque.logger.debug "new_variant = #{my_new_variant.inspect}"
     Resque.logger.debug "my_new_product = #{my_new_product.inspect}"

@@ -11,3 +11,9 @@ elm-stuff
 *.xlsx
 .rvmrc
 /lib/initializers/active_record_init.rb
+
+/scripts/order_report.rb
+/models/report.rb
+/db/migrate/20190108221413_create_reports.rb
+/db/migrate/20190109003059_add_subcription_id_to_reports.rb
+/db/migrate/schema.rb

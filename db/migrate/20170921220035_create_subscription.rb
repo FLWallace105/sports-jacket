@@ -19,9 +19,7 @@ class CreateSubscription < ActiveRecord::Migration[5.1]
       t.integer :order_interval_frequency
       t.integer :charge_interval_frequency
       t.integer :order_day_of_month
-      t.integer :order_day_of_week      
-
-
+      t.integer :order_day_of_week
     end
   end
 

@@ -67,7 +67,7 @@ GEM
     rack-test (0.8.2)
       rack (>= 1.0, < 3)
     rainbow (3.0.0)
-    rake (12.3.0)
+    rake (12.3.2)
     recharge-api (0.0.1)
       class2 (~> 0.3.0)
     redis (3.3.5)

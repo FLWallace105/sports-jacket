@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20181128214806) do
+ActiveRecord::Schema.define(version: 20190109003059) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -356,6 +356,18 @@ ActiveRecord::Schema.define(version: 20181128214806) do
     t.string "vendor"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "reports", force: :cascade do |t|
+    t.string "first_name"
+    t.string "last_name"
+    t.string "email"
+    t.string "shopify_customer_id"
+    t.string "missing_sports_jacket"
+    t.string "missing_legging"
+    t.string "missing_sports_bra"
+    t.datetime "next_charge_scheduled_at"
+    t.string "subscription_id"
   end
 
   create_table "shopify_customer_tag_fixes", force: :cascade do |t|
