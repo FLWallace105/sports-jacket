@@ -1,13 +1,12 @@
 SIZES = %w(S M L XL)
-PRODUCT_COLLECTION = 'Street Smarts - 3 Items'
-
+PRODUCT_COLLECTION = "Fierce & Floral - 3 Items"
+PREPAIDTHREE = 1635509436467
+PREPAIDFIVE = 1635509469235
 FactoryBot.define do
   factory :subscription do
     subscription_id { rand.to_s[2..9] }
-    address_id { rand.to_s[2..9] }
-    customer_id { rand.to_s[2..9] }
-    product_title { "Test Collection" }
-    shopify_product_id { rand.to_s[2..14] }
+    product_title { PRODUCT_COLLECTION }
+    shopify_product_id { PREPAIDTHREE }
     shopify_variant_id { rand.to_s[2..14] }
     sku { rand.to_s[2..15] }
     order_interval_unit { "month" }
@@ -31,7 +30,7 @@ FactoryBot.define do
         "value": PRODUCT_COLLECTION
     },{
         "name": "product_id",
-        "value": "#{rand.to_s[2..14]}"
+        "value": PREPAIDTHREE,
     },{
         "name": "referrer",
         "value": ""
@@ -49,5 +48,15 @@ FactoryBot.define do
         "value": "#{SIZES.sample}"
     }] }
     expire_after_specific_number_charges { 0 }
+    customer
+    factory :subscription_with_line_items do
+      transient do
+        line_items_count { 2 }
+      end
+      after(:create) do |subscription, evaluator|
+        create_list(:line_item, evaluator.line_items_count, subscription: subscription)
+      end
+
+    end
   end
 end

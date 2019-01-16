@@ -1,8 +1,9 @@
 FactoryBot.define do
   factory :customer do
-    customer_id { rand.to_s[2..9] }
-    shopify_customer_id { rand.to_s[2..13] }
+    customer_id { Faker::Number.number(8) }
+    shopify_customer_id { Faker::Number.number(12)}
     first_name { Faker::Name.first_name }
-    last_nam
+    last_name { Faker::Name.last_name }
+    status { 'ACTIVE' }
   end
 end

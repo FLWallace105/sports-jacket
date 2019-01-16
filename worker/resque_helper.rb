@@ -57,19 +57,19 @@ module ResqueHelper
   end
 
   def provide_no_queued_info(myprod_id, incoming_product_id, subscription_id)
+      Resque.logger = Logger.new("#{Dir.getwd}/logs/no_queued_helper.log", progname: 'PROVIDE_NO_QUEUED')
       my_three_pak = SwitchableProduct.find_by_product_id(myprod_id)
       puts "my_three_pak = #{my_three_pak.threepk}"
-      puts "my incoming_product_id = #{incoming_product_id}"
+      Resque.logger.debug "my incoming_product_id = #{incoming_product_id}"
       my_outgoing_product = MatchingProduct.where("incoming_product_id = ? and threepk = ?",
                                                   incoming_product_id,
                                                   my_three_pak.threepk).first
-      puts "got here"
-      puts my_outgoing_product.inspect
+      Resque.logger.info my_outgoing_product.inspect
       my_outgoing_product_id = my_outgoing_product.outgoing_product_id
-      puts "my outgoing_product_id = #{my_outgoing_product_id}"
+      Resque.logger "my outgoing_product_id = #{my_outgoing_product_id}"
 
       my_new_product = AlternateProduct.find_by_product_id(my_outgoing_product_id)
-      puts "new product info is #{my_new_product.inspect}"
+      Resque.logger "new product info is #{my_new_product.inspect}"
       my_sub = Subscription.find_by_subscription_id(subscription_id)
       puts my_sub.inspect
       my_line_items = my_sub.raw_line_item_properties
@@ -77,22 +77,22 @@ module ResqueHelper
       found_collection = false
 
       my_line_items.map do |mystuff|
-          #puts "#{key}, #{value}"
+          #Resque.logger "#{key}, #{value}"
           if mystuff['name'] == 'product_collection'
               mystuff['value'] = my_new_product.product_collection
               found_collection = true
           end
       end
-      puts "my_line_items = #{my_line_items.inspect}"
+      Resque.logger.info "my_line_items = #{my_line_items.inspect}"
 
       if found_collection == false
            #only if I did not find the product_collection property in the line items do I need to add it
-          puts "We are adding the product collection to the line item properties"
+          Resque.logger.info "We are adding the product collection to the line item properties"
           my_line_items << {"name" => "product_collection", "value" => my_new_product.product_collection}
       else
-          puts "We have already updated the product_collection value!"
+          Resque.logger.info "We have already updated the product_collection value!"
       end
-      
+
       stuff_to_return = {"properties" => my_line_items }
       return stuff_to_return
   end

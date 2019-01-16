@@ -1,23 +1,24 @@
 require 'faker'
-PRODUCT_COLLECTION = "Street Smarts - 3 Items"
+PRODUCT_COLLECTION = "Fierce & Floral - 3 Items"
+PREPAIDTHREE = 1635509436467
+PREPAIDFIVE = 1635509469235
 month_start = Time.now.beginning_of_month
 month_end = Time.now.end_of_month
 
 FactoryBot.define do
   factory :order  do
+    transient do
+      sub_id { rand.to_s[2..9].to_i }
+    end
     order_id { rand.to_s[2..9] }
     status { "SUCCESS" }
     order_type { 'CHECKOUT' }
-    charge_id { rand.to_s[2..9] }
+    # charge_id { rand.to_s[2..9] }
     shopify_id { rand.to_s[2..13] }
-    shopify_order_id { rand.to_s[2..13] }
     shopify_order_number { rand.to_s[2..5] }
-    customer_id { rand.to_s[2..9] }
     first_name { Faker::Name.first_name }
     last_name { Faker::Name.last_name }
     is_prepaid { 0 }
-    created_at { month_start }
-    updated_at {  month_start }
     scheduled_at { month_end - 2.days }
     shipping_date { month_end - 2.days }
     line_items { [{
@@ -48,7 +49,7 @@ FactoryBot.define do
         },
         {
             "name": "product_id",
-            "value": rand.to_s[2..14]
+            "value": PREPAIDTHREE,
         },
         {
             "name": "referrer",
@@ -73,8 +74,8 @@ FactoryBot.define do
     ],
     "product_title": "3 Months 3 items",
     "variant_title": "",
-    "subscription_id": rand.to_s[2..9].to_i,
-    "shopify_product_id": rand.to_s[2..14],
+    "subscription_id": "#{sub_id}",
+    "shopify_product_id": PREPAIDTHREE,
     "shopify_variant_id": rand.to_s[2..14],
   }] }
   end

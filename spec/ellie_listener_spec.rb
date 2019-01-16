@@ -15,16 +15,20 @@ RSpec.describe EllieListener do
       it "returns 400 status code" do
         get "/subscriptions_properties"
         expect(last_response.status).to eq 400
-        # expect(last_response.body).to eq("Hello, success, thanks for installing me!")
-        # expect(last_response.status).to eq 200
       end
     end
 
     context "valid prepaid sub_id" do
-      let(:last_response) { get "/subscriptions_properties", :subscription_id => "28093829"}
       it "returns properties of next queued order" do
-        get "/subscriptions_properties", :shopify_id => @subscription_id
-        expect(last_response.body).to eq(last_response.body)
+        cust = FactoryBot.create(:customer)
+        sub = FactoryBot.create(:subscription_with_line_items, customer_id: cust.id)
+        sub.line_items[0].name = "product_id"
+        sub.line_items[0].value = sub.shopify_product_id
+        3.times do
+          ord = FactoryBot.create(:order, customer_id: cust.id, sub_id: sub.id)
+        end
+        # get "/subscriptions_properties", :shopify_id => @subscription_id
+        # expect(last_response.body).to eq(last_response.body)
       end
 
       it "has non-null values for each hash key" do

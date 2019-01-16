@@ -5,6 +5,5 @@ require 'rack/test'
 require_relative '../../api/ellie_listener.rb'
 
 RSpec.describe Customer do
-  describe "active"
 
 end

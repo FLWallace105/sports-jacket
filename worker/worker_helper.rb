@@ -2247,6 +2247,7 @@ module EllieHelper
 
               properties  = sub['properties'].to_json
               expire_after = sub['expire_after_specific_number_of_charges'].to_i
+              begin
               conn.exec_prepared('statement1', [id, address_id, customer_id, created_at, updated_at, next_charge_scheduled_at, cancelled_at, product_title, price, quantity, status, shopify_product_id, shopify_variant_id, sku, order_interval_unit, order_interval_frequency, charge_interval_frequency, order_day_of_month, order_day_of_week, properties, expire_after ])
 
 
@@ -2258,6 +2259,10 @@ module EllieHelper
                 logger.debug "#{temp_name}, #{temp_value}"
                 conn.exec_prepared('statement2', [id, temp_name, temp_value])
               end
+            rescue StandardError => e
+                puts e.inspect
+                next
+              end # end of rescue block
             end
           end
           current = Time.now

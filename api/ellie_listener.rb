@@ -307,7 +307,7 @@ class EllieListener < Sinatra::Base
                     '#{now.end_of_month.strftime('%F %T')}'
                     AND is_prepaid = 1;"
         my_orders = Order.find_by_sql(sql_query)
-        if my_orders != nil
+        if my_orders != []
 
           my_orders.each do |temp_order|
             @updated = false
@@ -342,26 +342,25 @@ class EllieListener < Sinatra::Base
           end
         else
           # edge case where all orders success, customer not re-billed yet
-          puts "INSIDE EDGE CASE BLOCK"
+          puts "INVOKING PrepaidCollectionSwitch"
           my_item = SubLineItem.find_by(
             subscription_id: local_sub_id,
             name: 'product_collection'
           )
           puts "my_item(sub line item) now: #{my_item.inspect}"
-          # my_properties = local_sub.raw_line_item_properties
-          # my_properties.map do |mystuff|
-          #   if mystuff['name'] == 'product_collection'
-          #     mystuff['value'] = my_item.value
-          #   end
-          # end
-          # puts
-          # local_sub.raw_line_item_properties = my_properties
-          # local_sub.save!
+          my_properties = local_sub.raw_line_item_properties
+          my_properties.map do |mystuff|
+            if mystuff['name'] == 'product_collection'
+              mystuff['value'] = my_item.value
+            end
+          end
+          local_sub.raw_line_item_properties = my_properties
+          local_sub.save!
           #Nope, this will just over-ride the entire product information which we want to keep
           #Instead we must just change the product_collection property
           #Resque.enqueue_to(:switch_product, 'SubscriptionSwitch', myjson)
 
-          # Resque.enqueue_to(:switch_collection, 'PrepaidCollectionSwitch', myjson)
+          Resque.enqueue_to(:switch_collection, 'PrepaidCollectionSwitch', myjson)
 
         end
       elsif local_sub.switchable? && !local_sub.prepaid?
