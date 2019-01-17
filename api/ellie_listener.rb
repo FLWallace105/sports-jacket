@@ -10,7 +10,7 @@ class EllieListener < Sinatra::Base
 
   register Sinatra::CrossOrigin
   configure do
-    enable :logging
+    # enable :logging
     set :server, :puma
     set :database, ENV['DATABASE_URL']
     set :protection, :except => [:json_csrf]
@@ -20,7 +20,7 @@ class EllieListener < Sinatra::Base
     # on webserver startup set the current theme id
     Resque.enqueue_to(:default, 'Rollover', :set_current_theme_id)
     # TODO(Neville lee) commented out. noisy in STDOUT when testing with rspec
-    # puts "running configure timezone: #{Time.zone.inspect}"
+    puts "running configure timezone: #{Time.zone.inspect}"
   end
 
   def initialize

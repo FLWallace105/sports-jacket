@@ -1,4 +1,4 @@
-PRODUCT_COLLECTION = "Fierce & Floral - 3 Items"
+PRODUCT_COLLECTION ||= "Fierce & Floral - 3 Items"
 
 FactoryBot.define do
   factory :sub_line_item, aliases: [:line_item] do

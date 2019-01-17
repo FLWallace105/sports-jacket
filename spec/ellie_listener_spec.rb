@@ -5,7 +5,6 @@ require_relative '../api/ellie_listener.rb'
 
 RSpec.describe EllieListener do
   include Rack::Test::Methods
-  @subscription_id = 28093829
   def app
     EllieListener
   end
@@ -19,7 +18,7 @@ RSpec.describe EllieListener do
     end
 
     context "valid prepaid sub_id" do
-      it "returns properties of next queued order" do
+      it "returns properties of next queued order or current order" do
         cust = FactoryBot.create(:customer)
         sub = FactoryBot.create(:subscription_with_line_items, customer_id: cust.id)
         sub.line_items[0].name = "product_id"
@@ -27,14 +26,15 @@ RSpec.describe EllieListener do
         3.times do
           ord = FactoryBot.create(:order, customer_id: cust.id, sub_id: sub.id)
         end
-        # get "/subscriptions_properties", :shopify_id => @subscription_id
+        my_order = Order.find_by(customer_id: cust.id)
+        my_order.status = "SUCCESS"
+        my_order.is_prepaid = 1
+        my_order.scheduled_at = Date.today - 1
+        get "/subscriptions_properties", :shopify_id => cust.shopify_customer_id
         # expect(last_response.body).to eq(last_response.body)
       end
-
-      it "has non-null values for each hash key" do
-        get "/subscriptions_properties", :shopify_id => @subscription_id
-      end
     end
+
   end
 
 

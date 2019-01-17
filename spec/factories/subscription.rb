@@ -1,15 +1,16 @@
 SIZES = %w(S M L XL)
-PRODUCT_COLLECTION = "Fierce & Floral - 3 Items"
-PREPAIDTHREE = 1635509436467
-PREPAIDFIVE = 1635509469235
+PRODUCT_COLLECTION ||= "Fierce & Floral - 3 Items"
+PREPAID_THREE ||= 1635509436467
+PREPAID_FIVE ||= 1635509469235
 FactoryBot.define do
   factory :subscription do
     subscription_id { rand.to_s[2..9] }
     product_title { PRODUCT_COLLECTION }
-    shopify_product_id { PREPAIDTHREE }
+    shopify_product_id { PREPAID_THREE }
     shopify_variant_id { rand.to_s[2..14] }
     sku { rand.to_s[2..15] }
     order_interval_unit { "month" }
+    status { 'ACTIVE' }
     order_interval_frequency { 1 }
     charge_interval_frequency { 3 }
     raw_line_item_properties {
@@ -30,7 +31,7 @@ FactoryBot.define do
         "value": PRODUCT_COLLECTION
     },{
         "name": "product_id",
-        "value": PREPAIDTHREE,
+        "value": PREPAID_THREE,
     },{
         "name": "referrer",
         "value": ""
