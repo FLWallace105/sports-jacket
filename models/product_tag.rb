@@ -4,7 +4,8 @@ class ProductTag < ActiveRecord::Base
   # * :time - a valid datetime string / object
   # * :theme_id - the theme the product tag is associated with
   def self.active(options = {})
-    puts "Calling ProductTag::active time zone: #{Time.zone.inspect}, options: #{options.inspect}"
+    # TODO(Neville lee) commented out. noisy in STDOUT when testing with rspec
+    # puts "Calling ProductTag::active time zone: #{Time.zone.inspect}, options: #{options.inspect}"
     theme_id = options[:theme_id] || Config[:current_theme_id].to_s
     time = options[:time] || Time.zone.now
     sql = "

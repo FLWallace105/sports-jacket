@@ -20,7 +20,7 @@ class EllieListener < Sinatra::Base
     # on webserver startup set the current theme id
     Resque.enqueue_to(:default, 'Rollover', :set_current_theme_id)
     # TODO(Neville lee) commented out. noisy in STDOUT when testing with rspec
-    puts "running configure timezone: #{Time.zone.inspect}"
+    # puts "running configure timezone: #{Time.zone.inspect}"
   end
 
   def initialize
@@ -312,19 +312,11 @@ class EllieListener < Sinatra::Base
           my_orders.each do |temp_order|
             @updated = false
             temp_order.line_items.each do |my_hash|
-              puts my_hash["title"]
-              puts "my_hash['subscription_id'] value and class = #{my_hash['subscription_id']}, #{my_hash['subscription_id'].class}"
-              puts "local_sub_id value and class = #{local_sub_id}, #{local_sub_id.class}"
-              puts "do they match? #{my_hash["subscription_id"] == local_sub_id.to_i}"
-
               if my_hash["subscription_id"] == local_sub_id.to_i
                 puts "FOUND MATCHING Line Item based on sub id: #{local_sub_id}"
                 my_hash['properties'].each do |prop|
                   if prop['name'] == "product_collection"
                     prop['value'] = my_new_product.product_title
-                  end
-                  if prop['name'] == "product_id"
-                    prop['value'] = my_new_product.product_id
                   end
                 end
                 puts "updated line item:"
@@ -332,6 +324,7 @@ class EllieListener < Sinatra::Base
                 @updated = true
               end
             end
+
             if @updated == true
               temp_order.save!
               Resque.enqueue_to(:switch_product, 'SubscriptionSwitchPrepaid', myjson)
@@ -359,7 +352,6 @@ class EllieListener < Sinatra::Base
           #Nope, this will just over-ride the entire product information which we want to keep
           #Instead we must just change the product_collection property
           #Resque.enqueue_to(:switch_product, 'SubscriptionSwitch', myjson)
-
           Resque.enqueue_to(:switch_collection, 'PrepaidCollectionSwitch', myjson)
 
         end

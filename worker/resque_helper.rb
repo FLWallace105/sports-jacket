@@ -101,7 +101,7 @@ module ResqueHelper
   # =>         subscription_id argument that havent been shipped(status=QUEUED)
   #            and are scheduled to ship after today/same month
   #
-  # myprod_id - product_id of the current prod collection user is subscribed to
+  # myprod_id - product_id of the current prod collection user is subscribed to(prepaid? 3 MONTHS id)
   # new_product_id - product id of the users desired product
   def provide_current_orders(myprod_id, subscription_id, new_product_id)
     Resque.logger = Logger.new("#{Dir.getwd}/logs/prepaid_switch_helper.log")
@@ -109,8 +109,6 @@ module ResqueHelper
     now = Time.zone.now
     old_product = Product.find_by(shopify_id: myprod_id)
     my_new_product = Product.find_by(shopify_id: new_product_id)
-    my_new_variant = EllieVariant.find_by(product_id: new_product_id)
-    Resque.logger.debug "new_variant = #{my_new_variant.inspect}"
     Resque.logger.debug "my_new_product = #{my_new_product.inspect}"
     Resque.logger.debug "my_old_product = #{old_product.inspect}"
 
@@ -120,17 +118,14 @@ module ResqueHelper
                 AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}'
                 AND is_prepaid = 1;"
     my_orders = Order.find_by_sql(sql_query)
-    my_order_id = ''
 
     my_orders.each do |temp_order|
       temp_order.line_items.each do |l_item|
         begin
-        Resque.logger.debug "l_item['subscription_id'] == subscription_id: #{l_item["subscription_id"].to_s == subscription_id}"
         if l_item["subscription_id"].to_s == subscription_id
           Resque.logger.info "updating l_item with new: #{my_new_product.title} data"
           l_item['properties'].each do |prop|
             prop['value'] = my_new_product.title if (prop['name'] == "product_collection")
-            prop['value'] = my_new_product.shopify_id if (prop['name'] == "product_id")
           end
           updated_line_item.push(l_item)
         else
@@ -140,12 +135,12 @@ module ResqueHelper
           Resque.logger.error "error: #{e}"
         end
       end
-      my_order_id = temp_order.order_id
+      @my_order_id = temp_order.order_id
     end
 
     Resque.logger.info "PROVIDE CURRENT ORDERS WORKER DONE"
     response_hash = {
-      "my_order_id" => my_order_id,
+      "my_order_id" => @my_order_id,
       "o_array" => updated_line_item,
     }
     return response_hash

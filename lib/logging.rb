@@ -10,7 +10,7 @@ module Logging
     end
 
     def _configure_logger_for(classname)
-      Logger.new(STDOUT, progname: classname)
+      Logger.new("logs/test.log", progname: classname)
     end
   end
 

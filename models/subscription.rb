@@ -230,7 +230,7 @@ class Subscription < ActiveRecord::Base
       !prepaid_switched?,
     ]
     puts "PREPAID_SWITCHABLE?: prepaid: #{prepaid?}, order_check: #{order_check},"\
-    " has prepaid sub already been switched?: #{prepaid_switched?}"
+    " is prepaid sub switchable?: #{!prepaid_switched?}"
     skip_conditions.all?
   end
 
@@ -364,13 +364,15 @@ class Subscription < ActiveRecord::Base
   end
 
   def current_order_data
-    sql_query = "select  * from orders where line_items @> '[{\"subscription_id\": #{subscription_id}}]' and status = 'SUCCESS' and is_prepaid = 0 and scheduled_at <= '#{Date.today.strftime('%F %T')}' "
+    sql_query = "select  * from orders where line_items @>"\
+    " '[{\"subscription_id\": #{subscription_id}}]' and status = 'SUCCESS'"\
+    " and is_prepaid = 0 and scheduled_at <= '#{Date.today.strftime('%F %T')}'"
+
     my_order = Order.find_by_sql(sql_query).first
     puts "++++current_order_data = #{my_order.inspect}"
     puts "my sub id : #{subscription_id} and date today: #{Date.today.strftime('%F %T')}"
     my_title = ""
     my_date = ""
-
     begin
       my_order.line_items.each do |item|
         if item["subscription_id"].to_s == subscription_id
@@ -398,7 +400,7 @@ class Subscription < ActiveRecord::Base
       }
   end
 
-  private
+  # private
 
   def update_line_items
     return unless saved_change_to_attribute? :raw_line_item_properties
@@ -477,7 +479,6 @@ class Subscription < ActiveRecord::Base
       puts "no queued orders found for sub: #{subscription_id}, all orders sent!"
       order_check = true
     end
-    # puts "================order_check = #{order_check}"
     return order_check
   end
 
@@ -488,8 +489,6 @@ class Subscription < ActiveRecord::Base
   def prepaid_switched?(options = {})
     now = Time.zone.now
     options[:time] = now
-    puts "beginning_of_month: #{now.beginning_of_month.strftime('%F %T')}"
-    puts "end_of_month: #{now.end_of_month.strftime('%F %T')}"
 
     sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{subscription_id}}]'
                 AND status = 'QUEUED' AND scheduled_at > '#{now.beginning_of_month.strftime('%F %T')}'
@@ -500,15 +499,14 @@ class Subscription < ActiveRecord::Base
 
     if this_months_orders != []
       this_months_orders.each do |order|
-        order_prod_id = ""
         order.line_items.each do|item|
           if item["subscription_id"].to_s == subscription_id
             item["properties"].each do |prop_hash|
-              order_prod_id = prop_hash["value"] if prop_hash["name"] == "product_id"
+              @product_name = prop_hash["value"] if prop_hash["name"] == "product_collection"
             end
           end
         end
-
+        order_prod_id = Product.find_by(title: @product_name).shopify_id
         if ProductTag.active(options).where(tag: 'switchable')
           .pluck(:product_id).include?(order_prod_id.to_s) &&
           ProductTag.active(options).where(tag: 'current')
@@ -519,7 +517,7 @@ class Subscription < ActiveRecord::Base
     elsif all_orders_sent?(subscription_id)
       return false
     end
-    puts "================Has switched this month = #{switched_this_month}"
+    puts "================Is prepaid sub switchable? = #{!switched_this_month}"
     return switched_this_month
   end
 
@@ -539,14 +537,15 @@ class Subscription < ActiveRecord::Base
 
     if this_months_orders != []
       this_months_orders.each do |order|
-        order_prod_id = ""
         order.line_items.each do|item|
           if item["subscription_id"].to_s == subscription_id
             item["properties"].each do |prop_hash|
-              order_prod_id = prop_hash["value"] if prop_hash["name"] == "product_id"
+              @product_name = prop_hash["value"] if prop_hash["name"] == "product_collection"
             end
           end
         end
+
+        order_prod_id = Product.find_by(title: @product_name).shopify_id
         if ProductTag.active(options).where(tag: 'skippable')
           .pluck(:product_id).include?(order_prod_id.to_s) &&
           ProductTag.active(options).where(tag: 'current')
