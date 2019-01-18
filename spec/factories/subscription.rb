@@ -4,7 +4,7 @@ PREPAID_THREE ||= 1635509436467
 PREPAID_FIVE ||= 1635509469235
 FactoryBot.define do
   factory :subscription do
-    subscription_id { rand.to_s[2..9] }
+    subscription_id { Faker::Number.number(8) }
     product_title { PRODUCT_COLLECTION }
     shopify_product_id { PREPAID_THREE }
     shopify_variant_id { rand.to_s[2..14] }
@@ -15,38 +15,38 @@ FactoryBot.define do
     charge_interval_frequency { 3 }
     raw_line_item_properties {
       [{
-        "name": "charge_interval_frequency",
-        "value": "3"
+        name: "charge_interval_frequency",
+        value: "3"
     },{
-        "name": "charge_interval_unit_type",
-        "value": "Months"
+        name: "charge_interval_unit_type",
+        value: "Months"
     },{
-        "name": "leggings",
-        "value": "#{SIZES.sample}"
+        name: "leggings",
+        value: "S"
     },{
-        "name": "main-product",
-        "value": "true"
+        name: "main-product",
+        value: "true"
     },{
-        "name": "product_collection",
-        "value": PRODUCT_COLLECTION
+        name: "product_collection",
+        value: PRODUCT_COLLECTION
     },{
-        "name": "product_id",
-        "value": PREPAID_THREE,
+        name: "product_id",
+        value: PREPAID_THREE,
     },{
-        "name": "referrer",
-        "value": ""
+        name: "referrer",
+        value: ""
     },{
-        "name": "shipping_interval_frequency",
-        "value": "1"
+        name: "shipping_interval_frequency",
+        value: "1"
     },{
-        "name": "shipping_interval_unit_type",
-        "value": "Months"
+        name: "shipping_interval_unit_type",
+        value: "Months"
     },{
-        "name": "sports-bra",
-        "value": "#{SIZES.sample}"
+        name: "sports-bra",
+        value: "S"
     },{
-        "name": "tops",
-        "value": "#{SIZES.sample}"
+        name: "tops",
+        value: "S"
     }] }
     expire_after_specific_number_charges { 0 }
     customer

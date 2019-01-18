@@ -411,7 +411,6 @@ class EllieListener < Sinatra::Base
           end
           temp_subscription.save!
           Resque.enqueue_to(:skip_product_prepaid, 'SubscriptionSkipPrepaid', params)
-
         elsif temp_subscription.skippable?
           puts "temp_subscription = #{temp_subscription.inspect}"
           local_date = temp_subscription.next_charge_scheduled_at
