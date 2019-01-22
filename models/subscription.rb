@@ -370,17 +370,20 @@ class Subscription < ActiveRecord::Base
 
     my_order = Order.find_by_sql(sql_query).first
     puts "++++current_order_data = #{my_order.inspect}"
-    puts "my sub id : #{subscription_id} and date today: #{Date.today.strftime('%F %T')}"
     my_title = ""
     my_date = ""
     begin
       my_order.line_items.each do |item|
-        if item["subscription_id"].to_s == subscription_id
-          item["properties"].each do |prop|
-            my_title = prop["value"] if prop["name"] == "product_collection"
-          end
+        next unless item["subscription_id"].to_s == subscription_id
+        item["properties"].each do |prop|
+          next unless prop["name"] == "product_collection"
+          my_title = prop["value"]
         end
-        my_date = my_order.shipping_date
+        if all_orders_sent?(subscription_id)
+          my_date = next_charge_scheduled_at
+        else
+          my_date = my_order.shipping_date
+        end
       end
     rescue StandardError => e
       puts "Current order not found for subscription_id: #{subscription_id}"
@@ -396,7 +399,7 @@ class Subscription < ActiveRecord::Base
     end
     return {
         my_title: my_title,
-        ship_date: my_order.shipping_date,
+        ship_date: my_date,
       }
   end
 

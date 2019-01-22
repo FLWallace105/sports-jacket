@@ -2270,7 +2270,9 @@ module EllieHelper
           logger.info "Been running #{duration} seconds"
           logger.info "Done with page #{page}"
           logger.info "Sleeping #{sleep_recharge}"
-          sleep sleep_recharge.to_i
+          # TODO(Neville lee) commented out. sleep changed to 1 for testing purposes
+          # sleep sleep_recharge.to_i
+          sleep 1
         end
         logger.info "All done with full download of subscriptions"
         conn.close

@@ -9,11 +9,15 @@ class PrepaidCollectionSwitch
 
     #{"action"=>"switch_product", "subscription_id"=>"8672750", "product_id"=>"8204555081"}
     subscription_id = params['subscription_id']
-    product_id = params['product_id']
     incoming_product_id = params['alt_product_id']
     puts "We are working on subscription #{subscription_id}"
     Resque.logger.info("We are working on subscription #{subscription_id}")
-
+    my_item = SubLineItem.find_by(
+      subscription_id: subscription_id,
+      name: 'product_collection'
+    )
+    product_id = Product.find_by_title(my_item['value']).shopify_id
+    Resque.logger.debug(product_id)
     #Here is where we do some things that make sure we only push the product_collection changes to
     #the ReCharge endpoint for the prepaid subscription where there is no queued orders as the card
     #has not yet charged

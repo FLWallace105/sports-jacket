@@ -58,6 +58,7 @@ module ResqueHelper
 
   def provide_no_queued_info(myprod_id, incoming_product_id, subscription_id)
       Resque.logger = Logger.new("#{Dir.getwd}/logs/no_queued_helper.log", progname: 'PROVIDE_NO_QUEUED')
+      Resque.logger.info myprod_id
       my_three_pak = SwitchableProduct.find_by_product_id(myprod_id)
       puts "my_three_pak = #{my_three_pak.threepk}"
       Resque.logger.debug "my incoming_product_id = #{incoming_product_id}"
@@ -66,10 +67,10 @@ module ResqueHelper
                                                   my_three_pak.threepk).first
       Resque.logger.info my_outgoing_product.inspect
       my_outgoing_product_id = my_outgoing_product.outgoing_product_id
-      Resque.logger "my outgoing_product_id = #{my_outgoing_product_id}"
+      Resque.logger.debug "my outgoing_product_id = #{my_outgoing_product_id}"
 
       my_new_product = AlternateProduct.find_by_product_id(my_outgoing_product_id)
-      Resque.logger "new product info is #{my_new_product.inspect}"
+      Resque.logger.info "new product info is #{my_new_product.inspect}"
       my_sub = Subscription.find_by_subscription_id(subscription_id)
       puts my_sub.inspect
       my_line_items = my_sub.raw_line_item_properties

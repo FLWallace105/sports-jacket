@@ -10,7 +10,7 @@ class EllieListener < Sinatra::Base
 
   register Sinatra::CrossOrigin
   configure do
-    # enable :logging
+    enable :logging
     set :server, :puma
     set :database, ENV['DATABASE_URL']
     set :protection, :except => [:json_csrf]
@@ -336,16 +336,13 @@ class EllieListener < Sinatra::Base
         else
           # edge case where all orders success, customer not re-billed yet
           puts "INVOKING PrepaidCollectionSwitch"
-          my_item = SubLineItem.find_by(
-            subscription_id: local_sub_id,
-            name: 'product_collection'
-          )
-          puts "my_item(sub line item) now: #{my_item.inspect}"
+          new_collection = Product.find(myjson['real_alt_product_id']).title
+          puts "New product collection #{new_collection}"
           my_properties = local_sub.raw_line_item_properties
+
           my_properties.map do |mystuff|
-            if mystuff['name'] == 'product_collection'
-              mystuff['value'] = my_item.value
-            end
+            next unless mystuff['name'] == 'product_collection'
+            mystuff['value'] = new_collection
           end
           local_sub.raw_line_item_properties = my_properties
           local_sub.save!
@@ -557,7 +554,6 @@ class EllieListener < Sinatra::Base
     if sub.prepaid?
       skip_value = sub.prepaid_skippable?
       switch_value = sub.prepaid_switchable?
-      # reutrn false if no queued orders scheduled in current month
       if sub.get_order_props
         res = sub.get_order_props
         puts "=====> VALUES FROM GET_ORDER PROPS IN TRANFORM_SUBS: TITLE=#{res[:my_title]} SHIP DATE: #{res[:ship_date]}"
