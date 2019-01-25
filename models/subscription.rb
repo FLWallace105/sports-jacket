@@ -538,7 +538,7 @@ class Subscription < ActiveRecord::Base
     this_months_orders = Order.find_by_sql(sql_query)
     can_skip = false
 
-    if this_months_orders != []
+    if this_months_orders.any?
       this_months_orders.each do |order|
         order.line_items.each do|item|
           if item["subscription_id"].to_s == subscription_id

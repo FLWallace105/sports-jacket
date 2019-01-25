@@ -1,3 +1,5 @@
+require 'faker'
+
 FactoryBot.define do
   factory :customer do
     customer_id { Faker::Number.number(8) }

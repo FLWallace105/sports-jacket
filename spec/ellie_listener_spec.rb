@@ -16,7 +16,6 @@ RSpec.describe EllieListener do
         expect(last_response.status).to eq 400
       end
     end
-
     context "valid prepaid sub_id" do
       let(:base_date) { Date.today + 1 << 1 }
       it "returns properties of next queued order or current order" do
@@ -84,7 +83,6 @@ RSpec.describe EllieListener do
         )
       end
     end
-
     context "no queued orders" do
       let(:base_date) { Date.today + 1 << 3 }
       it "returns most recent order info" do
@@ -218,7 +216,7 @@ RSpec.describe EllieListener do
         expect(@prod_collection).to eq(Product.find(params[:real_alt_product_id]).title)
       end
     end
-    context "NO QUEUED ORDERS", :focus do
+    context "NO QUEUED ORDERS" do
       let(:base_date) { Date.today + 1 << 3 }
       it "switches subscriptions product_collection value" do
         cust = FactoryBot.create(:customer)
@@ -284,9 +282,9 @@ RSpec.describe EllieListener do
     end
   end
 
-  describe "POST #subscription_skip" do
+  describe "POST #subscription_skip", :focus do
+    let(:base_date) { Date.today + 1 << 3 }
     context "when subscription is prepaid" do
-      let(:base_date) { Date.today + 1 << 3 }
       it "advances sub and QUEUED orders dates 1 month" do
         cust = FactoryBot.create(:customer)
         sub = FactoryBot.create(
@@ -312,13 +310,15 @@ RSpec.describe EllieListener do
           sub_id: sub.id,
           first_name: cust.first_name,
           last_name: cust.last_name,
-          scheduled_at: base_date >> 1
+          scheduled_at: base_date >> 1,
+          shipping_date: base_date >> 1,
         )
         order_3 = FactoryBot.create(
           :order,
           customer_id: cust.customer_id,
           sub_id: sub.id,
           scheduled_at: base_date >> 2,
+          shipping_date: base_date >> 2,
           first_name: cust.first_name,
           last_name: cust.last_name,
         )
@@ -334,7 +334,7 @@ RSpec.describe EllieListener do
 
         my_order2 = Order.find(order_2.order_id)
         my_order3 = Order.find(order_3.order_id)
-        my_sub = Subscription.find(sub.id)
+        my_sub = Subscription.find_by(subscription_id: sub.id)
 
         expect(my_sub.next_charge_scheduled_at
           .try{ |time| time.strftime('%F %T') })
@@ -345,7 +345,7 @@ RSpec.describe EllieListener do
       end
     end
     context "NO QUEUED ORDERS" do
-      let(:base_date) { Date.today + 1 << 3 }
+      # let(:base_date) { Date.today + 1 << 3 }
       it "adds one month to subscription.next_charge_scheduled_at" do
         cust = FactoryBot.create(:customer)
         sub = FactoryBot.create(

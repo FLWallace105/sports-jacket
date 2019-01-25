@@ -396,15 +396,16 @@ class EllieListener < Sinatra::Base
           puts "temp_subscription w/ new charge date = #{temp_subscription.inspect}"
           sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{local_sub_id}}]' AND status = 'QUEUED';"
           my_queued_orders = Order.find_by_sql(sql_query)
-
-          my_queued_orders.each do |order|
-            my_time = order.scheduled_at
-            puts "was scheduled_at: #{my_time}"
-            order.scheduled_at = my_time + 1.month
-            puts "now scheduled for: #{order.scheduled_at}"
-            puts order.inspect
-            puts "============================================="
-            order.save
+          if my_queued_orders.any?
+            my_queued_orders.each do |order|
+              my_time = order.scheduled_at
+              puts "was scheduled_at: #{my_time}"
+              order.scheduled_at = my_time + 1.month
+              puts "now scheduled for: #{order.scheduled_at}"
+              puts order.inspect
+              puts "============================================="
+              order.save
+            end
           end
           temp_subscription.save!
           Resque.enqueue_to(:skip_product_prepaid, 'SubscriptionSkipPrepaid', params)

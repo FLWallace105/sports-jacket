@@ -1,4 +1,5 @@
 require 'faker'
+
 PRODUCT_COLLECTION ||= "Fierce & Floral - 3 Items"
 PREPAID_THREE ||= 1635509436467
 PREPAID_FIVE ||= 1635509469235

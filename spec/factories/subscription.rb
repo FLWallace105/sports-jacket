@@ -1,3 +1,5 @@
+require 'faker'
+
 SIZES = %w(S M L XL)
 PRODUCT_COLLECTION ||= "Fierce & Floral - 3 Items"
 PREPAID_THREE ||= 1635509436467
