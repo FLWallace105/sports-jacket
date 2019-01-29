@@ -14,9 +14,9 @@ Resque.logger =
   end
 
 namespace :auto_config do
-  desc 'auto configures skippable table'
-  task :skippable do
-    MonthlySetup.new.skippable_config
+  desc 'auto configures switchable table'
+  task :switchable do
+    MonthlySetup.new.switchable_config
   end
 
   desc 'auto configures alternate table'
@@ -31,7 +31,7 @@ namespace :auto_config do
 
  # run ellie_pull[products] then  'ruby early_product_tags.rb' (scripts/auto/early_product_tags.rb)
   desc 'runs entire auto config block'
-  task :splat => [:alternate, :matching, :skippable]
+  task :splat => [:alternate, :matching, :switchable]
 end
 
 # NEW (Neville 8/15/18)
