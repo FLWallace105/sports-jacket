@@ -10,3 +10,4 @@ elm-stuff
 *.csv
 *.xlsx
 .rvmrc
+*/db/schema.rb
