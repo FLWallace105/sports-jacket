@@ -1,5 +1,5 @@
 # product configuration manual tagging syntax
-# MMYY_(main, alt1, or alt2)_(3, 5, AR3, or AR5)
+# MMYY_collection
 require_relative '../lib/logging'
 class MonthlySetup
   include Logging

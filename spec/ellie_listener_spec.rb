@@ -157,7 +157,7 @@ RSpec.describe EllieListener do
   end
 
   describe "PUT #subscription_switch" do
-    context "when subscription is prepaid" do
+    context "when subscription is prepaid", :focus do
       let(:base_date) { Date.today + 1 << 1 }
       it "switches next QUEUED Order.line_items product_collection" do
         cust = FactoryBot.create(:customer)
@@ -282,7 +282,7 @@ RSpec.describe EllieListener do
     end
   end
 
-  describe "POST #subscription_skip", :focus do
+  describe "POST #subscription_skip" do
     let(:base_date) { Date.today + 1 << 3 }
     context "when subscription is prepaid" do
       it "advances sub and QUEUED orders dates 1 month" do
