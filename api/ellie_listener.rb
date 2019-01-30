@@ -19,8 +19,7 @@ class EllieListener < Sinatra::Base
 
     # on webserver startup set the current theme id
     Resque.enqueue_to(:default, 'Rollover', :set_current_theme_id)
-    # TODO(Neville lee) commented out. noisy in STDOUT when testing with rspec
-    # puts "running configure timezone: #{Time.zone.inspect}"
+    puts "running configure timezone: #{Time.zone.inspect}"
   end
 
   def initialize
