@@ -37,6 +37,8 @@ prepaid_3 = 1635509436467
 prepaid_5 = 1635509469235
 
 
+ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_3, tag: 'prepaid').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_5, tag: 'prepaid').update(early_tag)
 ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_3, tag: 'current').update(early_tag)
 ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_5, tag: 'current').update(early_tag)
 ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_3, tag: 'skippable').update(early_tag)
@@ -128,3 +130,24 @@ ProductTag.create_with(early_tag).find_or_create_by(product_id: morning_3_autore
 ProductTag.create_with(early_tag).find_or_create_by(product_id: morning_5_autorenew, tag: 'skippable')
 ProductTag.create_with(early_tag).find_or_create_by(product_id: morning_3_autorenew, tag: 'switchable')
 ProductTag.create_with(early_tag).find_or_create_by(product_id: morning_5_autorenew, tag: 'switchable')
+
+# feb_collection: True blue (repeat)
+true_blue_3 = 1663704662067
+true_blue_5 = 1663705514035
+true_blue_3_autorenew = 1663764496435
+true_blue_5_autorenew = 1663763480627
+
+
+ProductTag.create_with(early_tag).find_or_create_by(product_id: true_blue_3, tag: 'current').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: true_blue_5, tag: 'current').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: true_blue_3, tag: 'skippable').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: true_blue_5, tag: 'skippable').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: true_blue_3, tag: 'switchable').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: true_blue_5, tag: 'switchable').update(early_tag)
+
+ProductTag.create_with(early_tag).find_or_create_by(product_id: true_blue_3_autorenew, tag: 'current').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: true_blue_5_autorenew, tag: 'current').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: true_blue_3_autorenew, tag: 'skippable').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: true_blue_5_autorenew, tag: 'skippable').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: true_blue_3_autorenew, tag: 'switchable').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: true_blue_5_autorenew, tag: 'switchable').update(early_tag)

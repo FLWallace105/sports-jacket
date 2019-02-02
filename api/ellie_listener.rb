@@ -345,11 +345,7 @@ class EllieListener < Sinatra::Base
           end
           local_sub.raw_line_item_properties = my_properties
           local_sub.save!
-          #Nope, this will just over-ride the entire product information which we want to keep
-          #Instead we must just change the product_collection property
-          #Resque.enqueue_to(:switch_product, 'SubscriptionSwitch', myjson)
           Resque.enqueue_to(:switch_collection, 'PrepaidCollectionSwitch', myjson)
-
         end
       elsif local_sub.switchable? && !local_sub.prepaid?
         local_sub.shopify_product_id = my_new_product.product_id
@@ -560,18 +556,25 @@ class EllieListener < Sinatra::Base
         title_value = res[:my_title]
         shipping_date = res[:ship_date].strftime('%F')
       else
-        title_value = sub.current_order_data[:my_title]
+        if sub.all_orders_sent?(sub.id)
+          sub.raw_line_item_properties.each do |item|
+            next unless item['name'] == 'product_collection'
+            @title_value = item['value']
+          end
+        else
+          @title_value = sub.current_order_data[:my_title]
+        end
         shipping_date = sub.current_order_data[:ship_date].strftime('%F')
       end
     else
-      title_value = sub.product_title
+      @title_value = sub.product_title
       skip_value = sub.skippable?
       switch_value = sub.switchable?
     end
     result = {
       shopify_product_id: sub.shopify_product_id.to_i,
       subscription_id: sub.subscription_id.to_i,
-      product_title: title_value,
+      product_title: @title_value,
       next_charge: sub.next_charge_scheduled_at.try{|time| time.strftime('%Y-%m-%d')},
       charge_date: sub.next_charge_scheduled_at.try{|time| time.strftime('%Y-%m-%d')},
       sizes: sub.sizes,

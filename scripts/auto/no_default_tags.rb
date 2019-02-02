@@ -25,6 +25,34 @@ ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_3_autore
 ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_5_autorenew, tag: 'prepaid')
   .update(early_tag)
 
+ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_3, tag: 'current')
+  .update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_5, tag: 'current')
+  .update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_3_autorenew, tag: 'current')
+  .update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_5_autorenew, tag: 'current')
+  .update(early_tag)
+
+  ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_3, tag: 'skippable')
+    .update(early_tag)
+  ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_5, tag: 'skippable')
+    .update(early_tag)
+  ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_3_autorenew, tag: 'skippable')
+    .update(early_tag)
+  ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_5_autorenew, tag: 'skippable')
+    .update(early_tag)
+
+  ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_3, tag: 'switchable')
+    .update(early_tag)
+  ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_5, tag: 'switchable')
+    .update(early_tag)
+  ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_3_autorenew, tag: 'switchable')
+    .update(early_tag)
+  ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_5_autorenew, tag: 'switchable')
+    .update(early_tag)
+
+
 monthly_product_ids = Product.where("tags LIKE ?", my_tag ).pluck(:shopify_id)
 puts "my ids: #{monthly_product_ids}"
 

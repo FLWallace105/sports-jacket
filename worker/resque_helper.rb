@@ -94,7 +94,10 @@ module ResqueHelper
           Resque.logger.info "We have already updated the product_collection value!"
       end
 
-      stuff_to_return = {"properties" => my_line_items }
+      email = { "sku" => my_new_product.sku, "product_title" => my_new_product.product_title, "shopify_product_id" => my_new_product.product_id, "shopify_variant_id" => my_new_product.variant_id, "properties" => my_line_items }
+      recharge = { "properties" => my_line_items }
+      stuff_to_return = { "email_info" => email, "recharge" => recharge }
+
       return stuff_to_return
   end
 

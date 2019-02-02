@@ -46,14 +46,12 @@ class SendEmailToCustomer
                 content = Content.new(type: 'text/plain', value: mybody)
             when 'switching_product'
                 puts "switching product"
-
+                Resque.logger.debug "switching_product email processing..."
                 my_details = "Your new subscription is for: #{details['product_title']}"
                 puts "my_details for content = #{my_details}"
                 mybody = "Dear #{first_name} #{last_name}:\n\n Here is your confirmation of the change to your subscription:\n\n #{my_details} \n\n Your friends at Ellie."
                 subject = "Confirmation of Switching Your Subscription"
                 content = Content.new(type: 'text/plain', value: mybody)
-
-
             when 'skipping'
                 puts "skipping this month"
                 #Skip Month code here
@@ -67,10 +65,8 @@ class SendEmailToCustomer
                 content = Content.new(type: 'text/plain', value: mybody)
                 puts "All done sending email"
                 Resque.logger.info "all done sending email"
-
             else
                 puts "Doing nothing"
-
         end
 
         begin
@@ -78,6 +74,7 @@ class SendEmailToCustomer
             sg = SendGrid::API.new(api_key: ENV['SENDGRID_API_KEY'], host: 'https://api.sendgrid.com')
             response = sg.client.mail._('send').post(request_body: mail.to_json)
             puts response.headers
+            Resque.logger.debug "Send grid response code: #{response.status_code}"
         rescue Exception => e
             Resque.logger.error(e.inspect)
         else
