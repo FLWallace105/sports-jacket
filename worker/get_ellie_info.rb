@@ -26,8 +26,8 @@ module DetermineInfo
       }
       @uri = URI.parse(ENV['DATABASE_URL'])
       @conn = PG.connect(@uri.hostname, @uri.port, nil, nil, @uri.path[1..-1], @uri.user, @uri.password)
-      @shopify_base_site = "https://#{ENV['SHOPIFY_API_KEY']}:#{ENV['SHOPIFY_SHARED_SECRET']}@#{ENV['SHOPIFY_SHOP_NAME']}.myshopify.com/admin"
-      # @shopify_base_site = "https://#{ENV['SHOPIFY_API_KEY']}:#{ENV['SHOPIFY_PASSWORD']}@#{ENV['SHOPIFY_SHOP_NAME']}.myshopify.com/admin"
+      # @shopify_base_site = "https://#{ENV['SHOPIFY_API_KEY']}:#{ENV['SHOPIFY_SHARED_SECRET']}@#{ENV['SHOPIFY_SHOP_NAME']}.myshopify.com/admin"
+      @shopify_base_site = "https://#{ENV['SHOPIFY_API_KEY']}:#{ENV['SHOPIFY_PASSWORD']}@#{ENV['SHOPIFY_SHOP_NAME']}.myshopify.com/admin"
     end
 
     def count_subscriptions

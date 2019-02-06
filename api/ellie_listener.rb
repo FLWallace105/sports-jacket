@@ -211,15 +211,19 @@ class EllieListener < Sinatra::Base
         # update orders locally
         queued_orders = Order.where("line_items @> ? AND status = ? AND is_prepaid = ?", [{subscription_id: subscription_id.to_i}].to_json, "QUEUED", 1)
         logger.info queued_orders.inspect
-        raise "Error updating sizes. Please try again later." unless queued_orders.any?
-
-        queued_orders.each do |my_order|
-          my_order.sizes_change(sizes, subscription_id)
-          my_order.save!
+        # raise "Error updating sizes. Please try again later." unless queued_orders.any?
+        if queued_orders.any?
+          queued_orders.each do |my_order|
+            my_order.sizes_change(sizes, subscription_id)
+            my_order.save!
+          end
+          # prepaid background worker
+          queuedd = Resque.enqueue_to(:change_prepaid_sizes, 'ChangePrepaidSizes', subscription_id, sizes)
+          raise "Error updating prepaid sizes. Please try again later." unless queuedd
+        else
+          queued = Resque.enqueue_to(:change_sizes, 'ChangeSizes', subscription_id, sizes)
+          raise "Error updating sizes. Please try again later." unless queued
         end
-        # prepaid background worker
-        queuedd = Resque.enqueue_to(:change_prepaid_sizes, 'ChangePrepaidSizes', subscription_id, sizes)
-        raise "Error updating prepaid sizes. Please try again later." unless queuedd
       else
         queued = Resque.enqueue_to(:change_sizes, 'ChangeSizes', subscription_id, sizes)
         raise "Error updating sizes. Please try again later." unless queued
