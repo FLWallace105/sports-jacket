@@ -557,7 +557,11 @@ class Subscription < ActiveRecord::Base
         end
       end
     elsif all_orders_sent?(subscription_id)
-      can_skip = true
+      cutoff_date = Time.now.end_of_month
+      puts "#{cutoff_date}"
+      if next_charge_scheduled_at <= cutoff_date
+        can_skip = true
+      end
     end
     puts "==============Can skip and hasnt switched? = #{can_skip}"
     return can_skip
