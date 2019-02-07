@@ -2,7 +2,7 @@ require_relative 'resque_helper'
 
 class PrepaidCollectionSwitch
   extend ResqueHelper
-  @queue = "switch_product"
+  @queue = "switch_collection"
   def self.perform(params)
     puts params.inspect
     Resque.logger = Logger.new("#{Dir.getwd}/logs/prepaid_switch_resque.log")
