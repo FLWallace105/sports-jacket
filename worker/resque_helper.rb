@@ -1,6 +1,10 @@
+require 'shopify_api'
+require 'dotenv'
+Dotenv.load
 require_relative '../lib/logging'
 
 module ResqueHelper
+
   def provide_alt_products(myprod_id, incoming_product_id, subscription_id)
       #Fix this by doing: check current product_id, determine if three-pack true/false
       #use new_product_id and three-pack true/false to get outgoing product_id
@@ -41,7 +45,6 @@ module ResqueHelper
            #only if I did not find the product_collection property in the line items do I need to add it
           puts "We are adding the product collection to the line item properties"
           my_line_items << {"name" => "product_collection", "value" => my_new_product.product_collection}
-
       else
           puts "We have already updated the product_collection value!"
       end
@@ -52,10 +55,57 @@ module ResqueHelper
       return stuff_to_return
 
   end
-  # Internal: returns line_items of orders belonging to the subscription_id argument that
-  #           havent been shipped(status=QUEUED) and are scheduled to ship after today/same month
+
+  def provide_no_queued_info(myprod_id, incoming_product_id, subscription_id)
+      Resque.logger = Logger.new("#{Dir.getwd}/logs/no_queued_helper.log", progname: 'PROVIDE_NO_QUEUED')
+      Resque.logger.info myprod_id
+      my_three_pak = SwitchableProduct.find_by_product_id(myprod_id)
+      puts "my_three_pak = #{my_three_pak.threepk}"
+      Resque.logger.debug "my incoming_product_id = #{incoming_product_id}"
+      my_outgoing_product = MatchingProduct.where("incoming_product_id = ? and threepk = ?",
+                                                  incoming_product_id,
+                                                  my_three_pak.threepk).first
+      Resque.logger.info my_outgoing_product.inspect
+      my_outgoing_product_id = my_outgoing_product.outgoing_product_id
+      Resque.logger.debug "my outgoing_product_id = #{my_outgoing_product_id}"
+
+      my_new_product = AlternateProduct.find_by_product_id(my_outgoing_product_id)
+      Resque.logger.info "new product info is #{my_new_product.inspect}"
+      my_sub = Subscription.find_by_subscription_id(subscription_id)
+      puts my_sub.inspect
+      my_line_items = my_sub.raw_line_item_properties
+      puts my_line_items.inspect
+      found_collection = false
+
+      my_line_items.map do |mystuff|
+          #Resque.logger "#{key}, #{value}"
+          if mystuff['name'] == 'product_collection'
+              mystuff['value'] = my_new_product.product_collection
+              found_collection = true
+          end
+      end
+      Resque.logger.info "my_line_items = #{my_line_items.inspect}"
+
+      if found_collection == false
+           #only if I did not find the product_collection property in the line items do I need to add it
+          Resque.logger.info "We are adding the product collection to the line item properties"
+          my_line_items << {"name" => "product_collection", "value" => my_new_product.product_collection}
+      else
+          Resque.logger.info "We have already updated the product_collection value!"
+      end
+
+      email = { "sku" => my_new_product.sku, "product_title" => my_new_product.product_title, "shopify_product_id" => my_new_product.product_id, "shopify_variant_id" => my_new_product.variant_id, "properties" => my_line_items }
+      recharge = { "properties" => my_line_items }
+      stuff_to_return = { "email_info" => email, "recharge" => recharge }
+
+      return stuff_to_return
+  end
+
+  # Internal: returns line_items of orders belonging to the
+  # =>         subscription_id argument that havent been shipped(status=QUEUED)
+  #            and are scheduled to ship after today/same month
   #
-  # myprod_id - product id of the current product collection user is subscribed to
+  # myprod_id - product_id of the current prod collection user is subscribed to(prepaid? 3 MONTHS id)
   # new_product_id - product id of the users desired product
   def provide_current_orders(myprod_id, subscription_id, new_product_id)
     Resque.logger = Logger.new("#{Dir.getwd}/logs/prepaid_switch_helper.log")
@@ -63,9 +113,6 @@ module ResqueHelper
     now = Time.zone.now
     old_product = Product.find_by(shopify_id: myprod_id)
     my_new_product = Product.find_by(shopify_id: new_product_id)
-    my_old_variant = EllieVariant.find_by(product_id: old_product.shopify_id)
-    my_new_variant = EllieVariant.find_by(product_id: new_product_id)
-    Resque.logger.debug "new_variant = #{my_new_variant.inspect}"
     Resque.logger.debug "my_new_product = #{my_new_product.inspect}"
     Resque.logger.debug "my_old_product = #{old_product.inspect}"
 
@@ -75,17 +122,14 @@ module ResqueHelper
                 AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}'
                 AND is_prepaid = 1;"
     my_orders = Order.find_by_sql(sql_query)
-    my_order_id = ''
 
     my_orders.each do |temp_order|
       temp_order.line_items.each do |l_item|
         begin
-        Resque.logger.debug "l_item['subscription_id'] == subscription_id: #{l_item["subscription_id"].to_s == subscription_id}"
         if l_item["subscription_id"].to_s == subscription_id
           Resque.logger.info "updating l_item with new: #{my_new_product.title} data"
           l_item['properties'].each do |prop|
             prop['value'] = my_new_product.title if (prop['name'] == "product_collection")
-            prop['value'] = my_new_product.shopify_id if (prop['name'] == "product_id")
           end
           updated_line_item.push(l_item)
         else
@@ -95,12 +139,12 @@ module ResqueHelper
           Resque.logger.error "error: #{e}"
         end
       end
-      my_order_id = temp_order.order_id
+      @my_order_id = temp_order.order_id
     end
 
     Resque.logger.info "PROVIDE CURRENT ORDERS WORKER DONE"
     response_hash = {
-      "my_order_id" => my_order_id,
+      "my_order_id" => @my_order_id,
       "o_array" => updated_line_item,
     }
     return response_hash
@@ -277,6 +321,48 @@ module ResqueHelper
       res.push(new_line_item)
     end
     return res
+  end
+
+  # Internal: appends "skipped" tag to shopify customer via api request
+  #
+  # cust_id - shopify_customer_id of customer being tagged
+  def apply_skip_tag(shopify_customer_id)
+    Resque.logger = Logger.new("#{Dir.getwd}/logs/shopify_skip_tagging.log")
+
+    apikey = ENV['SHOPIFY_API_KEY']
+    shopname = ENV['SHOPIFY_SHOP_NAME']
+    password = ENV['SHOPIFY_PASSWORD']
+    ShopifyAPI::Base.site = "https://#{apikey}:#{password}@#{shopname}.myshopify.com/admin"
+
+    #{"tags"=>"['terms_and_conditions_agreed', etc..]", "captures"=>[], "customer_id"=>"14512370"}
+    cust_id = shopify_customer_id
+    puts "We are working on customer #{cust_id}"
+    Resque.logger.info("We are working on customer #{cust_id}")
+    shop = ShopifyAPI::Shop.current
+    Resque.logger.info("shop = #{shop.inspect}")
+
+    mycustomer = ShopifyAPI::Customer.find(cust_id)
+    # Resque.logger.info("Here is the shopify customer #{mycustomer.attributes.inspect}")
+    puts mycustomer.tags
+    Resque.logger.info("here are the shopify customer's tags #{mycustomer.tags.inspect}")
+    mytags = Array.new
+    mytags = mycustomer.tags.split(",")
+    mytags.map! {|x| x.strip}
+    puts mytags
+    Resque.logger.debug("my tags array: #{mytags.inspect}")
+
+    if mytags.include? "skipped"
+        puts "nothing to do, customer already has skipped tag"
+        Resque.logger.debug("nothing to do, customer already has skipped tag")
+    else
+        puts "Adding skip tags"
+        mytags << "skipped"
+        newtags = mytags.join(",")
+        mycustomer.tags = newtags
+        mycustomer.save
+        puts "Customer tags are now #{mycustomer.tags}"
+        Resque.logger.debug("Customer updated tags are now #{mycustomer.tags}")
+    end
   end
 
 end

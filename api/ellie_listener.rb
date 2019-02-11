@@ -1,6 +1,7 @@
 require_relative 'config/environment'
 require_relative '../lib/recharge_active_record'
 require_relative '../lib/logging'
+require 'pry'
 
 class EllieListener < Sinatra::Base
   register Sinatra::ActiveRecordExtension
@@ -210,15 +211,19 @@ class EllieListener < Sinatra::Base
         # update orders locally
         queued_orders = Order.where("line_items @> ? AND status = ? AND is_prepaid = ?", [{subscription_id: subscription_id.to_i}].to_json, "QUEUED", 1)
         logger.info queued_orders.inspect
-        raise "Error updating sizes. Please try again later." unless queued_orders.any?
-
-        queued_orders.each do |my_order|
-          my_order.sizes_change(sizes, subscription_id)
-          my_order.save!
+        # raise "Error updating sizes. Please try again later." unless queued_orders.any?
+        if queued_orders.any?
+          queued_orders.each do |my_order|
+            my_order.sizes_change(sizes, subscription_id)
+            my_order.save!
+          end
+          # prepaid background worker
+          queuedd = Resque.enqueue_to(:change_prepaid_sizes, 'ChangePrepaidSizes', subscription_id, sizes)
+          raise "Error updating prepaid sizes. Please try again later." unless queuedd
+        else
+          queued = Resque.enqueue_to(:change_sizes, 'ChangeSizes', subscription_id, sizes)
+          raise "Error updating sizes. Please try again later." unless queued
         end
-        # prepaid background worker
-        queuedd = Resque.enqueue_to(:change_prepaid_sizes, 'ChangePrepaidSizes', subscription_id, sizes)
-        raise "Error updating prepaid sizes. Please try again later." unless queuedd
       else
         queued = Resque.enqueue_to(:change_sizes, 'ChangeSizes', subscription_id, sizes)
         raise "Error updating sizes. Please try again later." unless queued
@@ -261,7 +266,6 @@ class EllieListener < Sinatra::Base
       return [400, @default_headers, {error: 'invalid payload data', details: e}.to_json]
     end
     skip_res = sub.skip
-    # FIXME: currently does not allow skipping prepaid subscriptions
     queue_res = Subscription.async :skip!, subscription_id
     if queue_res
       SkipReason.create(
@@ -299,44 +303,54 @@ class EllieListener < Sinatra::Base
       puts "local_sub = #{local_sub.inspect}"
 
       if local_sub.prepaid_switchable?
-        sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{local_sub_id}}]'
-                    AND status = 'QUEUED' AND scheduled_at > '#{now.strftime('%F %T')}'
-                    AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}'
+        sql_query = "SELECT * FROM orders WHERE line_items @>
+                    '[{\"subscription_id\": #{local_sub_id}}]'
+                    AND status = 'QUEUED' AND scheduled_at >
+                    '#{now.strftime('%F %T')}' AND scheduled_at <
+                    '#{now.end_of_month.strftime('%F %T')}'
                     AND is_prepaid = 1;"
         my_orders = Order.find_by_sql(sql_query)
-        my_orders.each do |temp_order|
-          @updated = false
-          temp_order.line_items.each do |my_hash|
-            puts my_hash["title"]
-            puts "my_hash['subscription_id'] value and class = #{my_hash['subscription_id']}, #{my_hash['subscription_id'].class}"
-            puts "local_sub_id value and class = #{local_sub_id}, #{local_sub_id.class}"
-            puts "do they match? #{my_hash["subscription_id"] == local_sub_id.to_i}"
+        if my_orders != []
 
-            if my_hash["subscription_id"] == local_sub_id.to_i
-              puts "FOUND MATCHING Line Item based on sub id: #{local_sub_id}"
-              my_hash['properties'].each do |prop|
-                if prop['name'] == "product_collection"
-                  prop['value'] = my_new_product.product_title
+          my_orders.each do |temp_order|
+            @updated = false
+            temp_order.line_items.each do |my_hash|
+              if my_hash["subscription_id"] == local_sub_id.to_i
+                puts "FOUND MATCHING Line Item based on sub id: #{local_sub_id}"
+                my_hash['properties'].each do |prop|
+                  if prop['name'] == "product_collection"
+                    prop['value'] = my_new_product.product_title
+                  end
                 end
-                if prop['name'] == "product_id"
-                  prop['value'] = my_new_product.product_id
-                end
+                puts "updated line item:"
+                puts temp_order.line_items.inspect
+                @updated = true
               end
-              puts "updated line item:"
-              puts temp_order.line_items.inspect
-              @updated = true
+            end
+
+            if @updated == true
+              temp_order.save!
+              Resque.enqueue_to(:switch_product, 'SubscriptionSwitchPrepaid', myjson)
+              return [200, @default_headers, {message: "Prepaid subscription successfully updated"}.to_json]
+            else
+              return [500, @default_headers, {message: "error within orders, see logs"}.to_json]
             end
           end
-          if @updated == true
-            temp_order.save!
-            Resque.enqueue_to(:switch_product, 'SubscriptionSwitchPrepaid', myjson)
-            return [200, @default_headers, {message: "Prepaid subscription successfully updated"}.to_json]
-          else
-            return [500, @default_headers, {message: "error within orders, see logs"}.to_json]
+        else
+          # edge case where all orders success, customer not re-billed yet
+          puts "INVOKING PrepaidCollectionSwitch"
+          new_collection = Product.find(myjson['real_alt_product_id']).title
+          puts "New product collection #{new_collection}"
+          my_properties = local_sub.raw_line_item_properties
+
+          my_properties.map do |mystuff|
+            next unless mystuff['name'] == 'product_collection'
+            mystuff['value'] = new_collection
           end
+          local_sub.raw_line_item_properties = my_properties
+          local_sub.save!
+          Resque.enqueue_to(:switch_collection, 'PrepaidCollectionSwitch', myjson)
         end
-
-
       elsif local_sub.switchable? && !local_sub.prepaid?
         local_sub.shopify_product_id = my_new_product.product_id
         local_sub.shopify_variant_id = my_new_product.variant_id
@@ -350,12 +364,9 @@ class EllieListener < Sinatra::Base
         #puts "#{key}, #{value}"
         if mystuff['name'] == 'product_collection'
             mystuff['value'] = my_new_product.product_collection
-            
           end
         end
         local_sub.raw_line_item_properties = my_properties
-
-
 
         local_sub.save!
         Resque.enqueue_to(:switch_product, 'SubscriptionSwitch', myjson)
@@ -372,7 +383,7 @@ class EllieListener < Sinatra::Base
     my_action = params['action']
     my_now = Date.current.day
     puts "Day of the month is #{my_now}"
-    if my_now < 50
+    if my_now < 5
       if my_action == "skip_month"
         #Add code to immediately skip the sub in DB only here
         local_sub_id = params['subscription_id']
@@ -383,19 +394,19 @@ class EllieListener < Sinatra::Base
           puts "temp_subscription w/ new charge date = #{temp_subscription.inspect}"
           sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{local_sub_id}}]' AND status = 'QUEUED';"
           my_queued_orders = Order.find_by_sql(sql_query)
-
-          my_queued_orders.each do |order|
-            my_time = order.scheduled_at
-            puts "was scheduled_at: #{my_time}"
-            order.scheduled_at = my_time + 1.month
-            puts "now scheduled for: #{order.scheduled_at}"
-            puts order.inspect
-            puts "============================================="
-            order.save
+          if my_queued_orders.any?
+            my_queued_orders.each do |order|
+              my_time = order.scheduled_at
+              puts "was scheduled_at: #{my_time}"
+              order.scheduled_at = my_time + 1.month
+              puts "now scheduled for: #{order.scheduled_at}"
+              puts order.inspect
+              puts "============================================="
+              order.save
+            end
           end
           temp_subscription.save!
           Resque.enqueue_to(:skip_product_prepaid, 'SubscriptionSkipPrepaid', params)
-
         elsif temp_subscription.skippable?
           puts "temp_subscription = #{temp_subscription.inspect}"
           local_date = temp_subscription.next_charge_scheduled_at
@@ -542,25 +553,31 @@ class EllieListener < Sinatra::Base
     if sub.prepaid?
       skip_value = sub.prepaid_skippable?
       switch_value = sub.prepaid_switchable?
-      # reutrn false if no queued orders scheduled in current month
       if sub.get_order_props
         res = sub.get_order_props
         puts "=====> VALUES FROM GET_ORDER PROPS IN TRANFORM_SUBS: TITLE=#{res[:my_title]} SHIP DATE: #{res[:ship_date]}"
         title_value = res[:my_title]
         shipping_date = res[:ship_date].strftime('%F')
       else
-        title_value = sub.current_order_data[:my_title]
+        if sub.all_orders_sent?(sub.id)
+          sub.raw_line_item_properties.each do |item|
+            next unless item['name'] == 'product_collection'
+            @title_value = item['value']
+          end
+        else
+          @title_value = sub.current_order_data[:my_title]
+        end
         shipping_date = sub.current_order_data[:ship_date].strftime('%F')
       end
     else
-      title_value = sub.product_title
+      @title_value = sub.product_title
       skip_value = sub.skippable?
       switch_value = sub.switchable?
     end
     result = {
       shopify_product_id: sub.shopify_product_id.to_i,
       subscription_id: sub.subscription_id.to_i,
-      product_title: title_value,
+      product_title: @title_value,
       next_charge: sub.next_charge_scheduled_at.try{|time| time.strftime('%Y-%m-%d')},
       charge_date: sub.next_charge_scheduled_at.try{|time| time.strftime('%Y-%m-%d')},
       sizes: sub.sizes,
@@ -571,4 +588,5 @@ class EllieListener < Sinatra::Base
     }
     return result
   end
+  #binding.pry
 end

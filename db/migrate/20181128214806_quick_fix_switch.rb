@@ -1,4 +1,4 @@
-class SwitchableProducts < ActiveRecord::Migration[5.1]
+class QuickFixSwitch < ActiveRecord::Migration[5.1]
   def up
     create_table :switchable_products do |t|
       t.string :product_title
@@ -11,4 +11,5 @@ class SwitchableProducts < ActiveRecord::Migration[5.1]
     remove_index :switchable_products, :product_id
     drop_table :switchable_products
   end
+
 end

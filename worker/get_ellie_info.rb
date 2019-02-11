@@ -1016,12 +1016,16 @@ module DetermineInfo
 
           my_insert = "insert into switchable_products (product_title, product_id, threepk) values ($1, $2, $3)"
         @conn.prepare('statement1', "#{my_insert}")
+<<<<<<< HEAD
         CSV.foreach('feb2019_switchable_products2.csv', :encoding => 'ISO-8859-1', :headers => true) do |row|
+=======
+        CSV.foreach('december2018_staging_skippable_products.csv', :encoding => 'ISO-8859-1', :headers => true) do |row|
+>>>>>>> no_queued_prepaid
           #puts row.inspect
           prod_title = row['product_title']
           prod_id = row['product_id']
           mythreepk = row['threepk']
-          
+
           @conn.exec_prepared('statement1', [prod_title, prod_id, mythreepk])
         end
           @conn.close
@@ -1034,7 +1038,11 @@ module DetermineInfo
 
       my_insert = "insert into matching_products (new_product_title, incoming_product_id, threepk, outgoing_product_id) values ($1, $2, $3, $4)"
       @conn.prepare('statement1', "#{my_insert}")
+<<<<<<< HEAD
       CSV.foreach('feb2019_matching_products.csv', :encoding => 'ISO-8859-1', :headers => true) do |row|
+=======
+      CSV.foreach('december2018_matching_products.csv', :encoding => 'ISO-8859-1', :headers => true) do |row|
+>>>>>>> no_queued_prepaid
         #puts row.inspect
         title = row['new_product_title']
         incoming_prod_id = row['incoming_product_id']
@@ -1054,7 +1062,11 @@ module DetermineInfo
 
       my_insert = "insert into alternate_products (product_title, product_id, variant_id, sku, product_collection) values ($1, $2, $3, $4, $5)"
       @conn.prepare('statement1', "#{my_insert}")
+<<<<<<< HEAD
       CSV.foreach('feb2019_alternate_products.csv', :encoding => 'ISO-8859-1', :headers => true) do |row|
+=======
+      CSV.foreach('december2018_alternate_products.csv', :encoding => 'ISO-8859-1', :headers => true) do |row|
+>>>>>>> no_queued_prepaid
         #puts row.inspect
         title = row['product_title']
         prod_id = row['product_id']

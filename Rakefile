@@ -14,9 +14,9 @@ Resque.logger =
   end
 
 namespace :auto_config do
-  desc 'auto configures skippable table'
-  task :skippable do
-    MonthlySetup.new.skippable_config
+  desc 'auto configures switchable table'
+  task :switchable do
+    MonthlySetup.new.switchable_config
   end
 
   desc 'auto configures alternate table'
@@ -31,7 +31,7 @@ namespace :auto_config do
 
  # run ellie_pull[products] then  'ruby early_product_tags.rb' (scripts/auto/early_product_tags.rb)
   desc 'runs entire auto config block'
-  task :splat => [:alternate, :matching, :skippable]
+  task :splat => [:alternate, :matching, :switchable]
 end
 
 # NEW (Neville 8/15/18)
@@ -135,8 +135,8 @@ task :sync_products do |t|
   ShopifyPull.async :all_products
 end
 #
-#load_skippable_products
-desc 'load this months skippable products for customers valid skippable products'
+#load_switchable_products
+desc 'load this months switchable products for customers valid switchable products'
 task :load_switchable_products do |t|
   DetermineInfo::InfoGetter.new.load_switchable_products
 end

@@ -12,17 +12,17 @@ class SubscriptionSwitchPrepaid
     subscription_id = params['subscription_id']
     product_id = params['product_id']
     my_variant = EllieVariant.find_by(product_id: product_id)
-    new_product = Product.find_by(shopify_id: new_product_id)
     new_product_id = AlternateProduct.find_by_product_id(params['real_alt_product_id']).product_id
+    new_product = Product.find_by(shopify_id: new_product_id)
 
     puts "We are working on subscription #{subscription_id}"
     Resque.logger.info "my new product id : #{new_product_id}"
     Resque.logger.info("We are working on subscription #{subscription_id}")
-    Resque.logger.info "my new product id is : #{new_product_id}"
+
     response_hash = provide_current_orders(product_id, subscription_id, new_product_id)
     updated_order_data = response_hash['o_array']
     my_order_id = response_hash['my_order_id']
-    Resque.logger.debug("new product info for subscription(#{subscription_id})'s orders are: #{updated_order_data.inspect}")
+    Resque.logger.info("new product info for subscription(#{subscription_id})'s orders are: #{updated_order_data.inspect}")
     recharge_change_header = params['recharge_change_header']
     puts recharge_change_header
 

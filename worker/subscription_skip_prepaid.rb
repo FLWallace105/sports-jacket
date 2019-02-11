@@ -66,28 +66,30 @@ class SubscriptionSkipPrepaid
       puts "We were not able to update the subscription" unless update_success
       Resque.logger.info("We were not able to update the subscription") unless update_success
 
-    # update all queued orders scheduled_at date
-      queued_orders.each do |order|
-        Resque.logger.info("order id: #{order['id']}")
-        temp_datetime = order['scheduled_at'].to_datetime
-        Resque.logger.debug("scheduled_at BEFORE skip: #{temp_datetime.inspect}")
-        new_datetime = temp_datetime >> 1
-        Resque.logger.debug("scheduled_at AFTER skip: #{new_datetime.inspect}")
-        @new_scheduled_at_str = new_datetime.strftime("%FT%T")
-        body = {"scheduled_at" => @new_scheduled_at_str}.to_json
-        puts "Pushing new scheduled_at date to ReCharge: #{body}"
-        @my_update_order = HTTParty.post("https://api.rechargeapps.com/orders/#{order['id']}/change_date", :headers => recharge_change_header, :body => body, :timeout => 80)
-        update_success = @my_update_order.success?
+      # update all queued orders scheduled_at date
+      if orders.success?
+        queued_orders.each do |order|
+          Resque.logger.info("order id: #{order['id']}")
+          temp_datetime = order['scheduled_at'].to_datetime
+          Resque.logger.debug("scheduled_at BEFORE skip: #{temp_datetime.inspect}")
+          new_datetime = temp_datetime >> 1
+          Resque.logger.debug("scheduled_at AFTER skip: #{new_datetime.inspect}")
+          @new_scheduled_at_str = new_datetime.strftime("%FT%T")
+          body = {"scheduled_at" => @new_scheduled_at_str}.to_json
+          puts "Pushing new scheduled_at date to ReCharge: #{body}"
+          @my_update_order = HTTParty.post("https://api.rechargeapps.com/orders/#{order['id']}/change_date", :headers => recharge_change_header, :body => body, :timeout => 80)
+          update_success = @my_update_order.success?
+          Resque.logger.debug(@my_update_order.inspect)
+        end
         Resque.logger.debug(@my_update_order.inspect)
       end
 
+      apply_skip_tag(shopify_customer_id) if update_success
       #Email results to customer
       new_date = {"date" => next_charge_str}
-      params = {"subscription_id" => sub_id, "action" => "skipping", "details" => new_date   }
+      params = { "subscription_id" => sub_id, "action" => "skipping", "details" => new_date }
       puts "params we are sending to SendEmailToCustomer = #{params.inspect}"
       Resque.enqueue(SendEmailToCustomer, params)
-      Resque.logger.debug(@my_update_order.inspect)
-
     rescue Exception => e
       #send error email to Customer service
       Resque.enqueue(SendEmailToCS, params)
