@@ -557,8 +557,8 @@ class EllieListener < Sinatra::Base
       if sub.get_order_props
         res = sub.get_order_props
         puts "=====> VALUES FROM GET_ORDER PROPS IN TRANFORM_SUBS: TITLE=#{res[:my_title]} SHIP DATE: #{res[:ship_date]}"
-        title_value = res[:my_title]
-        shipping_date = res[:ship_date].strftime('%F')
+        @title_value = res[:my_title]
+        @shipping_date = res[:ship_date].strftime('%F')
       else
         if sub.all_orders_sent?(sub.id)
           sub.raw_line_item_properties.each do |item|
@@ -568,7 +568,7 @@ class EllieListener < Sinatra::Base
         else
           @title_value = sub.current_order_data[:my_title]
         end
-        shipping_date = sub.current_order_data[:ship_date].strftime('%F')
+        @shipping_date = sub.current_order_data[:ship_date].strftime('%F')
       end
     else
       @title_value = sub.product_title
@@ -585,7 +585,7 @@ class EllieListener < Sinatra::Base
       prepaid: sub.prepaid?,
       skippable: skip_value,
       can_choose_alt_product: switch_value,
-      next_ship_date: shipping_date,
+      next_ship_date: @shipping_date,
     }
     return result
   end
