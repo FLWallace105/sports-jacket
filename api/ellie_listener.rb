@@ -255,7 +255,7 @@ class EllieListener < Sinatra::Base
     output = {subscription: subscription}
     [200, @default_headers, output.to_json]
   end
-  # /subscription/:subscription_id/skip is old code
+  # /subscription/:subscription_id/skip is depreciated
   post '/subscription/:subscription_id/skip' do |subscription_id|
     sub = Subscription.find subscription_id
     return [404, @default_headers, {error: 'subscription not found'}.to_json] if sub.nil?
@@ -311,7 +311,6 @@ class EllieListener < Sinatra::Base
                     AND is_prepaid = 1;"
         my_orders = Order.find_by_sql(sql_query)
         if my_orders != []
-
           my_orders.each do |temp_order|
             @updated = false
             temp_order.line_items.each do |my_hash|

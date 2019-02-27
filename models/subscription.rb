@@ -434,7 +434,6 @@ class Subscription < ActiveRecord::Base
     else
       my_line_item_hash = order.line_items
     end
-
     my_line_item_hash.each do |item|
       puts "SUB ID IN LINE_ITEM_PARSE: #{subscription_id} , class = #{subscription_id.class}\n\n"
       puts "item['subscription_id'] =#{item['subscription_id']} , sub_id param=#{subscription_id} match?: #{item['subscription_id'].to_s == subscription_id}"
