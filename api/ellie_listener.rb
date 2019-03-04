@@ -209,7 +209,7 @@ class EllieListener < Sinatra::Base
       sub.save!
       if sub.prepaid?
         # update orders locally
-        queued_orders = Order.where("line_items @> ? AND status = ? AND is_prepaid = ?", [{subscription_id: subscription_id.to_i}].to_json, "QUEUED", 1)
+        queued_orders = Order.where("line_items @> ? AND status = ?", [{subscription_id: subscription_id.to_i}].to_json, "QUEUED")
         logger.info queued_orders.inspect
         # raise "Error updating sizes. Please try again later." unless queued_orders.any?
         if queued_orders.any?
@@ -307,8 +307,7 @@ class EllieListener < Sinatra::Base
                     '[{\"subscription_id\": #{local_sub_id}}]'
                     AND status = 'QUEUED' AND scheduled_at >
                     '#{now.strftime('%F %T')}' AND scheduled_at <
-                    '#{now.end_of_month.strftime('%F %T')}'
-                    AND is_prepaid = 1;"
+                    '#{now.end_of_month.strftime('%F %T')}';"
         my_orders = Order.find_by_sql(sql_query)
         if my_orders != []
           my_orders.each do |temp_order|
@@ -382,8 +381,7 @@ class EllieListener < Sinatra::Base
     my_action = params['action']
     my_now = Date.current.day
     puts "Day of the month is #{my_now}"
-    # TODO(Neville) revert back to 5
-    if my_now < 50
+    if my_now < 5
       if my_action == "skip_month"
         #Add code to immediately skip the sub in DB only here
         local_sub_id = params['subscription_id']
@@ -553,12 +551,14 @@ class EllieListener < Sinatra::Base
     if sub.prepaid?
       skip_value = sub.prepaid_skippable?
       switch_value = sub.prepaid_switchable?
+      # returns next queued order this month if it exists
       if sub.get_order_props
         res = sub.get_order_props
         puts "=====> VALUES FROM GET_ORDER PROPS IN TRANFORM_SUBS: TITLE=#{res[:my_title]} SHIP DATE: #{res[:ship_date]}"
         @title_value = res[:my_title]
         @shipping_date = res[:ship_date].strftime('%F')
       else
+        # returns true if customer recieved all orders for subcription
         if sub.all_orders_sent?(sub.id)
           sub.raw_line_item_properties.each do |item|
             next unless item['name'] == 'product_collection'

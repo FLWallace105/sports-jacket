@@ -154,6 +154,77 @@ RSpec.describe EllieListener do
         )
       end
     end
+    # context "no_queued_" do
+    #   let(:base_date) { Date.today + 1 << 3 }
+    #   it "returns most recent order info" do
+    #     cust = FactoryBot.create(:customer)
+    #     sub = FactoryBot.create(
+    #       :subscription_with_line_items,
+    #       customer_id: cust.customer_id,
+    #       next_charge_scheduled_at: base_date >> 3,
+    #     )
+    #     sub.line_items[0].name = "product_id"
+    #     sub.line_items[0].value = sub.shopify_product_id
+    #     order_1 = FactoryBot.create(
+    #       :order,
+    #       customer_id: cust.customer_id,
+    #       sub_id: sub.id,
+    #       status: 'SUCCESS',
+    #       is_prepaid: 0,
+    #       scheduled_at: base_date,
+    #       shipping_date: base_date,
+    #       first_name: cust.first_name,
+    #       last_name: cust.last_name,
+    #     )
+    #     order_2 = FactoryBot.create(
+    #       :order,
+    #       customer_id: cust.customer_id,
+    #       sub_id: sub.id,
+    #       first_name: cust.first_name,
+    #       last_name: cust.last_name,
+    #       status: 'SUCCESS',
+    #       is_prepaid: 0,
+    #       scheduled_at: base_date >> 1,
+    #       shipping_date: base_date >> 1,
+    #     )
+    #     order_3 = FactoryBot.create(
+    #       :order,
+    #       customer_id: cust.customer_id,
+    #       sub_id: sub.id,
+    #       status: 'SUCCESS',
+    #       is_prepaid: 0,
+    #       scheduled_at: base_date >> 2,
+    #       shipping_date: base_date >> 2,
+    #       first_name: cust.first_name,
+    #       last_name: cust.last_name,
+    #     )
+    #
+    #     get "/subscriptions_properties", :shopify_id => cust.shopify_customer_id
+    #
+    #     my_order2 = Order.find(order_2.order_id)
+    #     my_order3 = Order.find(order_3.order_id)
+    #     my_title = ""
+    #     my_order3.line_items[0]['properties'].each do |item|
+    #       my_title = item['value'] if item['name'] == 'product_collection'
+    #     end
+    #     my_sub = Subscription.find(sub.id)
+    #     res = JSON.parse(last_response.body)
+    #
+    #     expect(res[0]['subscription_id']).to eq(my_sub.subscription_id.to_i)
+    #     expect(res[0]['shopify_product_id']).to eq(my_sub.shopify_product_id.to_i)
+    #     expect(res[0]['product_title']).to eq(my_title)
+    #     expect(res[0]['next_charge']).to eq(
+    #       my_sub.next_charge_scheduled_at.try{|time| time.strftime('%Y-%m-%d')}
+    #     )
+    #     expect(res[0]['sizes']).to eq(my_sub.sizes)
+    #     expect(res[0]['prepaid']).to eq(true)
+    #     expect(res[0]['skippable']).to eq(true)
+    #     expect(res[0]['can_choose_alt_product']).to eq(true)
+    #     expect(res[0]['next_ship_date']).to eq(
+    #       my_sub.next_charge_scheduled_at.try{|time| time.strftime('%Y-%m-%d')}
+    #     )
+    #   end
+    # end
   end
 
   describe "PUT #subscription_switch" do
