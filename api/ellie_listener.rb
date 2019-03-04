@@ -552,12 +552,14 @@ class EllieListener < Sinatra::Base
     if sub.prepaid?
       skip_value = sub.prepaid_skippable?
       switch_value = sub.prepaid_switchable?
+      # returns next queued order this month if it exists
       if sub.get_order_props
         res = sub.get_order_props
         puts "=====> VALUES FROM GET_ORDER PROPS IN TRANFORM_SUBS: TITLE=#{res[:my_title]} SHIP DATE: #{res[:ship_date]}"
         title_value = res[:my_title]
         shipping_date = res[:ship_date].strftime('%F')
       else
+        # returns true if customer recieved all orders for subcription
         if sub.all_orders_sent?(sub.id)
           sub.raw_line_item_properties.each do |item|
             next unless item['name'] == 'product_collection'

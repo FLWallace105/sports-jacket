@@ -365,7 +365,7 @@ class Subscription < ActiveRecord::Base
   def current_order_data
     sql_query = "select  * from orders where line_items @>"\
     " '[{\"subscription_id\": #{subscription_id}}]' and status = 'SUCCESS'"\
-    " and scheduled_at <= '#{Date.today.strftime('%F %T')}' ORDER BY (scheduled_at) DESC"
+    " and scheduled_at = '#{Date.today.strftime('%F %T')}' ORDER BY (scheduled_at) DESC"
 
     my_order = Order.find_by_sql(sql_query).first
     puts "++++current_order_data = #{my_order.inspect}"
@@ -385,15 +385,15 @@ class Subscription < ActiveRecord::Base
         end
       end
     rescue StandardError => e
+      # handles edge cases where all orders not recieved and no order scheduled today
       puts "Current order not found for subscription_id: #{subscription_id}"
-      next_order = Order.where(
-        "line_items @> ? AND status = ? AND scheduled_at <= ?",
-        [{subscription_id: subscription_id}].to_json, "QUEUED", Time.zone.today.end_of_month.strftime('%F %T')
-      ).first
-      next_order_prop = line_item_parse(next_order)
+      my_item = SubLineItem.find_by(
+        subscription_id: subscription_id,
+        name: 'product_collection'
+      )
       return {
-          my_title: next_order_prop[:my_title],
-          ship_date: next_order_prop[:ship_date],
+          my_title: my_item.value,
+          ship_date: next_charge_scheduled_at,
         }
     end
     return {
