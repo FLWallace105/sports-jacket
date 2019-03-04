@@ -209,7 +209,7 @@ class EllieListener < Sinatra::Base
       sub.save!
       if sub.prepaid?
         # update orders locally
-        queued_orders = Order.where("line_items @> ? AND status = ? AND is_prepaid = ?", [{subscription_id: subscription_id.to_i}].to_json, "QUEUED", 1)
+        queued_orders = Order.where("line_items @> ? AND status = ?", [{subscription_id: subscription_id.to_i}].to_json, "QUEUED")
         logger.info queued_orders.inspect
         # raise "Error updating sizes. Please try again later." unless queued_orders.any?
         if queued_orders.any?
@@ -307,8 +307,7 @@ class EllieListener < Sinatra::Base
                     '[{\"subscription_id\": #{local_sub_id}}]'
                     AND status = 'QUEUED' AND scheduled_at >
                     '#{now.strftime('%F %T')}' AND scheduled_at <
-                    '#{now.end_of_month.strftime('%F %T')}'
-                    AND is_prepaid = 1;"
+                    '#{now.end_of_month.strftime('%F %T')}';"
         my_orders = Order.find_by_sql(sql_query)
         if my_orders != []
 
