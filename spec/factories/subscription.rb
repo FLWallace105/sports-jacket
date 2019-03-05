@@ -1,14 +1,14 @@
 require 'faker'
 
-SIZES = %w(S M L XL)
-PRODUCT_COLLECTION ||= "Fierce & Floral - 3 Items"
-PREPAID_THREE ||= 1635509436467
-PREPAID_FIVE ||= 1635509469235
+SIZES = %w(XS S M L XL)
+PRODUCT_COLLECTION ||= "Mauve Muse - 3 Items"
+PREPAID_3_ACTIVE ||= 2209786298426
+PREPAID_5_ACTIVE ||= 2209789771834
 FactoryBot.define do
   factory :subscription do
     subscription_id { Faker::Number.number(8) }
     product_title { PRODUCT_COLLECTION }
-    shopify_product_id { PREPAID_THREE }
+    shopify_product_id { PREPAID_3_ACTIVE.to_s }
     shopify_variant_id { rand.to_s[2..14] }
     sku { rand.to_s[2..15] }
     order_interval_unit { "month" }
@@ -51,7 +51,7 @@ FactoryBot.define do
         value: "S"
     }] }
     expire_after_specific_number_charges { 0 }
-    customer
+    customer_id { "25181922" } #linked to devi_teem on ellieactive
     factory :subscription_with_line_items do
       transient do
         line_items_count { 2 }
