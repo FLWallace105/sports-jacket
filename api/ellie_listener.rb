@@ -310,17 +310,6 @@ class EllieListener < Sinatra::Base
                     '#{now.end_of_month.strftime('%F %T')}'
                     AND is_prepaid = 1;"
         my_orders = Order.find_by_sql(sql_query)
-
-        new_collection = Product.find(myjson['real_alt_product_id']).title
-        puts "New product collection #{new_collection}"
-
-        my_properties = local_sub.raw_line_item_properties
-        my_properties.map do |mystuff|
-          next unless mystuff['name'] == 'product_collection'
-          mystuff['value'] = new_collection
-        end
-        local_sub.raw_line_item_properties = my_properties
-        local_sub.save!
         # if subscription has QUEUED orders update their line_items properties as well
         if my_orders != []
           my_orders.each do |temp_order|
@@ -349,6 +338,16 @@ class EllieListener < Sinatra::Base
         else
           # edge case: subscription has no QUEUED orders left (customer not re-billed yet)
           puts "INVOKING PrepaidCollectionSwitch"
+          new_collection = Product.find(myjson['real_alt_product_id']).title
+          puts "New product collection #{new_collection}"
+
+          my_properties = local_sub.raw_line_item_properties
+          my_properties.map do |mystuff|
+            next unless mystuff['name'] == 'product_collection'
+            mystuff['value'] = new_collection
+          end
+          local_sub.raw_line_item_properties = my_properties
+          local_sub.save!
           Resque.enqueue_to(:switch_collection, 'PrepaidCollectionSwitch', myjson)
         end
       elsif local_sub.switchable? && !local_sub.prepaid?
