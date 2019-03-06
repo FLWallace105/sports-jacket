@@ -213,12 +213,10 @@ class Subscription < ActiveRecord::Base
       prepaid?,
       check_prepaid_orders,
       can_skip_hasnt_switched?,
-      # TODO(Neville) revert back to 5
-      today < 55,
+      today < 5,
     ]
     puts "PREPAID_SKIPPABLE?: prepaid: #{prepaid?}, check_prepaid_orders: #{check_prepaid_orders},"\
-    # TODO(Neville) revert back to 5
-    " today < 5: #{today < 55}, can_skip_hasnt_switched?: #{can_skip_hasnt_switched?}"
+    " today < 5: #{today < 5}, can_skip_hasnt_switched?: #{can_skip_hasnt_switched?}"
     skip_conditions.all?
   end
 
@@ -527,10 +525,11 @@ class Subscription < ActiveRecord::Base
   # and false means they cannot skip.
   def can_skip_hasnt_switched?(options = {})
     now = Time.zone.now
+    end_of_Month = Time.now.end_of_month.strftime('%F %T')
     options[:time] = now
     sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{subscription_id}}]'
                 AND status = 'QUEUED' AND scheduled_at > '#{now.beginning_of_month.strftime('%F %T')}'
-                AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}'
+                AND scheduled_at < '#{end_of_Month}'
                 AND is_prepaid = 1;"
     this_months_orders = Order.find_by_sql(sql_query)
     can_skip = false
@@ -554,9 +553,9 @@ class Subscription < ActiveRecord::Base
         end
       end
     elsif all_orders_sent?(subscription_id)
-      cutoff_date = Time.now.end_of_month
-      puts "#{cutoff_date}"
-      if next_charge_scheduled_at <= cutoff_date
+      today = Date.today.strftime('%F %T')
+      puts "#{end_of_Month}"
+      if (next_charge_scheduled_at > today) && (next_charge_scheduled_at <= end_of_Month)
         can_skip = true
       end
     end
@@ -569,10 +568,9 @@ class Subscription < ActiveRecord::Base
   #
   # returns true if subscription has no queued orders and next_charge_scheduled_at is > today
   def all_orders_sent?(sub_id)
-    week_ago = Date.today - 7
     sql_query = "SELECT * FROM orders WHERE
                   line_items @> '[{\"subscription_id\": #{sub_id}}]'
-                  AND status = 'QUEUED' AND scheduled_at > '#{week_ago.strftime('%F %T')}';"
+                  AND status = 'QUEUED' AND scheduled_at > '#{Date.today.strftime('%F %T')}';"
     upcoming_orders = Order.find_by_sql(sql_query)
     if next_charge_scheduled_at >= Date.today.strftime('%F %T') && upcoming_orders.empty?
       puts "all_orders_sent? = TRUE"
