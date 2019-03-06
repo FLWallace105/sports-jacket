@@ -209,28 +209,26 @@ class Subscription < ActiveRecord::Base
 
   def prepaid_skippable?
     today = Time.zone.now.day
-    order_check = check_prepaid_orders
     skip_conditions = [
       prepaid?,
-      order_check,
+      check_prepaid_orders,
       can_skip_hasnt_switched?,
       # TODO(Neville) revert back to 5
       today < 55,
     ]
-    puts "PREPAID_SKIPPABLE?: prepaid: #{prepaid?}, order_check: #{order_check},"\
+    puts "PREPAID_SKIPPABLE?: prepaid: #{prepaid?}, check_prepaid_orders: #{check_prepaid_orders},"\
     # TODO(Neville) revert back to 5
     " today < 5: #{today < 55}, can_skip_hasnt_switched?: #{can_skip_hasnt_switched?}"
     skip_conditions.all?
   end
 
   def prepaid_switchable?
-    order_check = check_prepaid_orders
     skip_conditions = [
       prepaid?,
-      order_check,
+      check_prepaid_orders,
       !prepaid_switched?,
     ]
-    puts "PREPAID_SWITCHABLE?: prepaid: #{prepaid?}, order_check: #{order_check},"\
+    puts "PREPAID_SWITCHABLE?: prepaid: #{prepaid?}, check_prepaid_orders: #{check_prepaid_orders},"\
     " is prepaid sub switchable?: #{!prepaid_switched?}"
     skip_conditions.all?
   end
