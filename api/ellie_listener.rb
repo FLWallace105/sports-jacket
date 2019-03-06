@@ -209,7 +209,7 @@ class EllieListener < Sinatra::Base
       sub.save!
       if sub.prepaid?
         # update orders locally
-        queued_orders = Order.where("line_items @> ? AND status = ?", [{subscription_id: subscription_id.to_i}].to_json, "QUEUED")
+        queued_orders = Order.where("line_items @> ? AND status = ? AND is_prepaid = ?", [{subscription_id: subscription_id.to_i}].to_json, "QUEUED", 1)
         logger.info queued_orders.inspect
         # raise "Error updating sizes. Please try again later." unless queued_orders.any?
         if queued_orders.any?
@@ -307,8 +307,21 @@ class EllieListener < Sinatra::Base
                     '[{\"subscription_id\": #{local_sub_id}}]'
                     AND status = 'QUEUED' AND scheduled_at >
                     '#{now.strftime('%F %T')}' AND scheduled_at <
-                    '#{now.end_of_month.strftime('%F %T')}';"
+                    '#{now.end_of_month.strftime('%F %T')}'
+                    AND is_prepaid = 1;"
         my_orders = Order.find_by_sql(sql_query)
+
+        new_collection = Product.find(myjson['real_alt_product_id']).title
+        puts "New product collection #{new_collection}"
+
+        my_properties = local_sub.raw_line_item_properties
+        my_properties.map do |mystuff|
+          next unless mystuff['name'] == 'product_collection'
+          mystuff['value'] = new_collection
+        end
+        local_sub.raw_line_item_properties = my_properties
+        local_sub.save!
+        # if subscription has QUEUED orders update their line_items properties as well
         if my_orders != []
           my_orders.each do |temp_order|
             @updated = false
@@ -325,7 +338,6 @@ class EllieListener < Sinatra::Base
                 @updated = true
               end
             end
-
             if @updated == true
               temp_order.save!
               Resque.enqueue_to(:switch_product, 'SubscriptionSwitchPrepaid', myjson)
@@ -335,18 +347,8 @@ class EllieListener < Sinatra::Base
             end
           end
         else
-          # edge case where all orders success, customer not re-billed yet
+          # edge case: subscription has no QUEUED orders left (customer not re-billed yet)
           puts "INVOKING PrepaidCollectionSwitch"
-          new_collection = Product.find(myjson['real_alt_product_id']).title
-          puts "New product collection #{new_collection}"
-          my_properties = local_sub.raw_line_item_properties
-
-          my_properties.map do |mystuff|
-            next unless mystuff['name'] == 'product_collection'
-            mystuff['value'] = new_collection
-          end
-          local_sub.raw_line_item_properties = my_properties
-          local_sub.save!
           Resque.enqueue_to(:switch_collection, 'PrepaidCollectionSwitch', myjson)
         end
       elsif local_sub.switchable? && !local_sub.prepaid?

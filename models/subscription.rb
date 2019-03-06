@@ -215,10 +215,11 @@ class Subscription < ActiveRecord::Base
       order_check,
       can_skip_hasnt_switched?,
       # TODO(Neville) revert back to 5
-      today < 5,
+      today < 55,
     ]
     puts "PREPAID_SKIPPABLE?: prepaid: #{prepaid?}, order_check: #{order_check},"\
-    " today < 5: #{today < 5}, can_skip_hasnt_switched?: #{can_skip_hasnt_switched?}"
+    # TODO(Neville) revert back to 5
+    " today < 5: #{today < 55}, can_skip_hasnt_switched?: #{can_skip_hasnt_switched?}"
     skip_conditions.all?
   end
 
@@ -346,7 +347,7 @@ class Subscription < ActiveRecord::Base
     mon_end = Time.zone.today.end_of_month
     sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{subscription_id}}]'
                 AND scheduled_at <= '#{mon_end.strftime('%F %T')}'
-                AND status = 'QUEUED';"
+                AND status = 'QUEUED' AND is_prepaid = 1;"
     my_orders = Order.find_by_sql(sql_query)
     puts "queued orders this month for sub: #{subscription_id} =====>  #{my_orders.inspect}"
 
@@ -365,7 +366,7 @@ class Subscription < ActiveRecord::Base
   def current_order_data
     sql_query = "select  * from orders where line_items @>"\
     " '[{\"subscription_id\": #{subscription_id}}]' and status = 'SUCCESS'"\
-    " and scheduled_at = '#{Date.today.strftime('%F %T')}' ORDER BY (scheduled_at) DESC"
+    " and is_prepaid = 0 and scheduled_at = '#{Date.today.strftime('%F %T')}' ORDER BY (scheduled_at) DESC"
 
     my_order = Order.find_by_sql(sql_query).first
     puts "++++current_order_data = #{my_order.inspect}"
@@ -464,7 +465,8 @@ class Subscription < ActiveRecord::Base
                 line_items @> '[{\"subscription_id\": #{subscription_id}}]'
                 AND status = 'QUEUED'
                 AND scheduled_at > '#{now.beginning_of_month.strftime('%F %T')}'
-                AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}';"
+                AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}'
+                AND is_prepaid = 1;"
     this_months_orders = Order.find_by_sql(sql_query)
     order_check = false
     puts this_months_orders.inspect
@@ -492,7 +494,8 @@ class Subscription < ActiveRecord::Base
 
     sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{subscription_id}}]'
                 AND status = 'QUEUED' AND scheduled_at > '#{now.beginning_of_month.strftime('%F %T')}'
-                AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}';"
+                AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}'
+                AND is_prepaid = 1;"
     this_months_orders = Order.find_by_sql(sql_query)
     switched_this_month = true
 

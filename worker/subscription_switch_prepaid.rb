@@ -14,17 +14,36 @@ class SubscriptionSwitchPrepaid
     my_variant = EllieVariant.find_by(product_id: product_id)
     new_product_id = AlternateProduct.find_by_product_id(params['real_alt_product_id']).product_id
     new_product = Product.find_by(shopify_id: new_product_id)
+    incoming_product_id = params['alt_product_id']
+    recharge_change_header = params['recharge_change_header']
 
     puts "We are working on subscription #{subscription_id}"
     Resque.logger.info "my new product id : #{new_product_id}"
-    Resque.logger.info("We are working on subscription #{subscription_id}")
 
+    # UPDATE SUBSCRIPTION
+    Resque.logger.info("We are working on subscription #{subscription_id}")
+    my_item = SubLineItem.find_by(
+      subscription_id: subscription_id,
+      name: 'product_collection'
+    )
+    current_product_id = Product.find_by_title(my_item['value']).shopify_id
+    hash_array = provide_no_queued_info(current_product_id, incoming_product_id, subscription_id)
+    sub_body = hash_array['recharge'].to_json
+    puts "subscription switch prepaid request Body = #{sub_body.inspect}"
+    Resque.logger.info "subscription switch prepaid request Body = #{sub_body.inspect}"
+    my_update_sub = HTTParty.put(
+      "https://api.rechargeapps.com/subscriptions/#{subscription_id}",
+      :headers => recharge_change_header, :body => sub_body, :timeout => 80
+    )
+    puts my_update_sub.inspect
+    Resque.logger.info("Recharge sub update response: #{my_update_sub.inspect}")
+    # END OF UPDATE SUBSCRIPTION
+
+    # UPDATE QUEUED ORDERS
     response_hash = provide_current_orders(product_id, subscription_id, new_product_id)
     updated_order_data = response_hash['o_array']
     my_order_id = response_hash['my_order_id']
     Resque.logger.info("new product info for subscription(#{subscription_id})'s orders are: #{updated_order_data.inspect}")
-    recharge_change_header = params['recharge_change_header']
-    puts recharge_change_header
 
     updated_order_data.each do |l_item|
       my_line_item = {
@@ -53,6 +72,7 @@ class SubscriptionSwitchPrepaid
     # line_items before, otherwise only new parameters will remain! (from Recharge docs)
     my_update_order = HTTParty.put("https://api.rechargeapps.com/orders/#{my_order_id}", :headers => recharge_change_header, :body => body, :timeout => 80)
     Resque.logger.info "MY RECHARGE RESPONSE: #{my_update_order.parsed_response}"
+    # END OF UPDATE ORDERS
 
     Resque.logger.debug(my_update_order.inspect)
     # Below for email to customer
