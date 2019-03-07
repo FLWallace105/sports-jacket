@@ -209,27 +209,24 @@ class Subscription < ActiveRecord::Base
 
   def prepaid_skippable?
     today = Time.zone.now.day
-    order_check = check_prepaid_orders
     skip_conditions = [
       prepaid?,
-      order_check,
+      check_prepaid_orders,
       can_skip_hasnt_switched?,
-      # TODO(Neville) revert back to 5
-      today < 55,
+      today < 5,
     ]
-    puts "PREPAID_SKIPPABLE?: prepaid: #{prepaid?}, order_check: #{order_check},"\
-    " today < 55: #{today < 55}, can_skip_hasnt_switched?: #{can_skip_hasnt_switched?}"
+    puts "PREPAID_SKIPPABLE?: prepaid: #{prepaid?}, check_prepaid_orders: #{check_prepaid_orders},"\
+    " today < 5: #{today < 5}, can_skip_hasnt_switched?: #{can_skip_hasnt_switched?}"
     skip_conditions.all?
   end
 
   def prepaid_switchable?
-    order_check = check_prepaid_orders
     skip_conditions = [
       prepaid?,
-      order_check,
+      check_prepaid_orders,
       !prepaid_switched?,
     ]
-    puts "PREPAID_SWITCHABLE?: prepaid: #{prepaid?}, order_check: #{order_check},"\
+    puts "PREPAID_SWITCHABLE?: prepaid: #{prepaid?}, check_prepaid_orders: #{check_prepaid_orders},"\
     " is prepaid sub switchable?: #{!prepaid_switched?}"
     skip_conditions.all?
   end
@@ -365,7 +362,7 @@ class Subscription < ActiveRecord::Base
   def current_order_data
     sql_query = "select  * from orders where line_items @>"\
     " '[{\"subscription_id\": #{subscription_id}}]' and status = 'SUCCESS'"\
-    " and is_prepaid = 0 and scheduled_at <= '#{Date.today.strftime('%F %T')}'"
+    " and is_prepaid = 0 and scheduled_at = '#{Date.today.strftime('%F %T')}' ORDER BY (scheduled_at) DESC"
 
     my_order = Order.find_by_sql(sql_query).first
     puts "++++current_order_data = #{my_order.inspect}"
@@ -385,15 +382,15 @@ class Subscription < ActiveRecord::Base
         end
       end
     rescue StandardError => e
+      # handles edge cases where all orders not recieved and no order scheduled today
       puts "Current order not found for subscription_id: #{subscription_id}"
-      next_order = Order.where(
-        "line_items @> ? AND status = ? AND is_prepaid = ? AND scheduled_at <= ?",
-        [{subscription_id: subscription_id}].to_json, "QUEUED", 1, Time.zone.today.end_of_month.strftime('%F %T')
-      ).first
-      next_order_prop = line_item_parse(next_order)
+      my_item = SubLineItem.find_by(
+        subscription_id: subscription_id,
+        name: 'product_collection'
+      )
       return {
-          my_title: next_order_prop[:my_title],
-          ship_date: next_order_prop[:ship_date],
+          my_title: my_item.value,
+          ship_date: next_charge_scheduled_at,
         }
     end
     return {
@@ -433,7 +430,6 @@ class Subscription < ActiveRecord::Base
     else
       my_line_item_hash = order.line_items
     end
-
     my_line_item_hash.each do |item|
       puts "SUB ID IN LINE_ITEM_PARSE: #{subscription_id} , class = #{subscription_id.class}\n\n"
       puts "item['subscription_id'] =#{item['subscription_id']} , sub_id param=#{subscription_id} match?: #{item['subscription_id'].to_s == subscription_id}"
@@ -529,10 +525,11 @@ class Subscription < ActiveRecord::Base
   # and false means they cannot skip.
   def can_skip_hasnt_switched?(options = {})
     now = Time.zone.now
+    end_of_Month = Time.now.end_of_month.strftime('%F %T')
     options[:time] = now
     sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{subscription_id}}]'
                 AND status = 'QUEUED' AND scheduled_at > '#{now.beginning_of_month.strftime('%F %T')}'
-                AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}'
+                AND scheduled_at < '#{end_of_Month}'
                 AND is_prepaid = 1;"
     this_months_orders = Order.find_by_sql(sql_query)
     can_skip = false
@@ -556,9 +553,9 @@ class Subscription < ActiveRecord::Base
         end
       end
     elsif all_orders_sent?(subscription_id)
-      cutoff_date = Time.now.end_of_month
-      puts "#{cutoff_date}"
-      if next_charge_scheduled_at <= cutoff_date
+      today = Date.today.strftime('%F %T')
+      puts "#{end_of_Month}"
+      if (next_charge_scheduled_at > today) && (next_charge_scheduled_at <= end_of_Month)
         can_skip = true
       end
     end
@@ -566,16 +563,22 @@ class Subscription < ActiveRecord::Base
     return can_skip
   end
 
-  # Internal: query number of orders with status=SUCCESS
+  # Internal: query number of orders with status=QUEUED and scheduled_at > 1 week ago for
+  # added independency incase order is delayed
   #
-  # returns true if subscription has all 3 prepaid orders
-  # showing as shipped (status=SUCCESS).
+  # returns true if subscription has no queued orders and next_charge_scheduled_at is > today
   def all_orders_sent?(sub_id)
     sql_query = "SELECT * FROM orders WHERE
                   line_items @> '[{\"subscription_id\": #{sub_id}}]'
-                  AND status = 'SUCCESS';"
-    successful_orders = Order.find_by_sql(sql_query)
-    return successful_orders.size == 3
+                  AND status = 'QUEUED' AND scheduled_at > '#{Date.today.strftime('%F %T')}';"
+    upcoming_orders = Order.find_by_sql(sql_query)
+    if next_charge_scheduled_at >= Date.today.strftime('%F %T') && upcoming_orders.empty?
+      puts "all_orders_sent? = TRUE"
+      return true
+    else
+      puts "all_orders_sent? = FALSE"
+      return false
+    end
   end
 
 end

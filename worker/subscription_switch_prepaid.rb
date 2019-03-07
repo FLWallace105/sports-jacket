@@ -23,8 +23,8 @@ class SubscriptionSwitchPrepaid
     updated_order_data = response_hash['o_array']
     my_order_id = response_hash['my_order_id']
     Resque.logger.info("new product info for subscription(#{subscription_id})'s orders are: #{updated_order_data.inspect}")
+    incoming_product_id = params['alt_product_id']
     recharge_change_header = params['recharge_change_header']
-    puts recharge_change_header
 
     updated_order_data.each do |l_item|
       my_line_item = {

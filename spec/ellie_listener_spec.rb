@@ -154,10 +154,24 @@ RSpec.describe EllieListener do
         )
       end
     end
+    context "no_queued_not_charged", :focus do
+      it "returns the subscription product_collection" do
+        cust = FactoryBot.create(:customer)
+        my_sub = FactoryBot.create(
+          :subscription_with_line_items,
+          product_title: "Mauve Muse - 3 Items",
+          next_charge_scheduled_at: "2019-03-10 00:00:00",
+          customer_id: cust.customer_id,
+        )
+        expect(my_sub).to be_valid
+        get "/subscriptions_properties", shopify_id: cust.shopify_customer_id
+        puts last_response.body
+      end
+    end
   end
 
   describe "PUT #subscription_switch" do
-    context "when subscription is prepaid", :focus do
+    context "when subscription is prepaid" do
       let(:base_date) { Date.today + 1 << 1 }
       it "switches next QUEUED Order.line_items product_collection" do
         cust = FactoryBot.create(:customer)
@@ -403,55 +417,4 @@ RSpec.describe EllieListener do
       end
     end
   end
-
-  # describe "PUT #subscription/:subscription_id/sizes", :focus  do
-  #   context "when subscription is prepaid" do
-  #     let(:base_date) { Date.today + 1 << 1 }
-  #     it "changes sub and queued order sizes" do
-  #       cust = FactoryBot.create(:customer)
-  #       sub = FactoryBot.create(
-  #         :subscription_with_line_items,
-  #         customer_id: cust.customer_id,
-  #         next_charge_scheduled_at: base_date >> 3,
-  #       )
-  #       sub.line_items[0].name = "product_id"
-  #       sub.line_items[0].value = sub.shopify_product_id
-  #       order_1 = FactoryBot.create(
-  #         :order,
-  #         customer_id: cust.customer_id,
-  #         sub_id: sub.id,
-  #         status: 'SUCCESS',
-  #         is_prepaid: 0,
-  #         scheduled_at: base_date,
-  #         first_name: cust.first_name,
-  #         last_name: cust.last_name,
-  #       )
-  #       order_2 = FactoryBot.create(
-  #         :order,
-  #         customer_id: cust.customer_id,
-  #         sub_id: sub.id,
-  #         first_name: cust.first_name,
-  #         last_name: cust.last_name,
-  #         scheduled_at: base_date >> 1
-  #       )
-  #       order_3 = FactoryBot.create(
-  #         :order,
-  #         customer_id: cust.customer_id,
-  #         sub_id: sub.id,
-  #         scheduled_at: base_date >> 2,
-  #         first_name: cust.first_name,
-  #         last_name: cust.last_name,
-  #       )
-  #       my_body = { "leggings" => "XS", "sports-bra" => "XS", "tops" => "XS"}.to_json
-  #
-  #       put "/subscription/#{sub.id}/sizes", body: my_body
-  #       my_order2 = Order.find(order_2.order_id)
-  #       my_order3 = Order.find(order_3.order_id)
-  #       my_sub = Subscription.find(sub.id)
-  #       expect(last_response.body).to eq(last_response)
-  #     end
-  #   end
-  # end
-
-
 end

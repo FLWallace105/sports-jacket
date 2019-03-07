@@ -255,7 +255,7 @@ class EllieListener < Sinatra::Base
     output = {subscription: subscription}
     [200, @default_headers, output.to_json]
   end
-  # /subscription/:subscription_id/skip is old code
+  # /subscription/:subscription_id/skip is depreciated
   post '/subscription/:subscription_id/skip' do |subscription_id|
     sub = Subscription.find subscription_id
     return [404, @default_headers, {error: 'subscription not found'}.to_json] if sub.nil?
@@ -310,8 +310,8 @@ class EllieListener < Sinatra::Base
                     '#{now.end_of_month.strftime('%F %T')}'
                     AND is_prepaid = 1;"
         my_orders = Order.find_by_sql(sql_query)
+        # if subscription has QUEUED orders update their line_items properties as well
         if my_orders != []
-
           my_orders.each do |temp_order|
             @updated = false
             temp_order.line_items.each do |my_hash|
@@ -327,7 +327,6 @@ class EllieListener < Sinatra::Base
                 @updated = true
               end
             end
-
             if @updated == true
               temp_order.save!
               Resque.enqueue_to(:switch_product, 'SubscriptionSwitchPrepaid', myjson)
@@ -337,12 +336,12 @@ class EllieListener < Sinatra::Base
             end
           end
         else
-          # edge case where all orders success, customer not re-billed yet
+          # edge case: subscription has no QUEUED orders left (customer not re-billed yet)
           puts "INVOKING PrepaidCollectionSwitch"
           new_collection = Product.find(myjson['real_alt_product_id']).title
           puts "New product collection #{new_collection}"
-          my_properties = local_sub.raw_line_item_properties
 
+          my_properties = local_sub.raw_line_item_properties
           my_properties.map do |mystuff|
             next unless mystuff['name'] == 'product_collection'
             mystuff['value'] = new_collection
@@ -553,12 +552,14 @@ class EllieListener < Sinatra::Base
     if sub.prepaid?
       skip_value = sub.prepaid_skippable?
       switch_value = sub.prepaid_switchable?
+      # returns next queued order this month if it exists
       if sub.get_order_props
         res = sub.get_order_props
         puts "=====> VALUES FROM GET_ORDER PROPS IN TRANFORM_SUBS: TITLE=#{res[:my_title]} SHIP DATE: #{res[:ship_date]}"
         @title_value = res[:my_title]
-        shipping_date = res[:ship_date].strftime('%F')
+        @shipping_date = res[:ship_date].strftime('%F')
       else
+        # returns true if customer recieved all orders for subcription
         if sub.all_orders_sent?(sub.id)
           sub.raw_line_item_properties.each do |item|
             next unless item['name'] == 'product_collection'
@@ -567,7 +568,7 @@ class EllieListener < Sinatra::Base
         else
           @title_value = sub.current_order_data[:my_title]
         end
-        shipping_date = sub.current_order_data[:ship_date].strftime('%F')
+        @shipping_date = sub.current_order_data[:ship_date].strftime('%F')
       end
     else
       @title_value = sub.product_title
@@ -584,7 +585,7 @@ class EllieListener < Sinatra::Base
       prepaid: sub.prepaid?,
       skippable: skip_value,
       can_choose_alt_product: switch_value,
-      next_ship_date: shipping_date,
+      next_ship_date: @shipping_date,
     }
     return result
   end

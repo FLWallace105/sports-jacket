@@ -1,6 +1,6 @@
 require 'faker'
 
-PRODUCT_COLLECTION ||= "Fierce & Floral - 3 Items"
+PRODUCT_COLLECTION ||= "Mauve Muse - 3 Items"
 PREPAID_THREE ||= 1635509436467
 PREPAID_FIVE ||= 1635509469235
 month_start = Time.now.beginning_of_month
@@ -75,7 +75,7 @@ FactoryBot.define do
       product_title: "3 Months 3 items",
       variant_title: "",
       subscription_id: sub_id.to_i,
-      shopify_product_id: PREPAID_THREE,
+      shopify_product_id: PREPAID_THREE.to_s,
       shopify_variant_id: rand.to_s[2..14],
     }] }
   end

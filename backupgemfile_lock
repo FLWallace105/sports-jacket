@@ -1,21 +1,29 @@
 GIT
   remote: https://github.com/stympy/faker.git
-  revision: 7673ce34fa4aff368b2856be3d7eb16e1589fbe4
+  revision: 89de0e5122774cbf46a14c5f90e0f8d653b90939
   branch: master
   specs:
-    faker (1.9.3)
+    faker (1.9.2)
       i18n (>= 0.7)
-      pastel (~> 0.7.2)
-      thor (~> 0.20.0)
-      tty-pager (~> 0.12.0)
-      tty-screen (~> 0.6.5)
-      tty-tree (~> 0.2.0)
 
 GEM
   remote: https://rubygems.org/
   specs:
-    activemodel (5.2.2)
-      activesupport (= 5.2.2)
+    actionpack (5.1.5)
+      actionview (= 5.1.5)
+      activesupport (= 5.1.5)
+      rack (~> 2.0)
+      rack-test (>= 0.6.3)
+      rails-dom-testing (~> 2.0)
+      rails-html-sanitizer (~> 1.0, >= 1.0.2)
+    actionview (5.1.5)
+      activesupport (= 5.1.5)
+      builder (~> 3.1)
+      erubi (~> 1.4)
+      rails-dom-testing (~> 2.0)
+      rails-html-sanitizer (~> 1.0, >= 1.0.3)
+    activemodel (5.1.5)
+      activesupport (= 5.1.5)
     activemodel-serializers-xml (1.0.2)
       activemodel (> 5.x)
       activesupport (> 5.x)
@@ -39,44 +47,90 @@ GEM
     class2 (0.3.0)
       activesupport (>= 3.2)
     coderay (1.1.2)
+<<<<<<< HEAD
     concurrent-ruby (1.1.4)
     diff-lcs (1.3)
-    dotenv (2.7.1)
-    equatable (0.5.0)
-    factory_bot (5.0.2)
+    dotenv (2.6.0)
+    factory_bot (5.0.0)
       activesupport (>= 4.2.0)
-    graphql (1.9.3)
+    graphql (1.8.14)
     graphql-client (0.14.0)
       activesupport (>= 3.0, < 6.0)
       graphql (~> 1.6)
     httparty (0.16.4)
       mime-types (~> 3.0)
+=======
+    coffee-rails (4.2.2)
+      coffee-script (>= 2.2.0)
+      railties (>= 4.0.0)
+    coffee-script (2.4.1)
+      coffee-script-source
+      execjs
+    coffee-script-source (1.12.2)
+    commonjs (0.2.7)
+    concurrent-ruby (1.0.5)
+    crass (1.0.4)
+    diff-lcs (1.3)
+    dotenv (2.6.0)
+    erubi (1.8.0)
+    execjs (2.7.0)
+    factory_bot (4.11.1)
+      activesupport (>= 3.0.0)
+    ffi (1.10.0)
+    font-awesome-sass (5.0.9)
+      sass (>= 3.2)
+    httparty (0.16.0)
+>>>>>>> no_queued_prepaid
       multi_xml (>= 0.5.2)
-    i18n (1.6.0)
+    i18n (1.5.3)
       concurrent-ruby (~> 1.0)
+<<<<<<< HEAD
     jaro_winkler (1.5.2)
     liquid (4.0.1)
     method_source (0.9.2)
     mime-types (3.2.2)
       mime-types-data (~> 3.2015)
     mime-types-data (3.2018.0812)
+=======
+    jquery-rails (4.3.3)
+      rails-dom-testing (>= 1, < 3)
+      railties (>= 4.2.0)
+      thor (>= 0.14, < 2.0)
+    less (2.6.0)
+      commonjs (~> 0.2.7)
+    less-rails (2.8.0)
+      actionpack (>= 4.0)
+      less (~> 2.6.0)
+      sprockets (> 2, < 4)
+      tilt
+    liquid (4.0.0)
+    loofah (2.2.3)
+      crass (~> 1.0.2)
+      nokogiri (>= 1.5.9)
+    method_source (0.9.0)
+    mini_portile2 (2.4.0)
+>>>>>>> no_queued_prepaid
     minitest (5.11.3)
     mono_logger (1.1.0)
     multi_json (1.13.1)
     multi_xml (0.6.0)
+<<<<<<< HEAD
     mustermann (1.0.3)
-    parallel (1.14.0)
+    parallel (1.13.0)
     parser (2.6.0.0)
+=======
+    mustermann (1.0.2)
+    nokogiri (1.10.1)
+      mini_portile2 (~> 2.4.0)
+    parallel (1.12.1)
+    parser (2.5.0.1)
+>>>>>>> no_queued_prepaid
       ast (~> 2.4.0)
-    pastel (0.7.2)
-      equatable (~> 0.5.0)
-      tty-color (~> 0.4.0)
     pg (0.19.0)
     powerpack (0.1.2)
     pry (0.12.2)
       coderay (~> 1.1.0)
       method_source (~> 0.9.0)
-    psych (3.1.0)
     puma (3.12.0)
     rack (2.0.6)
     rack-contrib (2.1.0)
@@ -85,8 +139,22 @@ GEM
       rack
     rack-test (1.1.0)
       rack (>= 1.0, < 3)
+    rails-dom-testing (2.0.3)
+      activesupport (>= 4.2.0)
+      nokogiri (>= 1.6)
+    rails-html-sanitizer (1.0.4)
+      loofah (~> 2.2, >= 2.2.2)
+    railties (5.1.5)
+      actionpack (= 5.1.5)
+      activesupport (= 5.1.5)
+      method_source
+      rake (>= 0.8.7)
+      thor (>= 0.18.1, < 2.0)
     rainbow (3.0.0)
     rake (12.3.2)
+    rb-fsevent (0.10.3)
+    rb-inotify (0.10.0)
+      ffi (~> 1.0)
     recharge-api (0.0.1)
       class2 (~> 0.3.0)
     redis (3.3.5)
@@ -98,6 +166,13 @@ GEM
       redis-namespace (~> 1.6)
       sinatra (>= 0.9.2)
       vegas (~> 0.1.2)
+    resque-web (0.0.12)
+      coffee-rails
+      font-awesome-sass
+      jquery-rails
+      resque
+      sass-rails
+      twitter-bootstrap-rails
     rspec (3.8.0)
       rspec-core (~> 3.8.0)
       rspec-expectations (~> 3.8.0)
@@ -111,19 +186,34 @@ GEM
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.8.0)
     rspec-support (3.8.0)
-    rubocop (0.65.0)
+    rubocop (0.64.0)
       jaro_winkler (~> 1.5.1)
       parallel (~> 1.10)
       parser (>= 2.5, != 2.5.1.1)
       powerpack (~> 0.1)
-      psych (>= 3.1.0)
       rainbow (>= 2.2.2, < 4.0)
       ruby-progressbar (~> 1.7)
       unicode-display_width (~> 1.4.0)
     ruby-progressbar (1.10.0)
     ruby_http_client (3.3.0)
+<<<<<<< HEAD
     sendgrid-ruby (5.3.0)
       ruby_http_client (~> 3.3.0)
+=======
+    sass (3.7.3)
+      sass-listen (~> 4.0.0)
+    sass-listen (4.0.0)
+      rb-fsevent (~> 0.9, >= 0.9.4)
+      rb-inotify (~> 0.9, >= 0.9.7)
+    sass-rails (5.0.7)
+      railties (>= 4.0.0, < 6)
+      sass (~> 3.1)
+      sprockets (>= 2.8, < 4.0)
+      sprockets-rails (>= 2.0, < 4.0)
+      tilt (>= 1.1, < 3)
+    sendgrid-ruby (5.2.0)
+      ruby_http_client (~> 3.2)
+>>>>>>> no_queued_prepaid
       sinatra (>= 1.4.7, < 3)
     shopify_api (5.2.4)
       activeresource (>= 3.0.0)
@@ -138,26 +228,28 @@ GEM
       activerecord (>= 3.2)
       sinatra (>= 1.0)
     sinatra-cross_origin (0.4.0)
-    strings (0.1.4)
-      strings-ansi (~> 0.1.0)
-      unicode-display_width (~> 1.4.0)
-      unicode_utils (~> 1.4.0)
-    strings-ansi (0.1.0)
+    sprockets (3.7.2)
+      concurrent-ruby (~> 1.0)
+      rack (> 1, < 3)
+    sprockets-rails (3.2.1)
+      actionpack (>= 4.0)
+      activesupport (>= 4.0)
+      sprockets (>= 3.0.0)
     thor (0.20.3)
     thread_safe (0.3.6)
+<<<<<<< HEAD
     tilt (2.0.9)
-    tty-color (0.4.3)
-    tty-pager (0.12.0)
-      strings (~> 0.1.4)
-      tty-screen (~> 0.6)
-      tty-which (~> 0.4)
-    tty-screen (0.6.5)
-    tty-tree (0.2.0)
-    tty-which (0.4.0)
+=======
+    tilt (2.0.8)
+    twitter-bootstrap-rails (4.0.0)
+      actionpack (~> 5.0, >= 5.0.1)
+      execjs (~> 2.7)
+      less-rails (~> 2.8, >= 2.8.0)
+      railties (~> 5.0, >= 5.0.1)
+>>>>>>> no_queued_prepaid
     tzinfo (1.2.5)
       thread_safe (~> 0.1)
     unicode-display_width (1.4.1)
-    unicode_utils (1.4.0)
     vegas (0.1.11)
       rack (>= 1.0.0)
 
@@ -175,18 +267,19 @@ DEPENDENCIES
   pg (= 0.19.0)
   pry
   puma
-  rack (>= 2.0.6)
+  rack
   rack-contrib
   rack-test
   rake
   recharge-api
   redis (= 3.3.5)
   resque
+  resque-web
   rspec
   rubocop
   sendgrid-ruby
   shopify_api
-  sinatra (>= 2.0.2)
+  sinatra (~> 2.0.2)
   sinatra-activerecord
   sinatra-cross_origin
 

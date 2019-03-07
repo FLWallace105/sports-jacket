@@ -371,7 +371,7 @@ module EllieHelper
             total_spent = mycust['total_spent']
             updated_at = mycust['updated_at']
             verified_email = mycust['verified_email']
-            my_conn.exec_prepared('statement1', [accepts_marketing, addresses, created_at, default_address, email, first_name, customer_id, last_name, last_order_id, last_order_name, metafield, multipass_identifier, note, orders_count, phone, state, tags, tax_exempt, total_spent, updated_at, verified_email])
+            my_conn.exec_prepared('statement1', [accepts_marketing, addresses.to_json, created_at, default_address.to_json, email, first_name, customer_id, last_name, last_order_id, last_order_name, metafield.to_json, multipass_identifier, note, orders_count, phone, state, tags, tax_exempt, total_spent, updated_at, verified_email])
 
           end
           logger.info "Done with page #{page}"
