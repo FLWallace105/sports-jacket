@@ -383,7 +383,7 @@ class EllieListener < Sinatra::Base
     my_action = params['action']
     my_now = Date.current.day
     puts "Day of the month is #{my_now}"
-    if my_now < 5
+    if my_now < 50
       if my_action == "skip_month"
         #Add code to immediately skip the sub in DB only here
         local_sub_id = params['subscription_id']
@@ -556,7 +556,7 @@ class EllieListener < Sinatra::Base
       if sub.get_order_props
         res = sub.get_order_props
         puts "=====> VALUES FROM GET_ORDER PROPS IN TRANFORM_SUBS: TITLE=#{res[:my_title]} SHIP DATE: #{res[:ship_date]}"
-        title_value = res[:my_title]
+        @title_value = res[:my_title]
         shipping_date = res[:ship_date].strftime('%F')
       else
         if sub.all_orders_sent?(sub.id)
