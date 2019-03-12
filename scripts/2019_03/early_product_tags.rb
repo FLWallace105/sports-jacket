@@ -162,5 +162,24 @@ ProductTag.create_with(early_tag).find_or_create_by(product_id: street_smarts2_a
 ProductTag.create_with(early_tag).find_or_create_by(product_id: street_smarts2_auto_3, tag: 'switchable').update(early_tag)
 ProductTag.create_with(early_tag).find_or_create_by(product_id: street_smarts2_auto_5, tag: 'switchable').update(early_tag)
 
+#True Blue Added 3/12
+true_blue_3 = 2226409963578
+true_blue_5 = 2226391941178
+true_blue_auto_3 = 2237897441338
+true_blue_auto_5 = 2237898391610
+
+ProductTag.create_with(early_tag).find_or_create_by(product_id: true_blue_3, tag: 'current').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: true_blue_5, tag: 'current').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: true_blue_3, tag: 'skippable').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: true_blue_5, tag: 'skippable').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: true_blue_3, tag: 'switchable').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: true_blue_5, tag: 'switchable').update(early_tag)
+
+ProductTag.create_with(early_tag).find_or_create_by(product_id: true_blue_auto_3, tag: 'current').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: true_blue_auto_5, tag: 'current').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: true_blue_auto_3, tag: 'skippable').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: true_blue_auto_5, tag: 'skippable').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: true_blue_auto_3, tag: 'switchable').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: true_blue_auto_5, tag: 'switchable').update(early_tag)
 
 
