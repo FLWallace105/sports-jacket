@@ -310,7 +310,7 @@ class EllieListener < Sinatra::Base
                     '#{now.end_of_month.strftime('%F %T')}'
                     AND is_prepaid = 1;"
         my_orders = Order.find_by_sql(sql_query)
-        # if subscription has QUEUED orders update their line_items properties as well
+        # if subscription has QUEUED this month orders update their line_items properties as well
         if my_orders != []
           my_orders.each do |temp_order|
             @updated = false
@@ -550,6 +550,7 @@ class EllieListener < Sinatra::Base
   def transform_subscriptions(sub, orders)
     logger.debug "subscription: #{sub.inspect}"
     if sub.prepaid?
+      puts "THIS IS A PREPAID SUBSCRIPTION #{sub.id}"
       skip_value = sub.prepaid_skippable?
       switch_value = sub.prepaid_switchable?
       # returns next queued order this month if it exists
@@ -571,9 +572,11 @@ class EllieListener < Sinatra::Base
         @shipping_date = sub.current_order_data[:ship_date].strftime('%F')
       end
     else
+      puts "THIS IS A PREPAID SUBSCRIPTION #{sub.id}"
       @title_value = sub.product_title
       skip_value = sub.skippable?
       switch_value = sub.switchable?
+      @shipping_date = sub.next_charge_scheduled_at.try{|time| time.strftime('%Y-%m-%d')}
     end
     result = {
       shopify_product_id: sub.shopify_product_id.to_i,
@@ -589,5 +592,5 @@ class EllieListener < Sinatra::Base
     }
     return result
   end
-  #binding.pry
+  # binding.pry
 end

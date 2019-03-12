@@ -2,8 +2,8 @@
 # products must be manually tagged FIRST
 # according to specs in worker/monthly_setup.rb
 require_relative '../../config/environment'
-@month = Date.today >> 1 # set up for next month
-# @month = Date.today #set up for this month
+#@month = Date.today >> 1 # set up for next month
+@month = Date.today #set up for this month
 month_start = Time.local("#{@month.strftime('%Y')}", "#{@month.strftime('%m')}")
 month_end = month_start.end_of_month
 early_tag = { active_start: nil, active_end: month_end }

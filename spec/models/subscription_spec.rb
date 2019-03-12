@@ -5,7 +5,7 @@ require 'rack/test'
 require_relative '../../api/ellie_listener.rb'
 
 RSpec.describe Subscription do
-  context "When prepaid" do
+  context "When prepaid", :focus do
     let(:cust) { FactoryBot.create(:customer) }
     let(:sub) { FactoryBot.create(:subscription_with_line_items, customer_id: cust.id) }
     let(:order_1) {  FactoryBot.create(

@@ -2,8 +2,8 @@ require 'faker'
 
 SIZES = %w(XS S M L XL)
 PRODUCT_COLLECTION ||= "Mauve Muse - 3 Items"
-PREPAID_3_ACTIVE ||= 2209786298426
-PREPAID_5_ACTIVE ||= 2209789771834
+PREPAID_3_ACTIVE ||= 1635509436467
+PREPAID_5_ACTIVE ||= 1635509469235
 FactoryBot.define do
   factory :subscription do
     subscription_id { Faker::Number.number(8) }
@@ -51,7 +51,7 @@ FactoryBot.define do
         value: "S"
     }] }
     expire_after_specific_number_charges { 0 }
-    customer_id { "25181922" } #linked to devi_teem on ellieactive
+    customer_id { "12248147" } #linked to nlee on elliestaging
     factory :subscription_with_line_items do
       transient do
         line_items_count { 2 }
