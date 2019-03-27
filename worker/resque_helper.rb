@@ -347,7 +347,7 @@ module ResqueHelper
     Resque.logger.info("here are the shopify customer's tags #{mycustomer.tags.inspect}")
     mytags = Array.new
     mytags = mycustomer.tags.split(",")
-    mytags.map! {|x| x.strip}
+    mytags.map!(&:strip)
     puts mytags
     Resque.logger.debug("my tags array: #{mytags.inspect}")
 

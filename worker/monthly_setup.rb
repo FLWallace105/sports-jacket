@@ -22,6 +22,7 @@ class MonthlySetup
       "insert into switchable_products (product_title, product_id, threepk) values ($1, $2, $3)"
     @conn.prepare('statement1', "#{my_insert}")
     current_array.each do |x|
+      next unless !SwitchableProduct.exists?(:product_id => x.id)
       product_title = x.title
       product_id = x.id
       threepk = x.title.include?('3 Item')? true : false
@@ -41,6 +42,7 @@ class MonthlySetup
     @conn.prepare('statement1', "#{my_insert}")
 
     current_array.each do |x|
+      next unless !AlternateProduct.exists?(:product_id => x.id)
       product_title = x.title
       product_id = x.id
       variant_id = EllieVariant.find_by(product_id: x.id).variant_id
@@ -67,6 +69,7 @@ class MonthlySetup
     @conn.prepare('statement1', "#{my_insert}")
 
     current_array.each_with_index do |prod, idx|
+      next unless !MatchingProduct.exists?(:new_product_title => prod.title)
       if prod.title.include?('3')
         incoming_product_id = current_array[idx + 1].shopify_id
         threepk = true
@@ -86,5 +89,4 @@ class MonthlySetup
       @conn.close
   end
 end
-# binding.pry
-COLLECTION_IDS = ProductTag.where(active_end: '2019-04-01 06:59:59.999999').pluck(:product_id)
+COLLECTION_IDS = ProductTag.where(active_end: '2019-04-30 23:59:59.999999').pluck(:product_id)
