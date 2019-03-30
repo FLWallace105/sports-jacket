@@ -420,7 +420,7 @@ RSpec.describe EllieListener do
     end
   end
 
-  describe "PUTS #/subscription/:subscription_id/sizes", :focus do
+  describe "PUT #/subscription/:subscription_id/sizes" do
     before do
       ResqueSpec.reset!
     end
@@ -477,7 +477,6 @@ RSpec.describe EllieListener do
         expect(last_response.status).to eq 400
       end
     end
-
     context "prepaid subscription", :focus do
       it "sizes_change sub + queued orders" do
         prepaid_sub = FactoryBot.create(
@@ -497,5 +496,30 @@ RSpec.describe EllieListener do
     end
   end
 
+  describe "GET /subscription/:subscription_id/sizes", :focus do
+    let(:sub) {FactoryBot.create(:subscription_with_line_items)}
+    let(:new_sizes) {{"leggings"=>"XS", "sports-bra"=>"XS", "tops"=>"XS", "gloves"=>"XS"}}
+    let(:params) {{leggings: 'XS', :'sports-bra' => 'XS', tops: 'XS', gloves: 'XS',}}
+    context "prepaid sub" do
+      it "returns 200 with glove size" do
+        put "/subscription/#{sub.id}/sizes", params.to_json
+        get "/subscription/#{sub.id}/sizes"
+        expect(last_response.status).to eq 200
+        expect(last_response.body).to eq(new_sizes.to_json)
+      end
+
+      it "returns 200 w/o glove size" do
+        get "/subscription/#{sub.id}/sizes"
+        expect(last_response.body).to eq sub.sizes.to_json
+        expect(last_response.status).to eq 200
+      end
+      context "subscription not found" do
+        it "returns error" do
+          get "/subscription/#{11111111}/sizes"
+          expect(last_response.status).not_to eq 200
+        end
+      end
+    end
+  end
 
 end

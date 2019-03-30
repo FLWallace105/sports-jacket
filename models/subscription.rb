@@ -299,8 +299,8 @@ class Subscription < ActiveRecord::Base
   def sizes=(new_sizes)
     prop_hash = raw_line_item_properties.map{|prop| [prop['name'], prop['value']]}.to_h
     merged_hash = prop_hash.merge new_sizes
-    puts "merged_hash = #{merged_hash}"
     self[:raw_line_item_properties] = merged_hash.map{|k, v| {'name' => k, 'value' => v}}
+    puts "new subscription(#{subscription_id}) line_items = #{self[:raw_line_item_properties]}"
   end
 
   # valid options are:
