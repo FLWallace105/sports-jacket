@@ -288,12 +288,14 @@ class Subscription < ActiveRecord::Base
   end
 
   def sizes
+    #returns hash of (size_property and size) key-value pairs with keys as symbols
     raw_line_item_properties
       .select{|p| SubLineItem::SIZE_PROPERTIES.include? p['name']}
       .map{|p| [p['name'], p['value']]}
       .to_h
   end
 
+  #converts line_items hash to symbol keys, merges new sizes, saves resulting hash locally with string keys
   def sizes=(new_sizes)
     prop_hash = raw_line_item_properties.map{|prop| [prop['name'], prop['value']]}.to_h
     merged_hash = prop_hash.merge new_sizes

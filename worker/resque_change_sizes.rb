@@ -23,12 +23,12 @@ class ChangeSizes
     else
       Resque.enqueue(SendEmailToCS, params)
     end
-    #puts "recharge response to change sizes: #{res.response}"
-    #Resque.logger.info("recharge sent back from changing sizes #{res.response}")
-    #new_props = res.parsed_response['subscription']['properties'
-    #Resque.logger.info("New sub properties --> #{res.parsed_response['subscription']['properties']}")
-    #puts "new sub props: #{new_props}"
-    #Subscription.find(subscription_id).update(raw_line_item_properties: new_props)
+    puts "recharge response to change sizes: #{res.response}"
+    Resque.logger.info("recharge sent back from changing sizes #{res.response}")
+    new_props = res.parsed_response['subscription']['properties']
+    Resque.logger.info("New sub properties --> #{res.parsed_response['subscription']['properties']}")
+    puts "new sub props: #{new_props}"
+    Subscription.find(subscription_id).update(raw_line_item_properties: new_props)
     puts 'Sizes updated!'
   end
 end

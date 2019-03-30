@@ -29,6 +29,8 @@ group :development do
   gem 'rspec'
   gem 'factory_bot'
   gem 'faker', :git => 'https://github.com/stympy/faker.git', :branch => 'master'
+  gem 'yard'
+  gem 'resque_spec'
 end
 
 # Added at 2017-12-08 11:42:19 -0800 by ryan:

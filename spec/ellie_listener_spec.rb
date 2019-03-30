@@ -2,6 +2,8 @@ require 'sinatra'
 require 'rspec'
 require 'rack/test'
 require_relative '../api/ellie_listener.rb'
+require_relative '../worker/resque_change_sizes.rb'
+require_relative '../worker/resque_change_prepaid_sizes.rb'
 
 RSpec.describe EllieListener do
   include Rack::Test::Methods
@@ -154,7 +156,7 @@ RSpec.describe EllieListener do
         )
       end
     end
-    context "no_queued_not_charged", :focus do
+    context "no_queued_not_charged" do
       it "returns the subscription product_collection" do
         cust = FactoryBot.create(:customer)
         my_sub = FactoryBot.create(
@@ -417,4 +419,83 @@ RSpec.describe EllieListener do
       end
     end
   end
+
+  describe "PUTS #/subscription/:subscription_id/sizes", :focus do
+    before do
+      ResqueSpec.reset!
+    end
+    def create_prepaid_orders(my_customer, sub_id)
+      start_date = Date.today + 1 << 1
+      odr1 = FactoryBot.create(
+        :order,
+        customer_id: my_customer.customer_id,
+        sub_id: sub_id,
+        status: 'SUCCESS',
+        is_prepaid: 0,
+        scheduled_at: start_date,
+        shipping_date: start_date,
+        first_name: my_customer.first_name,
+        last_name: my_customer.last_name,
+      )
+      odr2 = FactoryBot.create(
+        :order,
+        customer_id: my_customer.customer_id,
+        sub_id: sub_id,
+        first_name: my_customer.first_name,
+        last_name: my_customer.last_name,
+        scheduled_at: start_date >> 1,
+        shipping_date: start_date >> 1,
+      )
+      odr3 = FactoryBot.create(
+        :order,
+        customer_id: my_customer.customer_id,
+        sub_id: sub_id,
+        scheduled_at: start_date >> 2,
+        shipping_date: start_date >> 2,
+        first_name: my_customer.first_name,
+        last_name: my_customer.last_name,
+      )
+      return { :s1 => odr1, :q1 => odr2, :q2 => odr3, }
+    end
+    let(:sub) {FactoryBot.create(:subscription_with_line_items)}
+    let(:new_sizes) {{"gloves"=>"XS", "leggings"=>"XS", "sports-bra"=>"XS", "tops"=>"XS"}}
+    let(:params) {{leggings: 'XS', :'sports-bra' => 'XS', tops: 'XS', gloves: 'XS',}}
+    let(:cust) {FactoryBot.create(:customer)}
+    let(:base_date) { Date.today + 1 << 1 }
+
+    context "regular subscription" do
+      it "#sizes_change locally" do
+        put "/subscription/#{sub.id}/sizes", params.to_json
+        expect(sub.reload.sizes).to eq(new_sizes)
+      end
+      it "enqueues ChangeSizes" do
+        put "/subscription/#{sub.id}/sizes", params.to_json
+        expect(ChangeSizes).to have_queued(sub.id, new_sizes).in(:change_sizes)
+      end
+      it "raises error without sizes param" do
+        put "/subscription/#{sub.id}/sizes"
+        expect(last_response.status).to eq 400
+      end
+    end
+
+    context "prepaid subscription", :focus do
+      it "sizes_change sub + queued orders" do
+        prepaid_sub = FactoryBot.create(
+          :subscription_with_line_items,
+          customer_id: cust.customer_id,
+          next_charge_scheduled_at: base_date >> 3,
+        )
+        prepaid_sub.line_items[0].name = "product_id"
+        prepaid_sub.line_items[0].value = sub.shopify_product_id
+        pre_orders = create_prepaid_orders(cust, prepaid_sub.id)
+
+        put "/subscription/#{prepaid_sub.id}/sizes", params.to_json
+        expect(prepaid_sub.reload.sizes).to eq(new_sizes)
+        expect(pre_orders[:q1].reload.sizes(prepaid_sub.id.to_s)).to eq(new_sizes)
+        expect(pre_orders[:q2].reload.sizes(prepaid_sub.id.to_s)).to eq(new_sizes)
+      end
+    end
+  end
+
+
 end
