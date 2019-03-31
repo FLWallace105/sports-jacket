@@ -9,6 +9,7 @@ class ChangePrepaidSizes
   }
   extend ResqueHelper
   @queue = 'change_prepaid_sizes'
+
   def self.perform(subscription_id, new_sizes)
     Resque.logger = Logger.new("#{Dir.getwd}/logs/size_change_prepaid_resque.log")
     sub = Subscription.find subscription_id
@@ -20,7 +21,7 @@ class ChangePrepaidSizes
     sub.save! if res1.code ==200
 
     queued_orders = Order.where("line_items @> ? AND status = ? AND is_prepaid = ?", [{subscription_id: subscription_id.to_i}].to_json, "QUEUED", 1)
-    Resque.logger.info(queued_orders.inspect)
+    Resque.logger.info("QUEUED_ORDERS found in ChangePrepaidSizes worker: #{queued_orders.inspect}")
     all_clear = true
     # Iterate through queued orders for sub_id argument and update through REcharge api
     queued_orders.each do |my_order|

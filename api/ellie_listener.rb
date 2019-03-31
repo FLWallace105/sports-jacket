@@ -184,10 +184,9 @@ class EllieListener < Sinatra::Base
   end
 
   put '/subscription/:subscription_id/sizes' do |subscription_id|
-    #puts 'found the method'
-    # body parsing and validation
+    puts "RECIEVED #{subscription_id}"
     begin
-      json = JSON.parse request.body.read
+      json = JSON.parse(request.body.read)
       sizes = json.select do |key, val|
         SubLineItem::SIZE_PROPERTIES.include?(key) && SubLineItem::SIZE_VALUES.include?(val)
       end
@@ -197,21 +196,19 @@ class EllieListener < Sinatra::Base
       return [400, @default_headers, {error: e}.to_json]
     end
     begin
-      #res = RechargeAPI.put("/subscriptions/#{subscription_id}", {body: body_json})
-      #queued = Subscription.async(:recharge_update, body)
-      #ChangeSizes.perform(subscription_id, sizes)
-
-      #Add code to immediately save size changes to DB in API.
-      #puts "now sizes are #{sizes.inspect}"
-      sub = Subscription.find subscription_id
-      #Resque.logger.info(sub.inspect)
+      #save size changes locally first in Subscription
+      puts "now sizes are #{sizes.inspect}"
+      sub = Subscription.find(subscription_id)
+      Resque.logger.info(sub.inspect)
       sub.sizes = sizes
       sub.save!
+      # save size changes locally in Orders if prepaid Subscription
       if sub.prepaid?
-        # update orders locally
-        queued_orders = Order.where("line_items @> ? AND status = ? AND is_prepaid = ?", [{subscription_id: subscription_id.to_i}].to_json, "QUEUED", 1)
-        logger.info queued_orders.inspect
-        # raise "Error updating sizes. Please try again later." unless queued_orders.any?
+        queued_orders = Order.where(
+          "line_items @> ? AND status = ? AND is_prepaid = ?",
+           [{subscription_id: subscription_id.to_i}].to_json, "QUEUED", 1
+        )
+        # logger.info queued_orders.inspect
         if queued_orders.any?
           queued_orders.each do |my_order|
             my_order.sizes_change(sizes, subscription_id)
@@ -221,6 +218,7 @@ class EllieListener < Sinatra::Base
           queuedd = Resque.enqueue_to(:change_prepaid_sizes, 'ChangePrepaidSizes', subscription_id, sizes)
           raise "Error updating prepaid sizes. Please try again later." unless queuedd
         else
+          #if no queued orders found, update prepaid Subscription line_item sizes only
           queued = Resque.enqueue_to(:change_sizes, 'ChangeSizes', subscription_id, sizes)
           raise "Error updating sizes. Please try again later." unless queued
         end

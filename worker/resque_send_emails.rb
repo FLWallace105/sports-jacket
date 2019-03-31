@@ -40,7 +40,12 @@ class SendEmailToCustomer
                 leggings_size = details['leggings']
                 bra_size = details['sports-bra']
                 tops = details['tops']
-                my_details = "Leggings: #{leggings_size}\n\n Sports Bra Size: #{bra_size}\n\n Top Size: #{tops}"
+                if details.key?("gloves")
+                  gloves = details['gloves']
+                  my_details = "Leggings: #{leggings_size}\n\n Sports Bra Size: #{bra_size}\n\n Top Size: #{tops}\n\n Glove Size: #{gloves}"
+                else
+                  my_details = "Leggings: #{leggings_size}\n\n Sports Bra Size: #{bra_size}\n\n Top Size: #{tops}"
+                end
                 mybody = "Dear #{first_name} #{last_name}:\n\n Here is your confirmation of the size changes for your subscription:\n\n #{my_details} \n\n Your friends at Ellie."
                 subject = "Confirmation of Size Change for Your Subscription"
                 content = Content.new(type: 'text/plain', value: mybody)
