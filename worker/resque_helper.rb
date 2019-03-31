@@ -314,8 +314,8 @@ module ResqueHelper
         "sku" => l_item['sku'],
         "title" => l_item['title'],
         "variant_title" => l_item['variant_title'],
-        "shopify_product_id" => l_item['shopify_product_id'].to_i,
-        "shopify_variant_id" => l_item['shopify_variant_id'].to_i,
+        "product_id" => l_item['shopify_product_id'].to_i,
+        "variant_id" => l_item['shopify_variant_id'].to_i,
         "subscription_id" => l_item['subscription_id'].to_i,
       }
       res.push(new_line_item)
