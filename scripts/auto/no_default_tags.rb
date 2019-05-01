@@ -24,14 +24,12 @@ ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_5, tag: 
   .update(early_tag)
 ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_3_legacy, tag: 'prepaid')
   .update(early_tag)
-  .update(early_tag)
 
 ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_3, tag: 'current')
   .update(early_tag)
 ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_5, tag: 'current')
   .update(early_tag)
 ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_3_legacy, tag: 'current')
-  .update(early_tag)
   .update(early_tag)
 
   ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_3, tag: 'skippable')
@@ -40,14 +38,12 @@ ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_3_legacy
     .update(early_tag)
   ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_3_legacy, tag: 'skippable')
     .update(early_tag)
-    .update(early_tag)
 
   ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_3, tag: 'switchable')
     .update(early_tag)
   ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_5, tag: 'switchable')
     .update(early_tag)
   ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_3_legacy, tag: 'switchable')
-    .update(early_tag)
     .update(early_tag)
 
 
