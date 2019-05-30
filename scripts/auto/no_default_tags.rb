@@ -12,7 +12,7 @@ next_month_end = Time.local("#{@month2.strftime('%Y')}", "#{@month2.strftime('%m
 early_tag = { active_start: nil, active_end: next_month_end }
 # sunset the old tags without an active_end
 # ProductTag.where(active_end: nil).update_all(active_end: month_start - 1.second)
-my_tag = "%#{@month2.strftime('%m%y')}_collection%"
+my_tag = "%#{@month.strftime('%m%y')}_collection%"
 # main: prepaid products
 prepaid_3 = 1421100974131
 prepaid_5 = 1635509469235

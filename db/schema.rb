@@ -347,7 +347,6 @@ ActiveRecord::Schema.define(version: 20190109003059) do
     t.index ["shopify_order_number"], name: "index_orders_on_shopify_order_number"
     t.index ["transaction_id"], name: "index_orders_on_transaction_id"
   end
-
   create_table "product_tags", force: :cascade do |t|
     t.string "product_id", null: false
     t.string "tag", null: false

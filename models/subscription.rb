@@ -462,7 +462,7 @@ class Subscription < ActiveRecord::Base
     sql_query = "SELECT * FROM orders WHERE
                 line_items @> '[{\"subscription_id\": #{subscription_id}}]'
                 AND status = 'QUEUED'
-                AND scheduled_at > '#{now.beginning_of_month.strftime('%F %T')}'
+                AND scheduled_at > '#{Date.today.to_time.strftime('%F %T')}'
                 AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}'
                 AND is_prepaid = 1;"
     this_months_orders = Order.find_by_sql(sql_query)
