@@ -1,5 +1,10 @@
 require_relative '../lib/logging'
-
+require 'active_support/core_ext'
+#
+#
+# CHANGE month TO THIS MONTH OR NEXT MONTH !!!!!
+#
+#
 class MonthlySetup
   include Logging
   def initialize
@@ -11,6 +16,8 @@ class MonthlySetup
     @conn = PG.connect(
       @uri.hostname, @uri.port, nil, nil, @uri.path[1..-1], @uri.user, @uri.password
     )
+    month = Date.today >> 1
+    @next_month_end = Time.local("#{month.strftime('%Y')}", "#{month.strftime('%m')}").end_of_month
   end
   # configures switchable_products table --step 1
   def switchable_config
@@ -34,12 +41,11 @@ class MonthlySetup
   # configures alternate_products table --step 2
   def alternate_config
     current_array = Product.find_by_sql(
-      "SELECT * from products where title NOT LIKE"\
-      " '%Auto renew%' AND CAST (shopify_id AS bigint) IN (#{COLLECTION_IDS.join(', ')});"
+      "SELECT * from products where title NOT LIKE '%Auto renew%' AND CAST (shopify_id AS bigint) IN (#{COLLECTION_IDS.join(', ')});"
     )
     my_insert = "insert into alternate_products"\
     " (product_title, product_id, variant_id, sku, product_collection) values ($1, $2, $3, $4, $5)"
-    @conn.prepare('statement1', "#{my_insert}")
+    @conn.prepare('statement2', "#{my_insert}")
 
     current_array.each do |x|
       next unless !AlternateProduct.exists?(:product_id => x.id)
@@ -49,7 +55,7 @@ class MonthlySetup
       sku = EllieVariant.find_by(product_id: x.id).sku
       product_collection = x.title
       @conn.exec_prepared(
-        'statement1', [product_title, product_id, variant_id, sku, product_collection]
+        'statement2', [product_title, product_id, variant_id, sku, product_collection]
       )
     end
     logger.info "alternate_config done"
@@ -66,7 +72,7 @@ class MonthlySetup
     )
     my_insert = "insert into matching_products ("\
     "new_product_title, incoming_product_id, threepk, outgoing_product_id) values ($1, $2, $3, $4)"
-    @conn.prepare('statement1', "#{my_insert}")
+    @conn.prepare('statement3', "#{my_insert}")
 
     current_array.each_with_index do |prod, idx|
       next unless !MatchingProduct.exists?(:new_product_title => prod.title)
@@ -82,11 +88,11 @@ class MonthlySetup
       # if threepk true, assign 3 item prod id to outgoing_product_id
       outgoing_product_id = (threepk)? prod.shopify_id : incoming_product_id
       @conn.exec_prepared(
-        'statement1', [new_product_title, incoming_product_id, threepk, outgoing_product_id]
+        'statement3', [new_product_title, incoming_product_id, threepk, outgoing_product_id]
       )
     end
       logger.info "matching_config done"
       @conn.close
   end
 end
-COLLECTION_IDS = ProductTag.where(active_end: '2019-04-30 23:59:59.999999').pluck(:product_id)
+COLLECTION_IDS = ProductTag.where("active_end = ?", "2019-07-01 06:59:59.999999").pluck(:product_id)
