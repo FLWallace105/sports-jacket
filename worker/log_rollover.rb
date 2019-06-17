@@ -17,7 +17,7 @@ module EllieLog
             puts __dir__
             
             temp_files_array = Array.new
-            my_files = Dir.entries("/Users/FWallace/Shopify/may2019_sports_jacket/sports-jacket/logs").select {|f| !File.directory? f}
+            my_files = Dir.entries("/home/floyd/sports-jacket/logs").select {|f| !File.directory? f}
             my_files.each do |myf|
                 puts myf.inspect
                 
@@ -37,7 +37,7 @@ module EllieLog
             my_date = Date.today.strftime("%Y-%m-%d")
             my_date_string = "_#{my_date}.log"
             temp_files_array.each do |tempfile|
-                local_file = "/Users/FWallace/Shopify/may2019_sports_jacket/sports-jacket/logs/#{tempfile}"
+                local_file = "/home/floyd/sports-jacket/logs/#{tempfile}"
                 remote_file = tempfile.gsub(/\.log/i, my_date_string)
                 remote_file_path = 'exports/' + remote_file
                 puts local_file
@@ -51,7 +51,7 @@ module EllieLog
 
             #File.delete(path_to_file) if File.exist?(path_to_file)
             temp_files_array.each do |tempfile|
-                local_file = "/Users/FWallace/Shopify/may2019_sports_jacket/sports-jacket/logs/#{tempfile}"
+                local_file = "/home/floyd/sports-jacket/logs/#{tempfile}"
                 File.delete(local_file) if File.exist?(local_file)
 
             end
