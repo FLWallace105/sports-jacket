@@ -13,6 +13,14 @@ Resque.logger =
     Logger.new STDOUT, level: Logger::INFO
   end
 
+namespace :log_rollover do
+    desc 'roll over all logs to S3 bucket'
+    task :log_rollover do |t|
+      EllieLog::Rollover.new.start_log_rollover
+    end
+  
+end
+
 namespace :auto_config do
   desc 'auto configures switchable table'
   task :switchable do
