@@ -26,13 +26,13 @@ module EllieLog
             puts temp_files_array.inspect
             
 
-            #arn:aws:s3:::fam-staging-logs
+            #arn:aws:s3:::fam-production-logs
 
             Aws.config.update({
                 credentials: Aws::Credentials.new(@aws_key, @aws_secret_key)
              })
             s3 = Aws::S3::Resource.new(region: 'us-east-1')
-            bucket = 'fam-staging-logs'
+            bucket = 'fam-production-logs'
 
             my_date = Date.today.strftime("%Y-%m-%d")
             my_date_string = "_#{my_date}.log"
