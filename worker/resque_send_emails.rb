@@ -33,22 +33,28 @@ class SendEmailToCustomer
 
         from = Email.new(email: 'no-reply@ellie.com', name: 'Ellie')
         to = Email.new(email: email)
-
+        personalization = Personalization.new
+        personalization.add_to(to)
         case myaction
             when 'change_sizes'
                 puts "changing sizes"
-                leggings_size = details['leggings']
-                bra_size = details['sports-bra']
-                tops = details['tops']
-                if details.key?("gloves")
-                  gloves = details['gloves']
-                  my_details = "Leggings: #{leggings_size}\n\n Sports Bra Size: #{bra_size}\n\n Top Size: #{tops}\n\n Glove Size: #{gloves}"
-                else
-                  my_details = "Leggings: #{leggings_size}\n\n Sports Bra Size: #{bra_size}\n\n Top Size: #{tops}"
+                leggings = "Leggings: #{details['leggings']}"
+                tops = "Top Size: #{details['tops']}"
+                product_collection = "Product Collection: #{params['product_collection']}"
+                if details.key?('sports-jacket')
+                  jacket_or_bra = "Sports Jacket Size: #{details['sports-jacket']}"
+                elsif details.key?('sports-bra')
+                  jacket_or_bra = "Sports Bra Size: #{details['sports-bra']}"
                 end
-                mybody = "Dear #{first_name} #{last_name}:\n\n Here is your confirmation of the size changes for your subscription:\n\n #{my_details} \n\n Your friends at Ellie."
                 subject = "Confirmation of Size Change for Your Subscription"
-                content = Content.new(type: 'text/plain', value: mybody)
+                personalization.add_dynamic_template_data({
+                  "first_name" => first_name,
+                  "last_name" => last_name,
+                  "leggings" => leggings,
+                  "tops" => tops,
+                  "jacket_or_bra" => jacket_or_bra,
+                  "product_collection" => product_collection,
+                })
             when 'switching_product'
                 puts "switching product"
                 Resque.logger.debug "switching_product email processing..."
@@ -75,11 +81,16 @@ class SendEmailToCustomer
         end
 
         begin
-            mail = Mail.new(from, subject, to, content)
-            sg = SendGrid::API.new(api_key: ENV['SENDGRID_API_KEY'], host: 'https://api.sendgrid.com')
+            mail = SendGrid::Mail.new
+            mail.from = from
+            mail.subject = subject
+            mail.add_personalization(personalization)
+            mail.template_id = 'd-2bd8b79ad88b40d7a3c5eb5504de33a1'
+            sg = SendGrid::API.new(api_key: ENV['SENDGRID_API_KEY'])
             response = sg.client.mail._('send').post(request_body: mail.to_json)
             puts response.headers
             Resque.logger.debug "Send grid response code: #{response.status_code}"
+            Resque.logger.debug response.inspect
         rescue Exception => e
             Resque.logger.error(e.inspect)
         else
