@@ -213,7 +213,7 @@ class Subscription < ActiveRecord::Base
       prepaid?,
       check_prepaid_orders,
       can_skip_hasnt_switched?,
-      today < 50,
+      today < 5,
     ]
     puts "PREPAID_SKIPPABLE?: prepaid: #{prepaid?}, check_prepaid_orders: #{check_prepaid_orders},"\
     " today < 5: #{today < 5}, can_skip_hasnt_switched?: #{can_skip_hasnt_switched?}"
@@ -248,7 +248,7 @@ class Subscription < ActiveRecord::Base
     skip_conditions = [
       !prepaid?,
       active?,
-      now.day < 50,
+      now.day < 5,
       ProductTag.active(options).where(tag: 'skippable')
         .pluck(:product_id).include?(shopify_product_id),
       next_charge_scheduled_at.try('>', now.beginning_of_month),
