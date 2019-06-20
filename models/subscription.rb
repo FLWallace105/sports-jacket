@@ -213,7 +213,7 @@ class Subscription < ActiveRecord::Base
       prepaid?,
       check_prepaid_orders,
       can_skip_hasnt_switched?,
-      today < 5,
+      today < 50,
     ]
     puts "PREPAID_SKIPPABLE?: prepaid: #{prepaid?}, check_prepaid_orders: #{check_prepaid_orders},"\
     " today < 5: #{today < 5}, can_skip_hasnt_switched?: #{can_skip_hasnt_switched?}"

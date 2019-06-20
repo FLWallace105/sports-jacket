@@ -56,6 +56,10 @@ class SubscriptionSwitchPrepaid
     # Below for email to customer
     update_success = false
     if my_update_order.code == 200
+      my_update_order.parsed_response['order']['line_items'][0]['properties'].each do |item|
+        next unless item['name'] == 'product_collection'
+        params['product_collection'] = item['value']
+      end
       Resque.enqueue(SendEmailToCustomer, params)
       update_success = true
       puts "****** Hooray We have no errors **********"

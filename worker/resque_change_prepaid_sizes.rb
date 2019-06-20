@@ -39,6 +39,10 @@ class ChangePrepaidSizes
     params = {"subscription_id" => subscription_id, "action" => "change_sizes", "details" => new_sizes  }
 
     if all_clear
+      @res.parsed_response['order']['line_items'][0]['properties'].each do |item|
+        next unless item['name'] == 'product_collection'
+        params['product_collection'] = item['value']
+      end
       Resque.enqueue(SendEmailToCustomer, params)
     else
       Resque.enqueue(SendEmailToCS, params)
