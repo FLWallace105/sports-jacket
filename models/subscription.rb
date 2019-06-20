@@ -248,7 +248,7 @@ class Subscription < ActiveRecord::Base
     skip_conditions = [
       !prepaid?,
       active?,
-      now.day < 5,
+      now.day < 50,
       ProductTag.active(options).where(tag: 'skippable')
         .pluck(:product_id).include?(shopify_product_id),
       next_charge_scheduled_at.try('>', now.beginning_of_month),
@@ -317,6 +317,7 @@ class Subscription < ActiveRecord::Base
       next_charge_scheduled_at.try('<', now.end_of_month),
       next_charge_scheduled_at.try('>', now),
     ]
+    puts "____________________________________________REG. SUB SWITCH CONDITIONS#{switch_conditions.inspect}"
     switch_conditions.all?
   end
 

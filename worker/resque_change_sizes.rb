@@ -9,7 +9,7 @@ class ChangeSizes
     sub = Subscription.find subscription_id
     Resque.logger.info(sub.inspect)
     sub.sizes = new_sizes
-    Resque.logger.info("Now sizes are #{sub.sizes}.inspect")
+    Resque.logger.info("Now sizes are #{sub.sizes}")
     params = {"subscription_id" => subscription_id, "action" => "change_sizes", "details" => new_sizes}
     #body = {properties: sub.raw_line_item_properties}
     res = Recharge::Subscription.update(sub.subscription_id, properties: sub.raw_line_item_properties)

@@ -25,7 +25,7 @@ class SubscriptionSwitch
     puts body
 
     #Below for email to customer
-    
+
     params = {"subscription_id" => subscription_id, "action" => "switching_product", "details" => temp_hash   }
 
 
@@ -37,6 +37,11 @@ class SubscriptionSwitch
 
     update_success = false
     if my_update_sub.code == 200
+      my_update_sub.parsed_response['subscription']['properties'].each do |prop|
+        puts "MY PROP: #{prop}"
+        next unless prop['name'] == 'product_collection'
+        params['product_collection'] = prop['value']
+      end
       Resque.enqueue(SendEmailToCustomer, params)
 
       #if 200 == 200

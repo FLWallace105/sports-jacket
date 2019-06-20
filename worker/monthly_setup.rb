@@ -95,4 +95,4 @@ class MonthlySetup
       @conn.close
   end
 end
-COLLECTION_IDS = ProductTag.where("active_end = ?", "2019-07-01 06:59:59.999999").pluck(:product_id)
+COLLECTION_IDS = ProductTag.where("active_end = ?", "2019-08-01 06:59:59.999999").pluck(:product_id)
