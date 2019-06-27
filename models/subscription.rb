@@ -317,7 +317,6 @@ class Subscription < ActiveRecord::Base
       next_charge_scheduled_at.try('<', now.end_of_month),
       next_charge_scheduled_at.try('>', now),
     ]
-    puts "____________________________________________REG. SUB SWITCH CONDITIONS#{switch_conditions.inspect}"
     switch_conditions.all?
   end
 

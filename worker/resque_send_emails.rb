@@ -16,7 +16,6 @@ class SendEmailToCustomer
         subscription_id = params['subscription_id']
         myaction = params['action']
         details = params['details']
-        charge_date = params['']
 
         puts "subscription_id = #{subscription_id}"
         Resque.logger.info "subscription_id = #{subscription_id}"
