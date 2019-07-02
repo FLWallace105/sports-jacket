@@ -30,7 +30,8 @@ group :development do
   gem 'rspec'
   gem 'factory_bot'
   gem 'faker', :git => 'https://github.com/stympy/faker.git', :branch => 'master'
-  gem 'yard'
+  #gem 'yard'
+  gem "yard", ">= 0.9.20"
   # gem 'resque_spec'
 end
 
