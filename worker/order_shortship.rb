@@ -28,24 +28,27 @@ module ShortShip
     puts "first loop started..."
     upcoming_subs.each do |sub|
       order_res = self.prepaid_this_month(sub.subscription_id)
-      not_found = true
       if sub.charge_interval_frequency == 3 && order_res[:order_check]
         props = sub.raw_line_item_properties.map{|p| [p['name'], p['value']]}.to_h
         if props['product_collection'].include?("Feels Like Summer")
           puts "PREPAID SHIPPING THIS MONTH"
           true_sorting_list << {'sub_id': sub.subscription_id, 'cust_id': sub.customer_id, 'ship_date': order_res[:ship_date]}
-          not_found = false
+        else
+          next
         end
       end
       # skip reg subs that ship next month
       if sub.next_charge_scheduled_at > month_end && sub.charge_interval_frequency == 1
         next
+      end
       # skip prepaids that dont have queued orders this month
-      elsif sub.charge_interval_frequency == 3 && !(self.prepaid_this_month(sub.subscription_id))
+      if sub.charge_interval_frequency == 3 && !(self.prepaid_this_month(sub.subscription_id))
         next
       end
+      if sub.next_charge_scheduled_at <= month_end && sub.charge_interval_frequency == 1
+        true_sorting_list << {'sub_id': sub.subscription_id, 'cust_id': sub.customer_id, 'ship_date': sub.next_charge_scheduled_at}
+      end
 
-      true_sorting_list << {'sub_id': sub.subscription_id, 'cust_id': sub.customer_id, 'ship_date': sub.next_charge_scheduled_at} if not_found
     end
     puts "first loop done!"
 
