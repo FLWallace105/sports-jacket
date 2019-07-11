@@ -152,3 +152,8 @@ desc 'load alternate_products table for this month to allow customers to switch 
 task :load_alternate_products do |t|
   DetermineInfo::InfoGetter.new.load_alternate_products
 end
+
+desc 'short ship report'
+task :generate_shorts do |t|
+  ShortShip.generate
+end

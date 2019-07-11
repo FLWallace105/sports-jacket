@@ -467,7 +467,7 @@ class Subscription < ActiveRecord::Base
                 AND is_prepaid = 1;"
     this_months_orders = Order.find_by_sql(sql_query)
     order_check = false
-    puts this_months_orders.inspect
+    # puts this_months_orders.inspect
     if this_months_orders != []
       this_months_orders.each do |order|
         if order.scheduled_at > now.strftime('%F %T')
