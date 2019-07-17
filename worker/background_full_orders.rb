@@ -7,7 +7,8 @@ module FullBackgroundOrders
 
 
         def get_min_max
-            my_yesterday = Date.today - 1
+          #TODO (Neville): changed to pick up 2 month old orders
+            my_yesterday = (Date.today << 30) - 1
             my_yesterday_str = my_yesterday.strftime("%Y-%m-%d")
             my_four_months = Date.today >> 4
             my_four_months = my_four_months.end_of_month
@@ -15,7 +16,7 @@ module FullBackgroundOrders
             my_hash = Hash.new
             my_hash = {"min" => my_yesterday_str, "max" => my_four_months_str}
             return my_hash
-
+            logger.info "MY TIME HASH: #{my_hash.inspect}"
         end
 
 
@@ -50,19 +51,19 @@ module FullBackgroundOrders
             conn =  PG.connect(myuri.hostname, myuri.port, nil, nil, myuri.path[1..-1], myuri.user, myuri.password)
 
             my_insert = "insert into orders (order_id, transaction_id, charge_status, payment_processor, address_is_active, status, order_type, charge_id, address_id, shopify_id, shopify_order_id, shopify_order_number, shopify_cart_token, shipping_date, scheduled_at, shipped_date, processed_at, customer_id, first_name, last_name, is_prepaid, created_at, updated_at, email, line_items, total_price, shipping_address, billing_address) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)"
-            conn.prepare('statement1', "#{my_insert}")  
-    
+            conn.prepare('statement1', "#{my_insert}")
+
             my_order_line_fixed_insert = "insert into order_line_items_fixed (order_id, shopify_variant_id, title, variant_title, subscription_id, quantity, shopify_product_id, product_title) values ($1, $2, $3, $4, $5, $6, $7, $8)"
-            conn.prepare('statement2', "#{my_order_line_fixed_insert}") 
-    
+            conn.prepare('statement2', "#{my_order_line_fixed_insert}")
+
             my_order_line_variable_insert = "insert into order_line_items_variable (order_id, name, value) values ($1, $2, $3)"
-            conn.prepare('statement3', "#{my_order_line_variable_insert}") 
-    
+            conn.prepare('statement3', "#{my_order_line_variable_insert}")
+
             my_order_shipping_insert = "insert into order_shipping_address (order_id, province, city, first_name, last_name, zip, country, address1, address2, company, phone) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"
-            conn.prepare('statement4', "#{my_order_shipping_insert}") 
-    
+            conn.prepare('statement4', "#{my_order_shipping_insert}")
+
             my_order_billing_insert = "insert into order_billing_address (order_id, province, city, first_name, last_name, zip, country, address1, address2, company, phone) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"
-            conn.prepare('statement5', "#{my_order_billing_insert}") 
+            conn.prepare('statement5', "#{my_order_billing_insert}")
 
 
             start = Time.now
@@ -77,7 +78,7 @@ module FullBackgroundOrders
                 my_orders.each do |order|
                     #logger.debug order.inspect
                     puts order.inspect
-                    order_id = order['id'] 
+                    order_id = order['id']
                     transaction_id = order['id']
                     charge_status = order['charge_status']
                     payment_processor = order['payment_processor']
@@ -103,7 +104,7 @@ module FullBackgroundOrders
                     email = order['email']
                     line_items = order['line_items'].to_json
                     raw_line_items = order['line_items'][0]
-    
+
                     shopify_variant_id = raw_line_items['shopify_variant_id']
                     title = raw_line_items['title']
                     variant_title = raw_line_items['variant_title']
@@ -112,21 +113,21 @@ module FullBackgroundOrders
                     shopify_product_id = raw_line_items['shopify_product_id']
                     product_title = raw_line_items['product_title']
                     conn.exec_prepared('statement2', [ order_id, shopify_variant_id, title, variant_title,  subscription_id, quantity, shopify_product_id, product_title ])
-    
-    
+
+
                     variable_line_items = raw_line_items['properties']
                     variable_line_items.each do |myprop|
                         myname = myprop['name']
                         myvalue = myprop['value']
                         conn.exec_prepared('statement3', [ order_id, myname, myvalue ])
                     end
-    
-    
-    
+
+
+
                 total_price = order['total_price']
                 shipping_address = order['shipping_address'].to_json
                 billing_address = order['billing_address'].to_json
-    
+
                 #insert shipping_address sub table
                 raw_shipping_address = order['shipping_address']
                 ord_ship_province = raw_shipping_address['province']
@@ -140,7 +141,7 @@ module FullBackgroundOrders
                 ord_ship_company = raw_shipping_address['company']
                 ord_ship_phone = raw_shipping_address['phone']
                 conn.exec_prepared('statement4', [ order_id, ord_ship_province, ord_ship_city, ord_ship_first_name, ord_ship_last_name, ord_ship_zip, ord_ship_country, ord_ship_address1, ord_ship_address2, ord_ship_company, ord_ship_phone ])
-    
+
                 #insert billing_address sub table
                 raw_billing_address = order['billing_address']
                 ord_bill_province = raw_billing_address['province']
@@ -154,25 +155,25 @@ module FullBackgroundOrders
                 ord_bill_company = raw_billing_address['company']
                 ord_bill_phone = raw_billing_address['phone']
                 conn.exec_prepared('statement5', [ order_id, ord_bill_province, ord_bill_city, ord_bill_first_name, ord_bill_last_name, ord_bill_zip, ord_bill_country, ord_bill_address1, ord_bill_address2, ord_bill_company, ord_bill_phone ])
-    
+
             #insert into orders
             conn.exec_prepared('statement1', [order_id, transaction_id, charge_status, payment_processor, address_is_active, status, type, charge_id, address_id, shopify_id, shopify_order_id, shopify_order_number, shopify_cart_token, shipping_date, scheduled_at, shipped_date, processed_at, customer_id, first_name, last_name, is_prepaid, created_at, updated_at, email, line_items, total_price, shipping_address, billing_address])
-    
-    
+
+
           end
-          #logger.info "Done with page #{page}"  
+          #logger.info "Done with page #{page}"
           logger.info "Done with page #{page}"
           current = Time.now
           duration = (current - start).ceil
-          logger.info "Been running #{duration} seconds" 
-          determine_limits(recharge_limit, 0.65)            
-    
+          logger.info "Been running #{duration} seconds"
+          determine_limits(recharge_limit, 0.65)
+
         end
         #logger.info "All done with FULL order download"
         puts "All done with FULL order download"
         conn.close
 
-        
+
 
         end
 

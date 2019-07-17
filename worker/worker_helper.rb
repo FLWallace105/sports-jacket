@@ -1952,8 +1952,9 @@ module EllieHelper
           current = Time.now
           duration = (current - start).ceil
           logger.info "Been running #{duration} seconds"
-          logger.info "Sleeping #{sleep_recharge}"
-          sleep sleep_recharge.to_i
+          # logger.info "Sleeping #{sleep_recharge}"
+          # TODO(Neville): change order pull from sleep_recharge to no sleep
+          # sleep sleep_recharge.to_i
 
         end
         logger.info "All done with FULL order download"

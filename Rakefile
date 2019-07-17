@@ -157,3 +157,8 @@ desc 'short ship report'
 task :generate_shorts do |t|
   ShortShip.generate
 end
+
+desc 'fix order line items'
+task :fix_orders do |t|
+  OrderLineItemFix.run
+end

@@ -13,12 +13,12 @@ module FullBackgroundCustomers
         my_header = params['headers']
         uri = params['uri']
 
-
-        customers = HTTParty.get("https://api.rechargeapps.com/customers/count?", :headers => my_header)
+        # TODO(Neville L): updated url to active customers only
+        customers = HTTParty.get("https://api.rechargeapps.com/customers/count?status=ACTIVE", :headers => my_header)
         #puts customers.inspect
         num_customers = customers['count'].to_i
         puts "We have #{num_customers} customers"
-        
+
 
         Customer.delete_all
         ActiveRecord::Base.connection.reset_pk_sequence!('customers')
@@ -28,15 +28,16 @@ module FullBackgroundCustomers
         my_insert = "insert into customers (customer_id, customer_hash, shopify_customer_id, email, created_at, updated_at, first_name, last_name, billing_address1, billing_address2, billing_zip, billing_city, billing_company, billing_province, billing_country, billing_phone, processor_type, status) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) ON CONFLICT (customer_id) DO UPDATE SET customer_hash = EXCLUDED.customer_hash, shopify_customer_id = EXCLUDED.shopify_customer_id, email = EXCLUDED.email, created_at = EXCLUDED.created_at, updated_at = EXCLUDED.updated_at, first_name = EXCLUDED.first_name, last_name = EXCLUDED.last_name, billing_address1 = EXCLUDED.billing_address1, billing_address2 = EXCLUDED.billing_address2, billing_zip = EXCLUDED.billing_zip, billing_city = EXCLUDED.billing_city, billing_company = EXCLUDED.billing_company, billing_province = EXCLUDED.billing_province, billing_country = EXCLUDED.billing_country, billing_phone = EXCLUDED.billing_phone, processor_type = EXCLUDED.processor_type, status = EXCLUDED.status"
         my_conn.prepare('statement1', "#{my_insert}")
 
-        start = Time.now    
+        start = Time.now
         page_size = 250
         num_pages = (num_customers/page_size.to_f).ceil
         1.upto(num_pages) do |page|
-            customers = HTTParty.get("https://api.rechargeapps.com/customers?limit=250&page=#{page}", :headers => my_header)
+          # TODO(Neville L): updated url to active customers only
+            customers = HTTParty.get("https://api.rechargeapps.com/customers?limit=250&page=#{page}&status=ACTIVE", :headers => my_header)
           my_customers = customers.parsed_response['customers']
           recharge_limit = customers.response["x-recharge-limit"]
           my_customers.each do |mycust|
-            #logger.debug 
+            #logger.debug
             puts mycust.inspect
             customer_id = mycust['id']
             hash = mycust['hash']
