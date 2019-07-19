@@ -5,14 +5,10 @@ require_relative '../lib/logging'
 module OrderLineItemFix
   # select all orders that are prepaid and have incorrect line_item data
   def self.run
-    product_map = { "3 Months - 5 Items": {},
-                    "3 MONTHS": {},
-                    "3 Months - 3 Items": {},
-                  }
     sql_query = "SELECT * from orders ord INNER JOIN order_line_items_fixed ordfix ON
-          ordfix.order_id = ord.order_id WHERE ord.scheduled_at > '2019-07-16' AND ord.is_prepaid = 1
-          AND ordfix.product_title NOT LIKE '%Months%' AND ordfix.title NOT LIKE '%Months%'
-          AND ordfix.product_title NOT LIKE '%MONTHS%' AND ordfix.title NOT LIKE '%MONTH%' AND ord.status='QUEUED'
+          ordfix.order_id = ord.order_id WHERE ord.scheduled_at > '2019-07-18' AND ord.is_prepaid = 1
+          AND (ordfix.product_title NOT LIKE '%Months%' OR ordfix.title NOT LIKE '%Months%')
+          AND (ordfix.product_title NOT LIKE '%MONTHS%' OR ordfix.title NOT LIKE '%MONTH%') AND ord.status='QUEUED'
           AND ord.customer_id NOT IN ('25181922','26016178');"
           # customer ids '25181922','26016178' belong to devi_team and Lourdes
     bad_orders = Order.find_by_sql(sql_query)
