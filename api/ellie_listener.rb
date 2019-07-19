@@ -479,55 +479,37 @@ class EllieListener < Sinatra::Base
       end
   end
 
-  put '/subscription/:subscription_id/upgrade' do |subscription_id|
+  put '/subscription/:subscription_id/item_change' do |subscription_id|
     puts 'Received stuff'
     logger.debug params.inspect
     myjson = params
     puts '----------'
     local_sub = Subscription.find(subscription_id)
-      return [404, @default_headers, {error: 'subscription not found'}.to_json] if local_sub.nil?
-      old_prod = Product.find_by shopify_id: myjson['product_id']
-      return [403, @default_headers,
-        { error: "5 Item products cannot be upgraded. received product id: #{myjson['product_id']}"}.to_json] if old_prod.title.include?("5 Item")
-    local_tags = old_prod.tags.split(",")
-    local_tags.each do |x|
-      if x.include? "#{Time.now.strftime('%m%y')}_"
-        @match_tag = x
-        @match_tag[-1] = '5'
-        break
-      end
-    end
-
-    new_product_data = Product.find_by_sql("SELECT * from products WHERE tags LIKE '%#{@match_tag}%';").first
-    my_action = myjson['action']
-    myjson['new_product_id'] = new_product_data.shopify_id
+    return [404, @default_headers, {error: 'subscription not found'}.to_json] if local_sub.nil?
+    #TODO (Neville): add check for nill product_collection value
+    new_product_collection = myjson['product_collection']
+    new_product = Product.find_by_shopify_id myjson['real_alt_product_id']
     myjson['recharge_change_header'] = @recharge_change_header
 
-    if my_action == "upgrade_subscription"
-      #Add code to immediately update subscription upgrade here
-      puts "Updating customer record immediately!"
-      puts "local_sub = #{local_sub.inspect}"
+    puts "local_sub = #{local_sub.inspect}"
+    new_variant = EllieVariant.find_by_product_id: new_product.shopify_id
 
-      my_variant = EllieVariant.find_by product_id: new_product_data.shopify_id
-      local_sub.shopify_product_id = new_product_data.shopify_id
-      local_sub.shopify_variant_id = my_variant.variant_id
-      local_sub.sku = my_variant.sku
-      local_sub.product_title = new_product_data.title
-      local_sub.price = my_variant.price
-      my_line_items = local_sub.raw_line_item_properties
+    local_sub.shopify_product_id = new_product.shopify_id
+    local_sub.shopify_variant_id = new_variant.variant_id
+    local_sub.sku = new_variant.sku
+    local_sub.product_title = new_product.title
+    local_sub.price = new_variant.price
 
-      my_line_items.map do |mystuff|
-          if mystuff['name'] == 'product_collection'
-            mystuff['value'] = new_product_data.title
-          end
-      end
-
-      logger.info "updated local sub data => #{local_sub.inspect}"
-      local_sub.save!
-      Resque.enqueue_to(:upgrade_sub, 'SubscriptionUpgrade', myjson)
-    else
-      puts "Can't upgrade subscription, action must be 'upgrade_subscription' not #{my_action}"
+    my_line_items = local_sub.raw_line_item_properties
+    #TODO (Neville): add check for product_collection property presence
+    my_line_items.map do |mystuff|
+      next unless mystuff['name'] == 'product_collection'
+      mystuff['value'] = new_product_collection
     end
+
+    logger.info "updated local sub data => #{local_sub.inspect}"
+    local_sub.save!
+    Resque.enqueue_to(:item_change, 'SubscriptionUpgrade', myjson)
   end
 
   error ActiveRecord::RecordNotFound do

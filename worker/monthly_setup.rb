@@ -19,6 +19,7 @@ class MonthlySetup
     month = Date.today >> 1
     @next_month_end = Time.local("#{month.strftime('%Y')}", "#{month.strftime('%m')}").end_of_month
   end
+
   # configures switchable_products table --step 1
   def switchable_config
     current_array = Product.find_by_sql(
@@ -38,6 +39,7 @@ class MonthlySetup
     logger.info "switchable_config done"
     @conn.close
   end
+
   # configures alternate_products table --step 2
   def alternate_config
     current_array = Product.find_by_sql(
@@ -61,6 +63,7 @@ class MonthlySetup
     logger.info "alternate_config done"
     @conn.close
   end
+  
   def matching_config
     # array of current months product collections
     # not including auto renews

@@ -150,40 +150,38 @@ module ResqueHelper
     return response_hash
   end
 
-  def provide_upgrade_product(new_product_id, subscription_id)
-      my_new_product = Product.find_by shopify_id: new_product_id
-      puts "(provide_upgrade_products) new product info is #{my_new_product.inspect}"
-      #Here I need to check current subscription line item properties. If need be add or modify
-      #the product_collection to the chosen product_collection customers switch to.
-      my_sub = Subscription.find_by_subscription_id(subscription_id)
-      my_variant = EllieVariant.find_by product_id: new_product_id
-      puts my_sub.inspect
-      my_line_items = my_sub.raw_line_item_properties
-      puts my_line_items.inspect
-      found_collection = false
-      my_line_items.map do |mystuff|
-          #puts "#{key}, #{value}"
-          if mystuff['name'] == 'product_collection'
-              mystuff['value'] = my_new_product.title
-              found_collection = true
-          end
-      end
+  def generate_change_data(new_product_id, subscription_id, new_collection)
+    puts "generate_change_data params: { new_product_id: #{my_new_product}, sub_id: #{subscription_id},
+          new_collection: #{new_collection}"
+    my_new_product = Product.find_by_shopify_id: new_product_id
+    my_variant = EllieVariant.find_by_product_id: new_product_id
+    my_new_collection = new_collection
+    my_sub = Subscription.find_by_subscription_id(subscription_id)
+    my_line_items = my_sub.raw_line_item_properties
+    puts my_line_items.inspect
+    found_collection = false
 
-      puts "my_line_items = #{my_line_items.inspect}"
+    my_line_items.map do |mystuff|
+      next unless mystuff['name'] == 'product_collection'
+      mystuff['value'] = my_new_collection
+      found_collection = true
+    end
+    puts "my_line_items = #{my_line_items.inspect}"
 
-      if found_collection == false
-           #only if I did not find the product_collection property in the line items do I need to add it
-          puts "We are adding the product collection to the line item properties"
-          my_line_items << {"name" => "product_collection", "value" => my_new_product.title}
-      else
-          puts "We have already updated the product_collection value!"
-      end
+    if found_collection == false
+        puts "We are adding the product collection to the line item properties"
+        my_line_items << {"name" => "product_collection", "value" => my_new_collection}
+    else
+        puts "We have already updated the product_collection value!"
+    end
 
-      stuff_to_return = { "price" => my_variant.price, "sku" => my_variant.sku, "product_title" => my_new_product.title, "shopify_product_id" => my_new_product.shopify_id, "shopify_variant_id" => my_variant.variant_id, "properties" => my_line_items }
-      logger.info "HASH GOING TO RECHARGE: #{stuff_to_return.inspect}"
-      return stuff_to_return
-
-
+    stuff_to_return = { "price" => my_variant.price, "sku" => my_variant.sku,
+      "product_title" => my_new_collection, "shopify_product_id" => my_new_product.shopify_id,
+      "shopify_variant_id" => my_variant.variant_id, "properties" => my_line_items,
+      "variant_title" => my_variant.title,
+    }
+    logger.info "HASH GOING TO RECHARGE: #{stuff_to_return.inspect}"
+    return stuff_to_return
   end
 
   def setup_subscription_update(params)
