@@ -153,8 +153,8 @@ module ResqueHelper
   def generate_change_data(new_product_id, subscription_id, new_collection)
     puts "generate_change_data params: { new_product_id: #{my_new_product}, sub_id: #{subscription_id},
           new_collection: #{new_collection}"
-    my_new_product = Product.find_by_shopify_id: new_product_id
-    my_variant = EllieVariant.find_by_product_id: new_product_id
+    my_new_product = Product.find_by_shopify_id(new_product_id)
+    my_variant = EllieVariant.find_by_product_id(new_product_id)
     my_new_collection = new_collection
     my_sub = Subscription.find_by_subscription_id(subscription_id)
     my_line_items = my_sub.raw_line_item_properties

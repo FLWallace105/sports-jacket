@@ -22,7 +22,7 @@ class ItemChange
     body = temp_hash.to_json
     puts body
 
-    # TODO(Neville): update email detail variables
+    # TODO(Neville): Add new email block in SendEmailToCustomer an SendEmailToCS
     params = {"subscription_id" => subscription_id, "action" => "change_subscription", "details" => temp_hash   }
     my_update_sub = HTTParty.put("https://api.rechargeapps.com/subscriptions/#{subscription_id}", :headers => recharge_change_header, :body => body, :timeout => 80)
     puts my_update_sub.inspect
