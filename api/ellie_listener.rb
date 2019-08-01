@@ -492,7 +492,7 @@ class EllieListener < Sinatra::Base
     myjson['recharge_change_header'] = @recharge_change_header
 
     puts "local_sub = #{local_sub.inspect}"
-    new_variant = EllieVariant.find_by_product_id: new_product.shopify_id
+    new_variant = EllieVariant.find_by_product_id(new_product.shopify_id)
 
     local_sub.shopify_product_id = new_product.shopify_id
     local_sub.shopify_variant_id = new_variant.variant_id
