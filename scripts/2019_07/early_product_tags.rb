@@ -208,3 +208,23 @@ ProductTag.create_with(early_tag).find_or_create_by(product_id: victory_lap_3, t
 ProductTag.create_with(early_tag).find_or_create_by(product_id: victory_lap_5, tag: 'switchable').update(early_tag)
 ProductTag.create_with(early_tag).find_or_create_by(product_id: victory_lap_3_autorenew, tag: 'switchable').update(early_tag)
 ProductTag.create_with(early_tag).find_or_create_by(product_id: victory_lap_5_autorenew, tag: 'switchable').update(early_tag)
+
+#bonus collection Catch Up
+catch_up_3 = 2405033246778
+catch_up_5 = 2405033607226
+catch_up_3_auto = 2418473271354
+catch_up_5_auto = 2418479333434
+ProductTag.create_with(early_tag).find_or_create_by(product_id: catch_up_3, tag: 'current').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: catch_up_5, tag: 'current').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: catch_up_3_auto, tag: 'current').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: catch_up_5_auto, tag: 'current').update(early_tag)
+# set skippable tags
+ProductTag.create_with(early_tag).find_or_create_by(product_id: catch_up_3, tag: 'skippable').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: catch_up_5, tag: 'skippable').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: catch_up_3_auto, tag: 'skippable').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: catch_up_5_auto, tag: 'skippable').update(early_tag)
+# set switchable tags
+ProductTag.create_with(early_tag).find_or_create_by(product_id: catch_up_3, tag: 'switchable').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: catch_up_5, tag: 'switchable').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: catch_up_3_auto, tag: 'switchable').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: catch_up_5_auto, tag: 'switchable').update(early_tag)

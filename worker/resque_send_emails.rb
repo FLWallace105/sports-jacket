@@ -43,9 +43,10 @@ class SendEmailToCustomer
                 leggings = details['leggings']
                 tops = details['tops']
                 if details.key?('sports-jacket')
-                  jacket_or_bra = "Sports Jacket Size: #{details['sports-jacket']}"
-                elsif details.key?('sports-bra')
-                  jacket_or_bra = "Sports Bra Size: #{details['sports-bra']}"
+                  sports_jacket = "#{details['sports-jacket']}"
+                end
+                if details.key?('sports-bra')
+                  sports_bra = "#{details['sports-bra']}"
                 end
                 subject = "Confirmation of Size Change for Your Subscription"
                 personalization.add_dynamic_template_data({
@@ -53,7 +54,8 @@ class SendEmailToCustomer
                   "last_name" => last_name,
                   "legging_size" => leggings,
                   "top_size" => tops,
-                  "jacket_or_bra_info" => jacket_or_bra,
+                  "sports_jacket" => sports_jacket,
+                  "sports_bra" => sports_bra,
                   "product_collection" => product_collection,
                 })
             when 'switching_product'

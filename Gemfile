@@ -20,6 +20,7 @@ gem 'sinatra', '>= 2.0.2', require: 'sinatra/base'
 gem 'sinatra-activerecord'
 gem 'recharge-api'
 gem 'sendgrid-ruby'
+gem 'pry'
 #Added Floyd Wallace 4/3/18
 #gem 'sinatra-cross_origin'
 
