@@ -16,6 +16,7 @@ module DetermineInfo
     def initialize
       recharge_regular = ENV['RECHARGE_ACCESS_TOKEN']
       @sleep_recharge = ENV['RECHARGE_SLEEP_TIME']
+      @sleep_shopify = ENV['SHOPIFY_SLEEP_TIME']
       @my_header = {
         "X-Recharge-Access-Token" => recharge_regular
       }

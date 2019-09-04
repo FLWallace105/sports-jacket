@@ -33,9 +33,9 @@ class SubFinder
   def generate_report
     #Headers for CSV
     column_header = [
-      "subscription_id", "next_charge_scheduled_at", "status",
-      "expire_after_specific_number_of_charges", "has_queued_charges", "created_at",
-      "updated_at", "json"
+      "subscription_id", "shopify_product_id", "next_charge_scheduled_at", "status", "charge_interval_frequency(months)",
+      "product_title", "expire_after_specific_number_of_charges", "has_queued_charges", "price",
+      "created_at", "updated_at", "json"
     ]
     #delete old file
     File.delete('no_next_charge_report.csv') if File.exist?('no_next_charge_report.csv')
@@ -46,17 +46,21 @@ class SubFinder
       subMap.each do |key, value|
         #Construct the CSV string
         subscription_id = key
+        shopify_product_id = value['shopify_product_id']
         next_charge_scheduled_at = value['next_charge_scheduled_at']
         expire_after_specific_number_of_charges = value['expire_after_specific_number_of_charges']
         has_queued_charges = value['has_queued_charges']
+        price = value['price']
         status = value['status']
-        created_at = value['created_at'].strftime('%F')
-        updated_at = value['updated_at'].strftime('%F')
+        charge_interval_frequency = value['charge_interval_frequency']
+        product_title = value['product_title']
+        created_at = Time.parse(value['created_at']).strftime('%F')
+        updated_at = Time.parse(value['updated_at']).strftime('%F')
         json = value
 
         csv_data_out = [
-          subscription_id, next_charge_scheduled_at, status,
-          expire_after_specific_number_of_charges, has_queued_charges,
+          subscription_id, shopify_product_id, next_charge_scheduled_at, status, charge_interval_frequency, product_title,
+          expire_after_specific_number_of_charges, has_queued_charges, price,
           created_at, updated_at, json
         ]
         hdr << csv_data_out
