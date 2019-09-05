@@ -8,6 +8,7 @@ require 'active_support/core_ext'
 class MonthlySetup
   include Logging
   def initialize
+    month = Date.today
     @sleep_shopify = ENV['SHOPIFY_SLEEP_TIME']
     @shopify_base_site = "https://#{ENV['SHOPIFY_API_KEY']}:#{ENV['SHOPIFY_SHARED_SECRET']}"\
     "@#{ENV['SHOPIFY_SHOP_NAME']}.myshopify.com/admin"
@@ -16,7 +17,6 @@ class MonthlySetup
     @conn = PG.connect(
       @uri.hostname, @uri.port, nil, nil, @uri.path[1..-1], @uri.user, @uri.password
     )
-    month = Date.today >> 1
     @next_month_end = Time.local("#{month.strftime('%Y')}", "#{month.strftime('%m')}").end_of_month
   end
   # configures switchable_products table --step 1
@@ -95,4 +95,4 @@ class MonthlySetup
       @conn.close
   end
 end
-COLLECTION_IDS = ProductTag.where("active_end = ?", "2019-08-01 06:59:59.999999").pluck(:product_id)
+COLLECTION_IDS = ProductTag.where("active_end = ?", "2019-10-01 06:59:59.999999").pluck(:product_id)

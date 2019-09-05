@@ -1,5 +1,5 @@
 require_relative 'resque_helper'
-
+# EDGE CASE WORKER
 class PrepaidCollectionSwitch
   extend ResqueHelper
   @queue = "switch_collection"
@@ -13,12 +13,12 @@ class PrepaidCollectionSwitch
     puts "We are working on subscription #{subscription_id}"
     Resque.logger.info("We are working on subscription #{subscription_id}")
     product_id = params['product_id']
-    
+
     Resque.logger.info(product_id)
     #Here is where we do some things that make sure we only push the product_collection changes to
     #the ReCharge endpoint for the prepaid subscription where there is no queued orders as the card
     #has not yet charged
-    hash_array = provide_no_queued_info(product_id, incoming_product_id, subscription_id)
+    hash_array = provide_sub_update_body(product_id, incoming_product_id, subscription_id)
     puts hash_array['email_info']
     Resque.logger.info("new product info for subscription #{subscription_id} is #{hash_array['email_info']}")
     recharge_change_header = params['recharge_change_header']

@@ -401,6 +401,11 @@ class Subscription < ActiveRecord::Base
       }
   end
 
+  def get_product_collection
+    my_item = SubLineItem.find_by(subscription_id: subscription_id, name: 'product_collection')
+    return my_item['value'])
+  end
+
   # private
 
   def update_line_items

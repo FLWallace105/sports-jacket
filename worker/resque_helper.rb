@@ -56,8 +56,8 @@ module ResqueHelper
 
   end
 
-  def provide_no_queued_info(myprod_id, incoming_product_id, subscription_id)
-      Resque.logger = Logger.new("#{Dir.getwd}/logs/no_queued_helper.log", progname: 'PROVIDE_NO_QUEUED')
+  def provide_sub_update_body(myprod_id, incoming_product_id, subscription_id)
+      Resque.logger = Logger.new("#{Dir.getwd}/logs/prepaid_sub_body_helper.log", progname: 'PROVIDE_SUB_BODY')
       Resque.logger.info myprod_id
       my_three_pak = SwitchableProduct.find_by_product_id(myprod_id)
       puts "my_three_pak = #{my_three_pak.threepk}"

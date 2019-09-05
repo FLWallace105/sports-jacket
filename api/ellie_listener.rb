@@ -299,6 +299,15 @@ class EllieListener < Sinatra::Base
       local_sub = Subscription.find_by_subscription_id(local_sub_id)
       puts "my_new_product = #{my_new_product.inspect}"
       puts "local_sub = #{local_sub.inspect}"
+      # update subscription locally for reg and prepaid subs
+      my_properties = local_sub.raw_line_item_properties
+      my_properties.map do |mystuff|
+      if mystuff['name'] == 'product_collection'
+          mystuff['value'] = my_new_product.product_collection
+        end
+      end
+      local_sub.raw_line_item_properties = my_properties
+      local_sub.save!
 
       if local_sub.prepaid_switchable?
         sql_query = "SELECT * FROM orders WHERE line_items @>
@@ -336,16 +345,6 @@ class EllieListener < Sinatra::Base
         else
           # edge case: subscription has no QUEUED orders left (customer not re-billed yet)
           puts "INVOKING PrepaidCollectionSwitch"
-          new_collection = Product.find(myjson['real_alt_product_id']).title
-          puts "New product collection #{new_collection}"
-
-          my_properties = local_sub.raw_line_item_properties
-          my_properties.map do |mystuff|
-            next unless mystuff['name'] == 'product_collection'
-            mystuff['value'] = new_collection
-          end
-          local_sub.raw_line_item_properties = my_properties
-          local_sub.save!
           Resque.enqueue_to(:switch_collection, 'PrepaidCollectionSwitch', myjson)
         end
       elsif local_sub.switchable? && !local_sub.prepaid?
@@ -353,19 +352,8 @@ class EllieListener < Sinatra::Base
         local_sub.shopify_variant_id = my_new_product.variant_id
         local_sub.sku = my_new_product.sku
         local_sub.product_title = my_new_product.product_title
-
         #add saving for product_collection in these lines so that saves as well.
         #product_collection = my_new_product.product_collection
-        my_properties = local_sub.raw_line_item_properties
-        my_properties.map do |mystuff|
-        #puts "#{key}, #{value}"
-        if mystuff['name'] == 'product_collection'
-            mystuff['value'] = my_new_product.product_collection
-          end
-        end
-        local_sub.raw_line_item_properties = my_properties
-
-        local_sub.save!
         Resque.enqueue_to(:switch_product, 'SubscriptionSwitch', myjson)
       else
         return [400, @default_headers, {message: 'not switchable'}.to_json]
@@ -553,26 +541,15 @@ class EllieListener < Sinatra::Base
       puts "THIS IS A PREPAID SUBSCRIPTION #{sub.id}"
       skip_value = sub.prepaid_skippable?
       switch_value = sub.prepaid_switchable?
+      @title_value = sub.get_product_collection
       # returns next queued order this month if it exists
       if sub.get_order_props
         res = sub.get_order_props
-        puts "=====> VALUES FROM GET_ORDER PROPS IN TRANFORM_SUBS: TITLE=#{res[:my_title]} SHIP DATE: #{res[:ship_date]}"
-        @title_value = res[:my_title]
         @shipping_date = res[:ship_date].strftime('%F')
       else
-        # returns true if customer recieved all orders for subcription
-        if sub.all_orders_sent?(sub.id)
-          sub.raw_line_item_properties.each do |item|
-            next unless item['name'] == 'product_collection'
-            @title_value = item['value']
-          end
-        else
-          @title_value = sub.current_order_data[:my_title]
-        end
         @shipping_date = sub.current_order_data[:ship_date].strftime('%F')
       end
     else
-      puts "THIS IS A PREPAID SUBSCRIPTION #{sub.id}"
       @title_value = sub.product_title
       skip_value = sub.skippable?
       switch_value = sub.switchable?
