@@ -403,7 +403,7 @@ class Subscription < ActiveRecord::Base
 
   def get_product_collection
     my_item = SubLineItem.find_by(subscription_id: subscription_id, name: 'product_collection')
-    return my_item['value'])
+    return my_item['value']
   end
 
   # private
