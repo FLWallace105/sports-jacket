@@ -12,11 +12,9 @@ class PrepaidCollectionSwitch
     incoming_product_id = params['alt_product_id']
     puts "We are working on subscription #{subscription_id}"
     Resque.logger.info("We are working on subscription #{subscription_id}")
-    my_item = SubLineItem.find_by(
-      subscription_id: subscription_id,
-      name: 'product_collection'
-    )
-    product_id = Product.find_by_title(my_item['value']).shopify_id
+    # (Neville L.) 9-5-19, changed product query to prod id instead of title because
+    # 3 Item title changes to Month YYY collection after rollover. 
+    product_id = Product.find_by_shopify_id(params['product_id']).shopify_id
     Resque.logger.info(product_id)
     #Here is where we do some things that make sure we only push the product_collection changes to
     #the ReCharge endpoint for the prepaid subscription where there is no queued orders as the card
