@@ -364,9 +364,10 @@ class Subscription < ActiveRecord::Base
   def current_order_data
     sql_query = "select  * from orders where line_items @>"\
     " '[{\"subscription_id\": #{subscription_id}}]' and status = 'SUCCESS'"\
-    " and is_prepaid = 0 and scheduled_at = '#{Date.today.strftime('%F %T')}' ORDER BY (scheduled_at) DESC"
+    # " and is_prepaid = 0 and scheduled_at = '#{Date.today.strftime('%F %T')}' ORDER BY (scheduled_at) DESC"
+    " and scheduled_at = '#{Date.today.strftime('%F %T')}' ORDER BY (scheduled_at, updated_at) DESC"
 
-    my_order = Order.find_by_sql(sql_query).first
+    my_order = Order.find_by_sql(sql_query)[0]
     puts "++++current_order_data = #{my_order.inspect}"
     my_title = ""
     my_date = ""
@@ -490,7 +491,7 @@ class Subscription < ActiveRecord::Base
   # Internal: Validate whether a subscription can switch this month
   #
   # Returns a boolean value where true means customer cant switch
-  # and false means they cannot switch.
+  # and false means they can switch.
   def prepaid_switched?(options = {})
     now = Time.zone.now
     options[:time] = now
@@ -575,9 +576,12 @@ class Subscription < ActiveRecord::Base
   #
   # returns true if subscription has no queued orders and next_charge_scheduled_at is > today
   def all_orders_sent?(sub_id)
+    # sql_query = "SELECT * FROM orders WHERE
+    #               line_items @> '[{\"subscription_id\": #{sub_id}}]'
+    #               AND status = 'QUEUED' AND scheduled_at > '#{Date.today.strftime('%F %T')}';"
     sql_query = "SELECT * FROM orders WHERE
                   line_items @> '[{\"subscription_id\": #{sub_id}}]'
-                  AND status = 'QUEUED' AND scheduled_at > '#{Date.today.strftime('%F %T')}';"
+                  AND scheduled_at >= '#{Date.today.strftime('%F %T')}';"
     upcoming_orders = Order.find_by_sql(sql_query)
     if next_charge_scheduled_at >= Date.today.strftime('%F %T') && upcoming_orders.empty?
       puts "all_orders_sent? = TRUE"
