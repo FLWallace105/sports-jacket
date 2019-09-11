@@ -8,7 +8,7 @@ require 'active_support/core_ext'
 class MonthlySetup
   include Logging
   def initialize
-    month = Date.today
+    month = Time.now.localtime.to_date
     @sleep_shopify = ENV['SHOPIFY_SLEEP_TIME']
     @shopify_base_site = "https://#{ENV['SHOPIFY_API_KEY']}:#{ENV['SHOPIFY_SHARED_SECRET']}"\
     "@#{ENV['SHOPIFY_SHOP_NAME']}.myshopify.com/admin"
@@ -18,12 +18,13 @@ class MonthlySetup
       @uri.hostname, @uri.port, nil, nil, @uri.path[1..-1], @uri.user, @uri.password
     )
     @next_month_end = Time.local("#{month.strftime('%Y')}", "#{month.strftime('%m')}").end_of_month
+    @collection_ids = ProductTag.where("active_end = ?", @next_month_end).pluck(:product_id)
   end
   # configures switchable_products table --step 1
   def switchable_config
     current_array = Product.find_by_sql(
       "SELECT * from products where title NOT LIKE '%Auto renew%' AND"\
-      " CAST (shopify_id AS bigint) IN (#{COLLECTION_IDS.join(', ')});"
+      " CAST (shopify_id AS bigint) IN (#{@collection_ids.join(', ')});"
     )
     my_insert =
       "insert into switchable_products (product_title, product_id, threepk) values ($1, $2, $3)"
@@ -41,7 +42,7 @@ class MonthlySetup
   # configures alternate_products table --step 2
   def alternate_config
     current_array = Product.find_by_sql(
-      "SELECT * from products where title NOT LIKE '%Auto renew%' AND CAST (shopify_id AS bigint) IN (#{COLLECTION_IDS.join(', ')});"
+      "SELECT * from products where title NOT LIKE '%Auto renew%' AND CAST (shopify_id AS bigint) IN (#{@collection_ids.join(', ')});"
     )
     my_insert = "insert into alternate_products"\
     " (product_title, product_id, variant_id, sku, product_collection) values ($1, $2, $3, $4, $5)"
@@ -67,7 +68,7 @@ class MonthlySetup
     current_array = Product.find_by_sql(
       "SELECT * from products
       WHERE title NOT LIKE '%Auto renew%'
-      AND CAST (shopify_id AS bigint) IN (#{COLLECTION_IDS.join(', ')})
+      AND CAST (shopify_id AS bigint) IN (#{@collection_ids.join(', ')})
       ORDER BY (title);"
     )
     my_insert = "insert into matching_products ("\
@@ -95,4 +96,3 @@ class MonthlySetup
       @conn.close
   end
 end
-COLLECTION_IDS = ProductTag.where("active_end = ?", "2019-09-30 23:59:59.999999").pluck(:product_id)
