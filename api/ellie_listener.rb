@@ -353,6 +353,7 @@ class EllieListener < Sinatra::Base
         local_sub.shopify_variant_id = my_new_product.variant_id
         local_sub.sku = my_new_product.sku
         local_sub.product_title = my_new_product.product_title
+        local_sub.save!
         #add saving for product_collection in these lines so that saves as well.
         #product_collection = my_new_product.product_collection
         Resque.enqueue_to(:switch_product, 'SubscriptionSwitch', myjson)
