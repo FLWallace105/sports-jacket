@@ -16,6 +16,7 @@ class EllieListener < Sinatra::Base
     set :protection, :except => [:json_csrf]
     mime_type :application_javascript, 'application/javascript'
     mime_type :application_json, 'application/json'
+    
 
     # on webserver startup set the current theme id
     Resque.enqueue_to(:default, 'Rollover', :set_current_theme_id)
@@ -519,6 +520,8 @@ class EllieListener < Sinatra::Base
       puts "Can't upgrade subscription, action must be 'upgrade_subscription' not #{my_action}"
     end
   end
+
+  
 
   error ActiveRecord::RecordNotFound do
     details = env['sinatra.error'].message
