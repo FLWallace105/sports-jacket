@@ -71,7 +71,7 @@ class SubscriptionSwitchPrepaid
     #---END order Recharge API update---#
 
     # Below for email to customer
-    if my_update_order.code == 200 && my_update_sub == 200
+    if my_update_order.code == 200 && my_update_sub.code == 200
       my_update_order.parsed_response['order']['line_items'][0]['properties'].each do |item|
         next unless item['name'] == 'product_collection'
         params['product_collection'] = item['value']
