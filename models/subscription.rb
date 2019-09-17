@@ -347,7 +347,7 @@ class Subscription < ActiveRecord::Base
                 AND scheduled_at <= '#{mon_end.strftime('%F %T')}'
                 AND status = 'QUEUED' AND is_prepaid = 1;"
     my_orders = Order.find_by_sql(sql_query)
-    puts "queued orders this month for sub: #{subscription_id} =====>  #{my_orders.inspect}"
+    puts "#{my_orders.size} queued orders this month for sub: #{subscription_id}"
 
     if my_orders.empty? == false
       my_orders.each do |order|
@@ -364,11 +364,10 @@ class Subscription < ActiveRecord::Base
   def current_order_data
     sql_query = "select  * from orders where line_items @>"\
     " '[{\"subscription_id\": #{subscription_id}}]' and status = 'SUCCESS'"\
-    # " and is_prepaid = 0 and scheduled_at = '#{Date.today.strftime('%F %T')}' ORDER BY (scheduled_at) DESC"
     " and scheduled_at = '#{Date.today.strftime('%F %T')}' ORDER BY (scheduled_at, updated_at) DESC"
 
     my_order = Order.find_by_sql(sql_query)[0]
-    puts "++++current_order_data = #{my_order.inspect}"
+    puts "++++current_order = #{my_order.inspect}"
     my_title = ""
     my_date = ""
     begin
@@ -403,8 +402,11 @@ class Subscription < ActiveRecord::Base
   end
 
   def get_product_collection
-    my_item = SubLineItem.find_by(subscription_id: subscription_id, name: 'product_collection')
-    return my_item['value']
+    raw_line_item_properties.each do |mystuff|
+      next unless mystuff['name'] == 'product_collection'
+      return mystuff['value']
+    end
+    return false
   end
 
   # private
@@ -439,8 +441,6 @@ class Subscription < ActiveRecord::Base
       my_line_item_hash = order.line_items
     end
     my_line_item_hash.each do |item|
-      puts "SUB ID IN LINE_ITEM_PARSE: #{subscription_id} , class = #{subscription_id.class}\n\n"
-      puts "item['subscription_id'] =#{item['subscription_id']} , sub_id param=#{subscription_id} match?: #{item['subscription_id'].to_s == subscription_id}"
       if item['properties'].empty? == false
         item['properties'].each do |prop|
           if prop['name'] == "product_collection" && item['subscription_id'].to_s == subscription_id
@@ -473,7 +473,7 @@ class Subscription < ActiveRecord::Base
                 AND is_prepaid = 1;"
     this_months_orders = Order.find_by_sql(sql_query)
     order_check = false
-    puts this_months_orders.inspect
+    # puts this_months_orders.inspect
     if this_months_orders != []
       this_months_orders.each do |order|
         if order.scheduled_at > now.strftime('%F %T')

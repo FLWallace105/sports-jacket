@@ -292,24 +292,25 @@ class EllieListener < Sinatra::Base
 
     if my_action == 'switch_product'
       now = Time.zone.now
-      puts "Updating customer record immediately!"
+      puts "Updating subscription record immediately!"
       my_real_product_id = myjson['real_alt_product_id']
       local_sub_id = myjson['subscription_id']
       my_new_product = AlternateProduct.find_by_product_id(my_real_product_id)
       local_sub = Subscription.find_by_subscription_id(local_sub_id)
       puts "my_new_product = #{my_new_product.inspect}"
       puts "local_sub = #{local_sub.inspect}"
-      # update subscription locally for reg and prepaid subs
-      my_properties = local_sub.raw_line_item_properties
-      my_properties.map do |mystuff|
-      if mystuff['name'] == 'product_collection'
-          mystuff['value'] = my_new_product.product_collection
-        end
-      end
-      local_sub.raw_line_item_properties = my_properties
-      local_sub.save!
 
       if local_sub.prepaid_switchable?
+        # update subscription locally for reg and prepaid subs
+        my_properties = local_sub.raw_line_item_properties
+        my_properties.map do |mystuff|
+        if mystuff['name'] == 'product_collection'
+            mystuff['value'] = my_new_product.product_collection
+          end
+        end
+        local_sub.raw_line_item_properties = my_properties
+        local_sub.save!
+
         sql_query = "SELECT * FROM orders WHERE line_items @>
                     '[{\"subscription_id\": #{local_sub_id}}]'
                     AND status = 'QUEUED' AND scheduled_at >
@@ -353,6 +354,14 @@ class EllieListener < Sinatra::Base
         local_sub.sku = my_new_product.sku
         local_sub.product_title = my_new_product.product_title
         #add saving for product_collection in these lines so that saves as well.
+        my_properties = local_sub.raw_line_item_properties
+        my_properties.map do |mystuff|
+        if mystuff['name'] == 'product_collection'
+            mystuff['value'] = my_new_product.product_collection
+          end
+        end
+        local_sub.raw_line_item_properties = my_properties
+        local_sub.save!
         #product_collection = my_new_product.product_collection
         Resque.enqueue_to(:switch_product, 'SubscriptionSwitch', myjson)
       else

@@ -10,21 +10,18 @@ class SubscriptionSwitchPrepaid
     updated_line_items = []
 
     subscription_id = params['subscription_id']
-    product_id = params['product_id']
+    product_id = params['product_id'] # 3 MONTHS product etc...
     new_product = AlternateProduct.find_by_product_id(params['real_alt_product_id'])
     recharge_change_header = params['recharge_change_header']
-    incoming_product_id = params['alt_product_id']
 
-    puts "We are working on subscription #{subscription_id}"
     Resque.logger.info "my new product id : #{new_product.product_id}"
     Resque.logger.info("We are working on subscription #{subscription_id}")
 
     #---START subscription Recharge API update---#
     # 9/5/19 requested code change where sub product_collection updates on
-    # all prepaid switch requests not just 'no queued order' subs.
-    new_line_items = provide_sub_update_body(product_id, incoming_product_id, subscription_id)
+    # all prepaid switch requests, not just 'no queued order' subs.
+    new_line_items = provide_sub_update_body(product_id, new_product.product_id, subscription_id)
     sub_body = new_line_items['recharge'].to_json
-    puts "Subscription update body going to ReCharge = #{sub_body.inspect}"
     Resque.logger.info "Subscription update body going to ReCharge = #{sub_body.inspect}"
     sub_update_success = false
 
@@ -32,7 +29,6 @@ class SubscriptionSwitchPrepaid
       "https://api.rechargeapps.com/subscriptions/#{subscription_id}",
       :headers => recharge_change_header, :body => sub_body, :timeout => 80
     )
-    puts my_update_sub.inspect
     Resque.logger.info "RECHARGE SUBSCRIPTION RESPONSE: #{my_update_sub.inspect}"
 
     sub_update_success = true if my_update_sub.code == 200
@@ -81,11 +77,9 @@ class SubscriptionSwitchPrepaid
         params['product_collection'] = item['value']
       end
       Resque.enqueue(SendEmailToCustomer, params)
-      puts "****** Hooray We have no errors **********"
       Resque.logger.info("****** Hooray We have no errors **********")
     else
       Resque.enqueue(SendEmailToCS, params)
-      puts "We were not able to update the subscription/orders"
       Resque.logger.error("We were not able to update the subscription/orders")
     end
 

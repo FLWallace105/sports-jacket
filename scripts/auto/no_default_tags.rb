@@ -18,12 +18,15 @@ my_tag = "%0919_collection%"
 prepaid_3 = 1421100974131
 prepaid_5 = 1635509469235
 prepaid_3_legacy = 1494813966387
+prepaid_2 = 2168707809331
 
 ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_3, tag: 'prepaid')
   .update(early_tag)
 ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_5, tag: 'prepaid')
   .update(early_tag)
 ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_3_legacy, tag: 'prepaid')
+  .update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_2, tag: 'prepaid')
   .update(early_tag)
 
 ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_3, tag: 'current')
@@ -32,6 +35,8 @@ ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_5, tag: 
   .update(early_tag)
 ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_3_legacy, tag: 'current')
   .update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_2, tag: 'current')
+  .update(early_tag)
 
   ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_3, tag: 'skippable')
     .update(early_tag)
@@ -39,12 +44,16 @@ ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_3_legacy
     .update(early_tag)
   ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_3_legacy, tag: 'skippable')
     .update(early_tag)
+  ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_2, tag: 'skippable')
+    .update(early_tag)
 
   ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_3, tag: 'switchable')
     .update(early_tag)
   ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_5, tag: 'switchable')
     .update(early_tag)
   ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_3_legacy, tag: 'switchable')
+    .update(early_tag)
+  ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_2, tag: 'switchable')
     .update(early_tag)
 
 
