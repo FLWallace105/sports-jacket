@@ -299,8 +299,9 @@ class EllieListener < Sinatra::Base
       local_sub = Subscription.find_by_subscription_id(local_sub_id)
       puts "my_new_product = #{my_new_product.inspect}"
       puts "local_sub = #{local_sub.inspect}"
+      orders_array = sub.all_orders
 
-      if local_sub.prepaid_switchable?
+      if local_sub.prepaid_switchable?(orders_array)
         # update subscription locally for reg and prepaid subs
         my_properties = local_sub.raw_line_item_properties
         my_properties.map do |mystuff|
@@ -384,7 +385,8 @@ class EllieListener < Sinatra::Base
         #Add code to immediately skip the sub in DB only here
         local_sub_id = params['subscription_id']
         temp_subscription = Subscription.find_by_subscription_id(local_sub_id)
-        if temp_subscription.prepaid_skippable?
+        orders_array = sub.all_orders
+        if temp_subscription.prepaid_skippable?(orders_array)
           my_next_charge = temp_subscription.try(:next_charge_scheduled_at).try('+', 1.month)
           temp_subscription.next_charge_scheduled_at = my_next_charge
           puts "temp_subscription w/ new charge date = #{temp_subscription.inspect}"
@@ -547,13 +549,14 @@ class EllieListener < Sinatra::Base
   def transform_subscriptions(sub, orders)
     logger.debug "subscription: #{sub.inspect}"
     if sub.prepaid?
+      orders_array = sub.all_orders
       puts "THIS IS A PREPAID SUBSCRIPTION #{sub.id}"
-      skip_value = sub.prepaid_skippable?
-      switch_value = sub.prepaid_switchable?
+      skip_value = sub.prepaid_skippable?(orders_array)
+      switch_value = sub.prepaid_switchable?(orders_array)
       @title_value = sub.get_product_collection
       # returns next queued order this month if it exists
-      if sub.get_order_props
-        res = sub.get_order_props
+      res = sub.get_order_props(orders_array)
+      if res
         @shipping_date = res[:ship_date].strftime('%F')
       else
         @shipping_date = sub.current_order_data[:ship_date].strftime('%F')
