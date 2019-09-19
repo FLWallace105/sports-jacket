@@ -297,9 +297,9 @@ class EllieListener < Sinatra::Base
       local_sub_id = myjson['subscription_id']
       my_new_product = AlternateProduct.find_by_product_id(my_real_product_id)
       local_sub = Subscription.find_by_subscription_id(local_sub_id)
-      puts "my_new_product = #{my_new_product.inspect}"
+      puts "SWITCHING my_new_product = #{my_new_product.inspect}"
       puts "local_sub = #{local_sub.inspect}"
-      orders_array = sub.all_orders
+      orders_array = local_sub.all_orders
 
       if local_sub.prepaid_switchable?(orders_array)
         # update subscription locally for reg and prepaid subs

@@ -29,6 +29,7 @@ class SubscriptionSwitchPrepaid
       "https://api.rechargeapps.com/subscriptions/#{subscription_id}",
       :headers => recharge_change_header, :body => sub_body, :timeout => 80
     )
+    Resque.logger.info "RECHARGE SUBSCRPTION UPDATE RESPONSE CODE: #{my_update_sub.code}"
     Resque.logger.info "RECHARGE SUBSCRIPTION RESPONSE: #{my_update_sub.inspect}"
 
     sub_update_success = true if my_update_sub.code == 200
