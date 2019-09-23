@@ -295,19 +295,35 @@ module ResqueHelper
   end
 
   def reformat_oline_items(prop_array)
+    Resque.logger = Logger.new("#{Dir.getwd}/logs/prepaid_order_line_item_formater.log")
     res = []
-    prop_array.each do |l_item|
-      new_line_item = {
-        "properties" => l_item['properties'],
-        "quantity" => l_item['quantity'].to_i,
-        "sku" => l_item['sku'],
-        "title" => l_item['title'],
-        "variant_title" => l_item['variant_title'],
-        "product_id" => l_item['shopify_product_id'].to_i,
-        "variant_id" => l_item['shopify_variant_id'].to_i,
-        "subscription_id" => l_item['subscription_id'].to_i,
-      }
-      res.push(new_line_item)
+      prop_array.each do |l_item|
+      begin
+        if l_item.key?("product_title")
+          p_title = l_item['product_title']
+        elsif l_item.key?("title")
+          p_title = l_item['title']
+        end
+        new_line_item = {
+          "properties" => l_item['properties'],
+          "quantity" => l_item['quantity'].to_i,
+          "sku" => l_item['sku'],
+          "title" => l_item['title'],
+          "variant_title" => l_item['variant_title'],
+          "product_id" => l_item['shopify_product_id'].to_i,
+          "variant_id" => l_item['shopify_variant_id'].to_i,
+          "subscription_id" => l_item['subscription_id'].to_i,
+          "grams" => l_item['grams'].to_i,
+          "price" => l_item['price'].to_i,
+          "product_title" => p_title,
+        }
+        res.push(new_line_item)
+      rescue StandardError => e
+        Resque.logger.warn "ERROR local Order for subscription(#{l_item['subscription_id']}) missing property"
+        puts "ERROR local Order for subscription(#{l_item['subscription_id']}) missing property"
+        Resque.logger.warn e
+        puts e
+      end
     end
     return res
   end

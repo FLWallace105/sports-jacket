@@ -14,6 +14,7 @@ class ChangePrepaidSizes
     Resque.logger = Logger.new("#{Dir.getwd}/logs/size_change_prepaid_resque.log")
     sub = Subscription.find subscription_id
     Resque.logger.info(sub.inspect)
+
     # Update subscription through REcharge api (propriatary method used)
     sub_litems = {"properties" => sub.raw_line_item_properties}.to_json
     res1 = HTTParty.put("https://api.rechargeapps.com/subscriptions/#{subscription_id}", :headers => @recharge_change_header, :body => sub_litems, :timeout => 80)
