@@ -578,6 +578,7 @@ class EllieListener < Sinatra::Base
       skippable: skip_value,
       can_choose_alt_product: switch_value,
       next_ship_date: @shipping_date,
+      charge_null: sub.charge_null?
     }
     return result
   end

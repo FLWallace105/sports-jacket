@@ -203,6 +203,14 @@ class Subscription < ActiveRecord::Base
     sub.recharge_update!
   end
 
+  def charge_null?
+    if next_charge_scheduled_at == nil
+      return true
+    else
+      return false
+    end
+  end
+
   def prepaid?
     ProductTag.active.where(tag: 'prepaid').pluck(:product_id).include? shopify_product_id
   end
