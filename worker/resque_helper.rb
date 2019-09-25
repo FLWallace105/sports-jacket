@@ -5,23 +5,31 @@ require_relative '../lib/logging'
 
 module ResqueHelper
 
-  def provide_alt_products(myprod_id, incoming_product_id, subscription_id)
+  def provide_alt_products(myprod_id, incoming_product_id, subscription_id, real_product_id)
       #Fix this by doing: check current product_id, determine if three-pack true/false
       #use new_product_id and three-pack true/false to get outgoing product_id
       #use outgoing product_id to create the product info: sku, variant_id, product_id, product title
       #and return that hash value to the calling method.
-      puts "#{myprod_id}, #{incoming_product_id}, #{subscription_id}"
-      my_three_pak = SwitchableProduct.find_by_product_id(myprod_id)
-      puts "my_three_pak = #{my_three_pak.threepk}"
-      puts "my incoming_product_id = #{incoming_product_id}"
-      my_outgoing_product = MatchingProduct.where("incoming_product_id = ? and threepk = ?", incoming_product_id,  my_three_pak.threepk).first
 
-      puts "got here"
-      puts my_outgoing_product.inspect
-      my_outgoing_product_id = my_outgoing_product.outgoing_product_id
-      puts "my outgoing_product_id = #{my_outgoing_product_id}"
+      #Don't need the bs below. We have the real_product_id so we can just use that. Its passed in
+      #Via the front end -- danger, if the theme is configured wrong like say the 2 item has a five item
+      #product in the theme set up customers will get the wrong stuff.
+      #start comment out Floyd Wallace 9/10/19
 
-      my_new_product = AlternateProduct.find_by_product_id(my_outgoing_product_id)
+      #puts "#{myprod_id}, #{incoming_product_id}, #{subscription_id}"
+      #my_three_pak = SwitchableProduct.find_by_product_id(myprod_id)
+      #puts "my_three_pak = #{my_three_pak.threepk}"
+      #puts "my incoming_product_id = #{incoming_product_id}"
+      #my_outgoing_product = MatchingProduct.where("incoming_product_id = ? and threepk = ?", incoming_product_id,  my_three_pak.threepk).first
+
+      #puts "got here"
+      #puts my_outgoing_product.inspect
+      #my_outgoing_product_id = my_outgoing_product.outgoing_product_id
+      #puts "my outgoing_product_id = #{my_outgoing_product_id}"
+
+      #end comment out Floyd Wallace 9/10/19
+
+      my_new_product = AlternateProduct.find_by_product_id(real_product_id)
       puts "new product info is #{my_new_product.inspect}"
 
       #Here I need to check current subscription line item properties. If need be add or modify
