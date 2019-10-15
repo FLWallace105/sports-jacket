@@ -5,8 +5,8 @@ ENV['BUNDLE_GEMFILE'] ||= File.expand_path('../../Gemfile', __FILE__)
 require 'pathname'
 require 'dotenv'
 # Some helper constants for path-centric logic
-APP_ROOT = Pathname.new(File.expand_path('../../', __FILE__))
-APP_NAME = APP_ROOT.basename.to_s
+APP_ROOT ||= Pathname.new(File.expand_path('../../', __FILE__))
+APP_NAME ||= APP_ROOT.basename.to_s
 Dotenv.load APP_ROOT.join('.env').to_s
 
 # Set the environment from common ruby environment variables. Default to
@@ -17,7 +17,7 @@ ENVIRONMENT = (ENV['RUBY_ENV'] || ENV['RACK_ENV'] || :development).to_sym
 require 'uri'
 require 'logger'
 require 'erb'
-if File.exists?(ENV['BUNDLE_GEMFILE'])
+if File.exist?(ENV['BUNDLE_GEMFILE'])
   require 'bundler'
   Bundler.require(:default, ENV['RACK_ENV'] || :development)
 end

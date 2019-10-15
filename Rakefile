@@ -13,6 +13,14 @@ Resque.logger =
     Logger.new STDOUT, level: Logger::INFO
   end
 
+namespace :log_rollover do
+    desc 'roll over all logs to S3 bucket'
+    task :log_rollover do |t|
+      EllieLog::Rollover.new.start_log_rollover
+    end
+
+end
+
 namespace :auto_config do
   desc 'auto configures switchable table'
   task :switchable do
@@ -135,8 +143,8 @@ task :sync_products do |t|
   ShopifyPull.async :all_products
 end
 #
-#load_skippable_products
-desc 'load this months skippable products for customers valid skippable products'
+#load_switchable_products
+desc 'load this months switchable products for customers valid switchable products'
 task :load_switchable_products do |t|
   DetermineInfo::InfoGetter.new.load_switchable_products
 end

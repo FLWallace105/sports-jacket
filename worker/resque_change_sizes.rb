@@ -9,9 +9,9 @@ class ChangeSizes
     sub = Subscription.find subscription_id
     Resque.logger.info(sub.inspect)
     sub.sizes = new_sizes
-    Resque.logger.info("Now sizes are #{sub.sizes}.inspect")
-    params = {"subscription_id" => subscription_id, "action" => "change_sizes", "details" => new_sizes   }
-    #body = {properties: sub.raw_line_item_propertie}
+    Resque.logger.info("Now sizes are #{sub.sizes}")
+    params = {"subscription_id" => subscription_id, "action" => "change_sizes", "details" => new_sizes}
+    #body = {properties: sub.raw_line_item_properties}
     res = Recharge::Subscription.update(sub.subscription_id, properties: sub.raw_line_item_properties)
     sub.save! if res
 
@@ -19,16 +19,29 @@ class ChangeSizes
     #res = false
 
     if res
+      res.properties.each do |prop|
+        next unless prop['name'] == 'product_collection'
+        params['product_collection'] = prop['value']
+      end
       Resque.enqueue(SendEmailToCustomer, params)
     else
       Resque.enqueue(SendEmailToCS, params)
     end
     #puts "recharge response to change sizes: #{res.response}"
     #Resque.logger.info("recharge sent back from changing sizes #{res.response}")
-    #new_props = res.parsed_response['subscription']['properties'
+    #new_props = res.parsed_response['subscription']['properties']
     #Resque.logger.info("New sub properties --> #{res.parsed_response['subscription']['properties']}")
-    #puts "new sub props: #{new_props}"
-    #Subscription.find(subscription_id).update(raw_line_item_properties: new_props)
+
+    #Changes made by Neville Lee, 6-26-19
+    puts "recharge response to change sizes: #{res.inspect}"
+    Resque.logger.info("recharge sent back from changing sizes #{res.inspect}")
+    new_props = res.properties
+    Resque.logger.info "New sub properties --> #{res.properties}"
+
+
+
+    puts "new sub props: #{new_props}"
+    Subscription.find(subscription_id).update(raw_line_item_properties: new_props)
     puts 'Sizes updated!'
   end
 end

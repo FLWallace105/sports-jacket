@@ -10,7 +10,11 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
+<<<<<<< HEAD
 ActiveRecord::Schema.define(version: 20190110194748) do
+=======
+ActiveRecord::Schema.define(version: 20190109003059) do
+>>>>>>> master
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -328,7 +332,10 @@ ActiveRecord::Schema.define(version: 20190110194748) do
     t.index ["shopify_order_number"], name: "index_orders_on_shopify_order_number"
     t.index ["transaction_id"], name: "index_orders_on_transaction_id"
   end
+<<<<<<< HEAD
 
+=======
+>>>>>>> master
   create_table "product_tags", force: :cascade do |t|
     t.string "product_id", null: false
     t.string "tag", null: false
@@ -358,13 +365,43 @@ ActiveRecord::Schema.define(version: 20190110194748) do
     t.datetime "updated_at", null: false
   end
 
+<<<<<<< HEAD
   create_table "prospect_tag_fixes", force: :cascade do |t|
+=======
+  create_table "reports", force: :cascade do |t|
+    t.string "first_name"
+    t.string "last_name"
+    t.string "email"
+    t.string "shopify_customer_id"
+    t.string "missing_sports_jacket"
+    t.string "missing_legging"
+    t.string "missing_sports_bra"
+    t.datetime "next_charge_scheduled_at"
+    t.string "subscription_id"
+  end
+
+  create_table "shopify_customer_tag_fixes", force: :cascade do |t|
+>>>>>>> master
     t.string "customer_id"
     t.string "email"
     t.string "first_name"
     t.string "last_name"
     t.string "tags"
     t.boolean "is_processed", default: false
+<<<<<<< HEAD
+=======
+  end
+
+  create_table "shopify_customers", force: :cascade do |t|
+    t.boolean "accepts_marketing"
+    t.jsonb "addresses"
+    t.datetime "created_at"
+    t.boolean "featured"
+    t.integer "position"
+    t.bigint "product_id"
+    t.string "sort_value"
+    t.datetime "updated_at"
+>>>>>>> master
   end
 
   create_table "recurring_tag_fixes", force: :cascade do |t|
@@ -475,6 +512,121 @@ ActiveRecord::Schema.define(version: 20190110194748) do
     t.datetime "sent_to_acs_at"
   end
 
+<<<<<<< HEAD
+=======
+  create_table "shopify_product_variants", id: :bigint, default: nil, force: :cascade do |t|
+    t.string "barcode"
+    t.float "compare_at_price"
+    t.datetime "created_at"
+    t.string "fulfillment_service"
+    t.integer "grams"
+    t.bigint "image_id"
+    t.string "inventory_management"
+    t.string "inventory_policy"
+    t.integer "inventory_quantity"
+    t.integer "old_inventory_quantity"
+    t.integer "inventory_quantity_adjustment"
+    t.bigint "inventory_item_id"
+    t.boolean "requires_shipping"
+    t.json "metafield"
+    t.string "option1"
+    t.string "option2"
+    t.string "option3"
+    t.integer "position"
+    t.float "price"
+    t.bigint "product_id"
+    t.string "sku"
+    t.boolean "taxable"
+    t.string "title"
+    t.datetime "updated_at"
+    t.integer "weight"
+    t.string "weight_unit"
+  end
+
+  create_table "shopify_products", id: :bigint, default: nil, force: :cascade do |t|
+    t.text "body_html"
+    t.datetime "created_at"
+    t.string "handle"
+    t.json "image"
+    t.json "images"
+    t.json "options"
+    t.string "product_type"
+    t.datetime "published_at"
+    t.string "published_scope"
+    t.string "tags"
+    t.string "template_suffix"
+    t.string "title"
+    t.string "metafields_global_title_tag"
+    t.string "metafields_global_description_tag"
+    t.datetime "updated_at"
+    t.json "variants"
+    t.string "vendor"
+  end
+
+  create_table "shopify_orders", id: :bigint, default: nil, force: :cascade do |t|
+    t.bigint "app_id"
+    t.json "billing_address"
+    t.string "browser_ip"
+    t.boolean "buyer_accepts_marketing"
+    t.datetime "cancelled_at"
+    t.string "cancel_reason"
+    t.string "cart_token"
+    t.bigint "checkout_id"
+    t.string "checkout_token"
+    t.datetime "closed_at"
+    t.boolean "confirmed"
+    t.string "contact_email"
+    t.datetime "created_at"
+    t.float "currency"
+    t.json "customer"
+    t.string "customer_locale"
+    t.bigint "device_id"
+    t.json "discount_codes"
+    t.string "email"
+    t.string "financial_status"
+    t.json "fulfillments"
+    t.string "fulfillment_status"
+    t.string "gateway"
+    t.string "landing_site"
+    t.string "landing_site_ref"
+    t.json "line_items"
+    t.bigint "location_id"
+    t.string "name"
+    t.text "note"
+    t.json "note_attributes"
+    t.integer "number"
+    t.integer "order_number"
+    t.string "order_status_url"
+    t.json "payment_gateway_names"
+    t.string "phone"
+    t.datetime "processed_at"
+    t.string "processing_method"
+    t.string "reference"
+    t.string "referring_site"
+    t.json "refunds"
+    t.json "shipping_address"
+    t.json "shipping_lines"
+    t.string "source_identifier"
+    t.string "source_name"
+    t.string "source_url"
+    t.float "subtotal_price"
+    t.string "tags"
+    t.boolean "taxes_included"
+    t.json "tax_lines"
+    t.boolean "test"
+    t.string "token"
+    t.float "total_discounts"
+    t.float "total_line_items_price"
+    t.float "total_price"
+    t.float "total_price_usd"
+    t.float "total_tax"
+    t.integer "total_weight"
+    t.datetime "updated_at"
+    t.bigint "user_id"
+    t.datetime "sent_to_acs_at"
+  end
+
+>>>>>>> master
   create_table "skip_reasons", force: :cascade do |t|
     t.string "customer_id", null: false
     t.string "shopify_customer_id", null: false

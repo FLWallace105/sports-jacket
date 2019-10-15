@@ -9,10 +9,12 @@ class ChangePrepaidSizes
   }
   extend ResqueHelper
   @queue = 'change_prepaid_sizes'
+
   def self.perform(subscription_id, new_sizes)
     Resque.logger = Logger.new("#{Dir.getwd}/logs/size_change_prepaid_resque.log")
     sub = Subscription.find subscription_id
     Resque.logger.info(sub.inspect)
+
     # Update subscription through REcharge api (propriatary method used)
     sub_litems = {"properties" => sub.raw_line_item_properties}.to_json
     res1 = HTTParty.put("https://api.rechargeapps.com/subscriptions/#{subscription_id}", :headers => @recharge_change_header, :body => sub_litems, :timeout => 80)
@@ -20,7 +22,7 @@ class ChangePrepaidSizes
     sub.save! if res1.code ==200
 
     queued_orders = Order.where("line_items @> ? AND status = ? AND is_prepaid = ?", [{subscription_id: subscription_id.to_i}].to_json, "QUEUED", 1)
-    Resque.logger.info(queued_orders.inspect)
+    Resque.logger.info("QUEUED_ORDERS found in ChangePrepaidSizes worker: #{queued_orders.inspect}")
     all_clear = true
     # Iterate through queued orders for sub_id argument and update through REcharge api
     queued_orders.each do |my_order|
@@ -38,6 +40,10 @@ class ChangePrepaidSizes
     params = {"subscription_id" => subscription_id, "action" => "change_sizes", "details" => new_sizes  }
 
     if all_clear
+      @res.parsed_response['order']['line_items'][0]['properties'].each do |item|
+        next unless item['name'] == 'product_collection'
+        params['product_collection'] = item['value']
+      end
       Resque.enqueue(SendEmailToCustomer, params)
     else
       Resque.enqueue(SendEmailToCS, params)

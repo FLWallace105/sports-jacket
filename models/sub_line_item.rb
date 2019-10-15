@@ -7,7 +7,7 @@ class SubLineItem < ActiveRecord::Base
 
   belongs_to :subscription
 
-  SIZE_PROPERTIES = ['leggings', 'tops', 'sports-jacket', 'sports-bra'].freeze
+  SIZE_PROPERTIES = ['leggings', 'tops', 'sports-jacket', 'sports-bra', 'gloves'].freeze
   SIZE_VALUES = %w[XS S M L XL].freeze
 
   validate do |sub_item|
