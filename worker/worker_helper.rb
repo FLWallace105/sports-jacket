@@ -16,13 +16,6 @@ module EllieHelper
 
         case option_value
         when "products"
-          #delete all product_tables
-          logger.warn "Deleting products table"
-          products_delete = "delete from products"
-          my_conn.exec(products_delete)
-          products_reset = "ALTER SEQUENCE products_id_seq RESTART WITH 1"
-          my_conn.exec(products_reset)
-          logger.info "Deleted all product table information and reset the id sequence"
           my_conn.close
           background_load_products(shopify_base)
         when "collects"
@@ -152,8 +145,8 @@ module EllieHelper
             end
 
             puts "Done with Page #{page}"
-            puts "Sleeping 4 secs"
-            sleep 4
+            puts "Sleeping 2 secs"
+            sleep 2
         end
         puts "All done with products"
 
@@ -190,7 +183,7 @@ module EllieHelper
             puts "------------------"
             puts "Done with page #{page}"
             puts "sleeping 4 secs"
-            sleep 4
+            sleep 2
         end
       end
 
