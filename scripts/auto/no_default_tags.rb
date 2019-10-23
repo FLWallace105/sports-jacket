@@ -1,6 +1,4 @@
-#!/bin/ruby
-# products must be manually tagged FIRST
-# according to specs in worker/monthly_setup.rb
+#ELLIE ACTIVE
 require_relative '../../config/environment'
 @month = Time.now.localtime.to_date #set up for this month
 @month2 = Time.now.localtime.to_date >> 1

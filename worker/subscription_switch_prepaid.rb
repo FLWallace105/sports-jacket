@@ -45,6 +45,7 @@ class SubscriptionSwitchPrepaid
       my_line_item = {
         "properties" => l_item['properties'],
         "quantity" => l_item['quantity'].to_i,
+        "price" => l_item['price'].to_i,
         "sku" => l_item['sku'],
         "title" => l_item['title'],
         "variant_title" => l_item['variant_title'],
