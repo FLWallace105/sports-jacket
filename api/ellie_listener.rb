@@ -385,7 +385,7 @@ class EllieListener < Sinatra::Base
         #Add code to immediately skip the sub in DB only here
         local_sub_id = params['subscription_id']
         temp_subscription = Subscription.find_by_subscription_id(local_sub_id)
-        orders_array = sub.all_orders
+        orders_array = temp_subscription.all_orders
         if temp_subscription.prepaid_skippable?(orders_array)
           my_next_charge = temp_subscription.try(:next_charge_scheduled_at).try('+', 1.month)
           temp_subscription.next_charge_scheduled_at = my_next_charge
