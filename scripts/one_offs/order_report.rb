@@ -1,4 +1,4 @@
-require_relative '../config/environment'
+require_relative '../../config/environment'
 my_inventory = {
   "sports-jacket" => {
     "XS"=> 110,
