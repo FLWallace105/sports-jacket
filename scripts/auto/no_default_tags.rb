@@ -14,7 +14,7 @@ early_tag = { active_start: nil, active_end: next_month_end }
 # sunset the old tags without an active_end
 # ProductTag.where(active_end: nil).update_all(active_end: month_start - 1.second)
 #my_tag = "%#{@month.strftime('%m%y')}_collection%"
-my_tag = "%1019_collection%"
+my_tag = "%1119_collection%"
 
 # Prepaid (current)
 prepaid_3 = 2209786298426

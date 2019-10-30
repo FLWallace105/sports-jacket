@@ -8,7 +8,7 @@ require 'active_support/core_ext'
 class MonthlySetup
   include Logging
   def initialize
-    month = Time.now.localtime.to_date
+    month = Time.now.localtime.to_date >> 1
     @sleep_shopify = ENV['SHOPIFY_SLEEP_TIME']
     @shopify_base_site = "https://#{ENV['SHOPIFY_API_KEY']}:#{ENV['SHOPIFY_SHARED_SECRET']}"\
     "@#{ENV['SHOPIFY_SHOP_NAME']}.myshopify.com/admin"
