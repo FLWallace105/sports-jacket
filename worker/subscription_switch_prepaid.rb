@@ -42,10 +42,15 @@ class SubscriptionSwitchPrepaid
     Resque.logger.info("Order update body [sub_id: #{subscription_id})] going to ReCharge = #{updated_order_data.inspect}")
 
     updated_order_data.each do |l_item|
+      # if l_item.key?('price')
+      #   price = line_item['price'].to_f.round(3)
+      # else
+      #   price = "0.00".to_f.round(3)
+      # end
       my_line_item = {
         "properties" => l_item['properties'],
         "quantity" => l_item['quantity'].to_i,
-        "price" => l_item['price'].to_i,
+        "price" => l_item['price'].to_f.round(3),
         "sku" => l_item['sku'],
         "title" => l_item['title'],
         "variant_title" => l_item['variant_title'],

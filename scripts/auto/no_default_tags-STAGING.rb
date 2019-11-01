@@ -8,7 +8,7 @@ month_start = Time.local("#{@month.strftime('%Y')}", "#{@month.strftime('%m')}")
 month_end = month_start.end_of_month
 next_month_end = Time.local("#{@month2.strftime('%Y')}", "#{@month2.strftime('%m')}").end_of_month
 
-early_tag = { active_start: nil, active_end: month_end }
+early_tag = { active_start: nil, active_end: next_month_end }
 my_tag = "%#{@month.strftime('%m%y')}_collection%"
 # my_tag = "%1019_collection%"
 
