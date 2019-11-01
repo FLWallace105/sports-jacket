@@ -15,20 +15,18 @@ class SubscriptionSkipPrepaid
     recharge_change_header = params['recharge_change_header']
     orders = HTTParty.get("https://api.rechargeapps.com/orders?subscription_id=#{sub_id}&status=QUEUED", :headers => recharge_change_header, :timeout => 80)
     queued_orders = orders.parsed_response['orders']
+    new_sub_charge_date = params['new_charge_date']
 
     #update parent subscription next_charge_scheduled_at
     begin
       my_sub = Subscription.find(sub_id)
-      puts my_sub.inspect
-      temp_next_charge = my_sub.next_charge_scheduled_at.to_s
-      puts temp_next_charge
+      Resque.logger.info "Sub next_charge_date in db before API call: #{new_sub_charge_date}"
       #We already push the next_charge_scheduled_at up a month in the main app so now we just need to send to ReCharge.
-      my_next_charge = my_sub.try(:next_charge_scheduled_at)
-      puts "Now next charge date = #{my_next_charge.inspect}"
-      next_charge_str = my_next_charge.strftime("%Y-%m-%d")
+      puts "Now next charge date = #{new_sub_charge_date.inspect}"
+      next_charge_str = new_sub_charge_date.strftime("%Y-%m-%d")
       puts "We will change the next_charge_scheduled_at to: #{next_charge_str}"
       sub_body = {"date" => next_charge_str}.to_json
-      puts "Pushing new charge_date to ReCharge: #{sub_body}"
+      Resque.logger.info "Pushing new charge_date to ReCharge: #{sub_body}"
       # add unique id subscription props to push to recharge and trigger update
       # so new next_charge_date value is pulled into db by cronjob
       found_unique_id = false
