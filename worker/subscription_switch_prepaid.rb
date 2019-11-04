@@ -55,7 +55,6 @@ class SubscriptionSwitchPrepaid
         # Recharge line_items endpoint ALPHA as of 11/3/19 stores price as string despite docs
         "price" => price,
         "sku" => l_item['sku'],
-        "product_title" => l_item['title'],
         "variant_title" => l_item['variant_title'],
         "product_id" => l_item['shopify_product_id'].to_i,
         "variant_id" => l_item['shopify_variant_id'].to_i,
@@ -65,7 +64,13 @@ class SubscriptionSwitchPrepaid
       if l_item.key?('grams')
         my_line_item['grams'] = l_item['grams'].to_i
       end
-      
+      if l_item.key?('product_title')
+        my_line_item['product_title'] = l_item['product_title']
+      end
+      if l_item.key?('title')
+        my_line_item['title'] = l_item['title']
+      end
+
       updated_line_items.push(my_line_item)
     end
 
