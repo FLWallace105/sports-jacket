@@ -52,7 +52,7 @@ class SubscriptionSwitchPrepaid
         "quantity" => l_item['quantity'].to_i,
         "price" => l_item['price'].to_f.round(3),
         "sku" => l_item['sku'],
-        "title" => l_item['title'],
+        "product_title" => l_item['title'],
         "variant_title" => l_item['variant_title'],
         "product_id" => l_item['shopify_product_id'].to_i,
         "variant_id" => l_item['shopify_variant_id'].to_i,
