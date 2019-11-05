@@ -10,6 +10,9 @@ elm-stuff
 *.csv
 *.xlsx
 .rvmrc
+<<<<<<< HEAD
+*/db/schema.rb
+=======
 /lib/initializers/active_record_init.rb
 
 /scripts/order_report.rb
@@ -19,3 +22,4 @@ elm-stuff
 /db/migrate/schema.rb
 Gemfile.lock*
 /scripts/auto/*.rb
+>>>>>>> master

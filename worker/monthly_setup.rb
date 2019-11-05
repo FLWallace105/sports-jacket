@@ -8,7 +8,7 @@ require 'active_support/core_ext'
 class MonthlySetup
   include Logging
   def initialize
-    month = Time.now.localtime.to_date
+    month = Time.now.localtime.to_date >> 1
     @sleep_shopify = ENV['SHOPIFY_SLEEP_TIME']
     @shopify_base_site = "https://#{ENV['SHOPIFY_API_KEY']}:#{ENV['SHOPIFY_SHARED_SECRET']}"\
     "@#{ENV['SHOPIFY_SHOP_NAME']}.myshopify.com/admin"
@@ -39,6 +39,13 @@ class MonthlySetup
     logger.info "switchable_config done"
     @conn.close
   end
+
+  def shopify_api_throttle
+    return if ShopifyAPI.credit_left > 5
+    puts "credit limited reached, sleepng 5..."
+    sleep 5
+  end
+
   # configures alternate_products table --step 2
   def alternate_config
     current_array = Product.find_by_sql(
@@ -49,12 +56,30 @@ class MonthlySetup
     @conn.prepare('statement2', "#{my_insert}")
 
     current_array.each do |x|
-      next unless !AlternateProduct.exists?(:product_id => x.id)
+      next if AlternateProduct.exists?(:product_id => x.id)
+      self.shopify_api_throttle
+      current_meta = ShopifyAPI::Metafield.all(params:
+       { resource: 'products',
+         resource_id: "#{x.id}",
+         fields: 'namespace, key, value, id, value_type'
+        })
+      metafield = x.title
+      if current_meta[0].key == "product_collection"
+        puts "current metafield for #{x.title} --> #{current_meta[0].value}"
+        metafield = current_meta[0].value
+      else
+        current_meta.each do |meta|
+          next unless meta.key == "product_collection"
+          metafield = meta.value
+        end
+      end
+      
       product_title = x.title
       product_id = x.id
-      variant_id = EllieVariant.find_by(product_id: x.id).variant_id
-      sku = EllieVariant.find_by(product_id: x.id).sku
-      product_collection = x.title
+      _variant = EllieVariant.find_by(product_id: x.id)
+      variant_id = _variant.variant_id
+      sku = _variant.sku
+      product_collection = metafield
       @conn.exec_prepared(
         'statement2', [product_title, product_id, variant_id, sku, product_collection]
       )

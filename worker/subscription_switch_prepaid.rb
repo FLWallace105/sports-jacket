@@ -42,17 +42,35 @@ class SubscriptionSwitchPrepaid
     Resque.logger.info("Order update body [sub_id: #{subscription_id})] going to ReCharge = #{updated_order_data.inspect}")
 
     updated_order_data.each do |l_item|
+      price = "0.00"
+      if l_item.key?('price')
+        if l_item['price'].to_i > 0
+          price = line_item['price']
+        end
+      end
+
       my_line_item = {
         "properties" => l_item['properties'],
         "quantity" => l_item['quantity'].to_i,
-        "price" => l_item['price'].to_i,
+        # Recharge line_items endpoint ALPHA as of 11/3/19 stores price as string despite docs
+        "price" => price,
         "sku" => l_item['sku'],
-        "title" => l_item['title'],
         "variant_title" => l_item['variant_title'],
         "product_id" => l_item['shopify_product_id'].to_i,
         "variant_id" => l_item['shopify_variant_id'].to_i,
         "subscription_id" => l_item['subscription_id'].to_i,
       }
+
+      if l_item.key?('grams')
+        my_line_item['grams'] = l_item['grams'].to_i
+      end
+      if l_item.key?('product_title')
+        my_line_item['product_title'] = l_item['product_title']
+      end
+      if l_item.key?('title')
+        my_line_item['title'] = l_item['title']
+      end
+
       updated_line_items.push(my_line_item)
     end
 
