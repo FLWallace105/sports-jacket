@@ -23,7 +23,7 @@ class SubscriptionSkipPrepaid
       Resque.logger.info "Sub next_charge_date in db before API call: #{new_sub_charge_date}"
       #We already push the next_charge_scheduled_at up a month in the main app so now we just need to send to ReCharge.
       puts "Now next charge date = #{new_sub_charge_date.inspect}"
-      next_charge_str = new_sub_charge_date.strftime("%Y-%m-%d")
+      next_charge_str = DateTime.parse(new_sub_charge_date).strftime("%Y-%m-%d")
       puts "We will change the next_charge_scheduled_at to: #{next_charge_str}"
       sub_body = {"date" => next_charge_str}.to_json
       Resque.logger.info "Pushing new charge_date to ReCharge: #{sub_body}"
