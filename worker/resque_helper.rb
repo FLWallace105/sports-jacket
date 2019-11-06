@@ -307,24 +307,23 @@ module ResqueHelper
     res = []
       prop_array.each do |l_item|
       begin
-        if l_item.key?("product_title")
-          p_title = l_item['product_title']
-        elsif l_item.key?("title")
-          p_title = l_item['title']
-        end
         new_line_item = {
           "properties" => l_item['properties'],
           "quantity" => l_item['quantity'].to_i,
           "sku" => l_item['sku'],
-          "title" => l_item['title'],
           "variant_title" => l_item['variant_title'],
           "product_id" => l_item['shopify_product_id'].to_i,
           "variant_id" => l_item['shopify_variant_id'].to_i,
           "subscription_id" => l_item['subscription_id'].to_i,
           "grams" => l_item['grams'].to_i,
-          "price" => l_item['price'],
-          "product_title" => p_title,
+          "price" => l_item['price']
         }
+        if l_item.key?("product_title")
+          new_line_item['product_title'] = l_item['product_title']
+        end
+        if l_item.key?("title")
+          new_line_item['title'] = l_item['title']
+        end
         res.push(new_line_item)
       rescue StandardError => e
         Resque.logger.warn "ERROR local Order for subscription(#{l_item['subscription_id']}) missing property"
