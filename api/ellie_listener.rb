@@ -552,7 +552,8 @@ class EllieListener < Sinatra::Base
     logger.debug "subscription: #{sub.inspect}"
     if sub.prepaid?
       orders_array = sub.all_orders
-      puts "THIS IS A PREPAID SUBSCRIPTION #{sub.id}"
+      puts "THIS IS A PREPAID SUBSCRIPTION #{sub.subscription_id}"
+      puts "#{orders_array.size} associated orders found"
       skip_value = sub.prepaid_skippable?(orders_array)
       switch_value = sub.prepaid_switchable?(orders_array)
       @title_value = sub.get_product_collection
