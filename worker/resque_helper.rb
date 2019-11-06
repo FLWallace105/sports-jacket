@@ -322,7 +322,7 @@ module ResqueHelper
           "variant_id" => l_item['shopify_variant_id'].to_i,
           "subscription_id" => l_item['subscription_id'].to_i,
           "grams" => l_item['grams'].to_i,
-          "price" => l_item['price'].to_i,
+          "price" => l_item['price'],
           "product_title" => p_title,
         }
         res.push(new_line_item)

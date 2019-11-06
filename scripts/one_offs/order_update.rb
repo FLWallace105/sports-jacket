@@ -42,12 +42,17 @@ no_price_orders.each do |order|
       "quantity" => line_item['quantity'].to_i,
       "price" => price,
       "sku" => line_item['sku'],
-      "title" => line_item['title'],
       "variant_title" => line_item['variant_title'],
       "product_id" => line_item['shopify_product_id'].to_i,
       "variant_id" => line_item['shopify_variant_id'].to_i,
       "subscription_id" => line_item['subscription_id'].to_i,
     }
+    if line_item.key?('product_title')
+      temp_item['product_title'] = line_item['product_title']
+    end
+    if line_item.key?('title')
+      temp_item['title'] = line_item['title']
+    end
     new_line_items.push(temp_item)
   end
   my_hash = { "line_items" => new_line_items }
