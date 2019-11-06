@@ -552,7 +552,9 @@ class EllieListener < Sinatra::Base
     logger.debug "subscription: #{sub.inspect}"
     if sub.prepaid?
       orders_array = sub.all_orders
-      puts "THIS IS A PREPAID SUBSCRIPTION #{sub.id}"
+      puts "THIS IS A PREPAID SUBSCRIPTION #{sub.subscription_id}"
+      puts "#{orders_array.size} associated orders found"
+      puts "next_charge_scheduled_at: #{sub.next_charge_scheduled_at}"
       skip_value = sub.prepaid_skippable?(orders_array)
       switch_value = sub.prepaid_switchable?(orders_array)
       @title_value = sub.get_product_collection
@@ -561,7 +563,7 @@ class EllieListener < Sinatra::Base
       if res
         @shipping_date = res[:ship_date].strftime('%F')
       else
-        @shipping_date = sub.current_order_data[:ship_date].strftime('%F')
+        @shipping_date = sub.current_order_data[:ship_date].try(:strftime, '%F')
       end
     else
       @title_value = sub.product_title

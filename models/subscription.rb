@@ -593,7 +593,7 @@ class Subscription < ActiveRecord::Base
     elsif all_orders_sent?(_orders)
       today = Date.today.strftime('%F %T')
       puts "#{end_of_Month}"
-      if (next_charge_scheduled_at > today) && (next_charge_scheduled_at <= end_of_Month)
+      if next_charge_scheduled_at.try('>', today) && next_charge_scheduled_at.try('<=', end_of_Month)
         can_skip = true
       end
     end
@@ -610,7 +610,7 @@ class Subscription < ActiveRecord::Base
       ord.scheduled_at >= Date.today.strftime('%F %T')
     end
 
-    if next_charge_scheduled_at >= Date.today.strftime('%F %T') && upcoming_orders.empty?
+    if next_charge_scheduled_at.try('>=', Date.today.strftime('%F %T')) && upcoming_orders.empty?
       puts "all_orders_sent? = TRUE"
       return true
     else
