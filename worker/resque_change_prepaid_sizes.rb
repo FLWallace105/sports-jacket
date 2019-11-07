@@ -37,7 +37,7 @@ class ChangePrepaidSizes
       all_clear = false if (@res.code != 200)
     end
 
-    params = {"subscription_id" => subscription_id, "action" => "change_sizes", "details" => new_sizes  }
+    params = {"subscription_id" => subscription_id, "action" => "change_sizes", "details" => new_sizes }
 
     if all_clear
       @res.parsed_response['order']['line_items'][0]['properties'].each do |item|
