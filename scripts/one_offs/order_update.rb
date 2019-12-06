@@ -24,7 +24,7 @@ end
 
 no_price_orders = Order.find_by_sql(
   "SELECT * FROM orders ord, jsonb_array_elements(ord.line_items) obj
-  where obj->>'price' is null and status = 'QUEUED' and is_prepaid = 1;"
+  where obj->>'price' is null and is_prepaid = 1;"
 )
 puts "WE HAVE #{no_price_orders.size} TO PROCESS"
 
