@@ -1,0 +1,68 @@
+[{
+  "grams": 2268,
+  "images": {
+      "large": "https://cdn.shopify.com/s/files/1/1565/8379/products/ellie-box_90c104c0-591a-49a0-8d3e-81ae7201b67e_large.jpg",
+      "medium": "https://cdn.shopify.com/s/files/1/1565/8379/products/ellie-box_90c104c0-591a-49a0-8d3e-81ae7201b67e_medium.jpg",
+      "original": "https://cdn.shopify.com/s/files/1/1565/8379/products/ellie-box_90c104c0-591a-49a0-8d3e-81ae7201b67e.jpg",
+      "small": "https://cdn.shopify.com/s/files/1/1565/8379/products/ellie-box_90c104c0-591a-49a0-8d3e-81ae7201b67e_small.jpg"
+  },
+  "price": "0.00",
+  "product_title": "3 Months - 5 Items",
+  "properties": [
+      {
+          "name": "charge_interval_frequency",
+          "value": "3"
+      },
+      {
+          "name": "charge_interval_unit_type",
+          "value": "Months"
+      },
+      {
+          "name": "leggings",
+          "value": "XL"
+      },
+      {
+          "name": "main-product",
+          "value": "true"
+      },
+      {
+          "name": "product_collection",
+          "value": "Floral Bliss - 5 Items"
+      },
+      {
+          "name": "product_id",
+          "value": "2209789771834"
+      },
+      {
+          "name": "referrer",
+          "value": ""
+      },
+      {
+          "name": "shipping_interval_frequency",
+          "value": "1"
+      },
+      {
+          "name": "shipping_interval_unit_type",
+          "value": "Months"
+      },
+      {
+          "name": "sports-bra",
+          "value": "XL"
+      },
+      {
+          "name": "tops",
+          "value": "XL"
+      },
+      {
+          "name": "sports-jacket",
+          "value": "XL"
+      }
+  ],
+  "quantity": 1,
+  "shopify_product_id": 2209789771834,
+  "shopify_variant_id": 22212763320378,
+  "sku": "764204317073",
+  "subscription_id": 52204777,
+  "title": "3 Months - 5 Items",
+  "variant_title": ""
+}]

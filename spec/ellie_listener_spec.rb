@@ -477,7 +477,7 @@ RSpec.describe EllieListener do
         expect(last_response.status).to eq 400
       end
     end
-    context "prepaid subscription", :focus do
+    context "prepaid subscription" do
       it "sizes_change sub + queued orders" do
         prepaid_sub = FactoryBot.create(
           :subscription_with_line_items,
@@ -496,7 +496,7 @@ RSpec.describe EllieListener do
     end
   end
 
-  describe "GET /subscription/:subscription_id/sizes", :focus do
+  describe "GET /subscription/:subscription_id/sizes"  do
     let(:sub) {FactoryBot.create(:subscription_with_line_items)}
     let(:new_sizes) {{"leggings"=>"XS", "sports-bra"=>"XS", "tops"=>"XS", "gloves"=>"XS"}}
     let(:params) {{leggings: 'XS', :'sports-bra' => 'XS', tops: 'XS', gloves: 'XS',}}
