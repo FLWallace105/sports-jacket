@@ -52,4 +52,31 @@ RSpec.describe 'LineItemConverter', :focus do
       )
     end
   end
+
+  context "ORDER" do
+    # create order line item to send as an argument
+    let (:o_line_item) { create(:order_line_item) }
+    let (:order_json_resonse) { converter.jsonify(o_line_item, "order") }
+    context "#jsonify" do
+      it "returns JSON string" do
+        expect(order_json_resonse).to be_a_kind_of(String)
+      end
+      it "response contains all arg keys" do
+        res_hash = JSON.parse(order_json_resonse)
+        puts res_hash.inspect
+        expect(res_hash[0].keys).to include(
+          "variant_id",
+          "quantity",
+          "product_title",
+          "product_id",
+          "variant_title",
+          "properties"
+        )
+      end
+    end
+  end
+
+  context "SUBSCRIPTION" do
+    let (:sub_line_item) {}
+  end
 end
