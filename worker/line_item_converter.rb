@@ -1,5 +1,5 @@
 module LineItemConverter
-  VARIABLE_PROPS = [
+  VARIABLE_ORDER_PROPS = [
     "charge_interval_frequency",
     "charge_interval_unit_type",
     "leggings",
@@ -39,8 +39,13 @@ module LineItemConverter
 
   def self.jsonify(my_model, format_type)
     res = []
-    if format_type == "subsciption"
-
+    if format_type == "subscription"
+      new_properties = []
+      my_model.attributes.each do |k, v|
+        next if ['id', 'created_at', 'updated_at', 'subscription_id'].include?(k)
+        new_properties << { "name" => k, "value" => v}
+      end
+      return new_properties.to_json
     elsif format_type == "order"
       begin
         new_line_item = {
@@ -58,7 +63,7 @@ module LineItemConverter
         end
         new_properties = []
         my_model.attributes.each do |k, v|
-          if VARIABLE_PROPS.include?(k)
+          if VARIABLE_ORDER_PROPS.include?(k)
             new_properties.push({ "name" => k, "value" => v})
           end
         end

@@ -63,7 +63,6 @@ RSpec.describe 'LineItemConverter', :focus do
       end
       it "response contains all arg keys" do
         res_hash = JSON.parse(order_json_resonse)
-        puts res_hash.inspect
         expect(res_hash[0].keys).to include(
           "variant_id",
           "quantity",
@@ -77,6 +76,32 @@ RSpec.describe 'LineItemConverter', :focus do
   end
 
   context "SUBSCRIPTION" do
-    let (:sub_line_item) {}
+    let (:sub_prop) { create(:subscription_property) }
+    let (:sub_json_response) { converter.jsonify(sub_prop, "subscription") }
+    context "#jsonify" do
+      it "returns JSON string" do
+        expect(sub_json_response).to be_a_kind_of(String)
+      end
+      it "has all arg keys in response" do
+        res_keys = JSON.parse(sub_json_response).map{ |hsh| hsh['name'] }
+        puts "SUB RESPONSE: #{res_keys.inspect}"
+        expect(res_keys).to include(
+          "product_collection",
+          "leggings",
+          "tops",
+          "gloves",
+          "sports-bra",
+          "sports-jacket",
+          "unique_identifier",
+          "charge_interval_frequency",
+          "charge_interval_unit_type",
+          "main-product",
+          "product_id",
+          "referrer",
+          "shipping_interval_frequency",
+          "shipping_interval_unit_type"
+        )
+      end
+    end
   end
 end

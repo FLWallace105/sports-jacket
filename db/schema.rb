@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_12_13_182255) do
+ActiveRecord::Schema.define(version: 2019_12_13_214130) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -576,6 +576,27 @@ ActiveRecord::Schema.define(version: 2019_12_13_182255) do
     t.string "name"
     t.string "value"
     t.index ["subscription_id"], name: "index_sub_line_items_on_subscription_id"
+  end
+
+  create_table "subscription_properties", force: :cascade do |t|
+    t.string "subscription_id"
+    t.string "product_collection"
+    t.string "leggings"
+    t.string "tops"
+    t.string "gloves"
+    t.string "sports-bra"
+    t.string "sports-jacket"
+    t.string "unique_identifier"
+    t.string "charge_interval_frequency"
+    t.string "charge_interval_unit_type"
+    t.string "main-product"
+    t.string "product_id"
+    t.string "referrer"
+    t.string "shipping_interval_frequency"
+    t.string "shipping_interval_unit_type"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.index ["subscription_id"], name: "index_subscription_properties_on_subscription_id"
   end
 
   create_table "subscription_update", force: :cascade do |t|
