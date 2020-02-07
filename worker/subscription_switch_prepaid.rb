@@ -51,7 +51,7 @@ class SubscriptionSwitchPrepaid
 
       #Fix missing sports-jacket here
       tops = l_item['properties'].select{|x| x['name'] == 'tops'}
-      sports_jacket = my_json['properties'].select{|x| x['name'] == 'sports-jacket'}
+      sports_jacket = l_item['properties'].select{|x| x['name'] == 'sports-jacket'}
       if sports_jacket == [] && tops != []
         l_item['properties'] << { "name" => "sports-jacket", "value" => tops.first['value'].upcase }
       end
