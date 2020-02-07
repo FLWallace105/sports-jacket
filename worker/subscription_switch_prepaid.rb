@@ -49,6 +49,13 @@ class SubscriptionSwitchPrepaid
         end
       end
 
+      #Fix missing sports-jacket here
+      tops = l_item['properties'].select{|x| x['name'] == 'tops'}
+      sports_jacket = my_json['properties'].select{|x| x['name'] == 'sports-jacket'}
+      if sports_jacket == [] && tops != []
+        l_item['properties'] << { "name" => "sports-jacket", "value" => tops.first['value'].upcase }
+      end
+
       my_line_item = {
         "properties" => l_item['properties'],
         "quantity" => l_item['quantity'].to_i,
@@ -60,6 +67,8 @@ class SubscriptionSwitchPrepaid
         "variant_id" => l_item['shopify_variant_id'].to_i,
         "subscription_id" => l_item['subscription_id'].to_i,
       }
+
+      
 
       if l_item.key?('grams')
         my_line_item['grams'] = l_item['grams'].to_i

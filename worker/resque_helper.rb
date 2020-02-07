@@ -48,6 +48,15 @@ module ResqueHelper
           end
       end
       puts "my_line_items = #{my_line_items.inspect}"
+      #Fix here for missing sports-jacket
+      sports_jacket = my_line_items.select{|x| x['name'] == 'sports-jacket'}
+      tops = my_line_items.select{|x| x['name'] == 'tops'}
+      
+      if sports_jacket == [] && tops != []
+        my_line_items << { "name" => "sports-jacket", "value" => tops.first['value'].upcase }
+        
+      end
+
 
       if found_collection == false
            #only if I did not find the product_collection property in the line items do I need to add it
@@ -59,6 +68,8 @@ module ResqueHelper
 
 
       stuff_to_return = { "sku" => my_new_product.sku, "product_title" => my_new_product.product_title, "shopify_product_id" => my_new_product.product_id, "shopify_variant_id" => my_new_product.variant_id, "properties" => my_line_items }
+
+      
 
       return stuff_to_return
 
@@ -82,6 +93,14 @@ module ResqueHelper
           end
       end
       Resque.logger.info "my_line_items = #{my_line_items.inspect}"
+      #Fix missing sports-jacket size here
+      sports_jacket = my_line_items.select{|x| x['name'] == 'sports-jacket'}
+      tops = my_line_items.select{|x| x['name'] == 'tops'}
+      
+      if sports_jacket == [] && tops != []
+        my_line_items << { "name" => "sports-jacket", "value" => tops.first['value'].upcase }
+          
+      end
 
       if found_collection == false
            #only if I did not find the product_collection property in the line items do I need to add it
