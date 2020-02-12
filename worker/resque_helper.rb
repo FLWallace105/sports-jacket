@@ -149,7 +149,7 @@ module ResqueHelper
           end
           updated_line_item.push(l_item)
         else
-          updated_line_item.push(l_item)
+          #updated_line_item.push(l_item)
         end
         rescue => e
           Resque.logger.error "error: #{e}"
