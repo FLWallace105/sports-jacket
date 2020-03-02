@@ -51,11 +51,13 @@ class SubscriptionSkip
       puts "now updated line item properties = #{my_temp_stuff}"
       stuff_to_recharge = { "properties" => my_temp_stuff }
       body = stuff_to_recharge.to_json
-      exit
+      
 
-      #my_update_sub = HTTParty.put("https://api.rechargeapps.com/subscriptions/#{my_sub_id}", :headers => 
-      #recharge_change_header, :body => body, :timeout => 80)
-      #puts my_update_sub.inspect
+      my_update_sub = HTTParty.put("https://api.rechargeapps.com/subscriptions/#{my_sub_id}", :headers => 
+      recharge_change_header, :body => body, :timeout => 80)
+      puts "----change sent to ReCharge to force webhook------"
+      puts my_update_sub.inspect
+      puts "-----------"
       #recharge_header = my_update_sub.response["x-recharge-limit"]
       #determine_limits(recharge_header, 0.65)
 
