@@ -34,6 +34,29 @@ class SubscriptionSkip
       update_success = my_update_sub.success?
       puts my_update_sub.inspect
       apply_skip_tag(shopify_customer_id) if update_success
+      #update subscription after skipping so it triggers a webhook event in Reserve Inventory
+      my_unique_id = SecureRandom.uuid
+      puts "old line item properties = #{my_sub.raw_line_item_properties}"
+      my_temp_stuff = my_sub.raw_line_item_properties
+      unique_id = my_temp_stuff.select{|x| x['name'] == 'unique_identifier'}
+      if unique_id == [] 
+        my_temp_stuff << { "name" => "unique_identifier", "value" => unique_id }
+      else
+        my_temp_stuff.map do |mystuff|
+          if mystuff['name'] == 'unique_identifier'
+            mystuff['value'] = my_unique_id       
+          end
+        end
+      end
+      puts "now updated line item properties = #{my_temp_stuff}"
+      stuff_to_recharge = { "properties" => my_temp_stuff }
+      body = stuff_to_recharge.to_json
+
+      #my_update_sub = HTTParty.put("https://api.rechargeapps.com/subscriptions/#{my_sub_id}", :headers => 
+      #recharge_change_header, :body => body, :timeout => 80)
+      #puts my_update_sub.inspect
+      #recharge_header = my_update_sub.response["x-recharge-limit"]
+      #determine_limits(recharge_header, 0.65)
 
       #Email results to customer
       new_date = {"date" => next_charge_str}
