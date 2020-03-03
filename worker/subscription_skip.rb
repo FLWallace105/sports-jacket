@@ -53,7 +53,7 @@ class SubscriptionSkip
       body = stuff_to_recharge.to_json
       
 
-      my_update_sub = HTTParty.put("https://api.rechargeapps.com/subscriptions/#{my_sub_id}", :headers => 
+      my_update_sub = HTTParty.put("https://api.rechargeapps.com/subscriptions/#{subscription_id}", :headers => 
       recharge_change_header, :body => body, :timeout => 80)
       puts "----change sent to ReCharge to force webhook------"
       puts my_update_sub.inspect
