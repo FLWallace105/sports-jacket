@@ -8,11 +8,14 @@ gem 'activesupport'
 gem 'dotenv'
 gem 'httparty'
 gem 'pg', '0.19.0'
-gem 'puma'
+#gem 'puma'
+gem "puma", ">= 3.12.4"
 #gem 'rack'
-gem "rack", ">= 2.0.6"
+#gem "rack", ">= 2.0.6"
+gem "rack", ">= 2.0.8"
 gem 'rack-contrib'
-gem 'rake'
+#gem 'rake'
+gem "rake", ">= 12.3.3"
 gem 'redis', '=3.3.5'
 gem 'resque'
 gem 'shopify_api'
