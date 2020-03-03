@@ -808,6 +808,7 @@ GEM
     multi_json (1.13.1)
     multi_xml (0.6.0)
     mustermann (1.0.3)
+    nio4r (2.5.2)
     parallel (1.17.0)
     parser (2.6.3.0)
       ast (~> 2.4.0)
@@ -818,8 +819,9 @@ GEM
     pry (0.12.2)
       coderay (~> 1.1.0)
       method_source (~> 0.9.0)
-    puma (3.12.1)
-    rack (2.0.7)
+    puma (4.3.3)
+      nio4r (~> 2.0)
+    rack (2.2.2)
     rack-contrib (2.1.0)
       rack (~> 2.0)
     rack-protection (2.0.5)
@@ -827,7 +829,7 @@ GEM
     rack-test (1.1.0)
       rack (>= 1.0, < 3)
     rainbow (3.0.0)
-    rake (12.3.2)
+    rake (13.0.1)
     recharge-api (0.0.1)
       class2 (~> 0.3.0)
     redis (3.3.5)
@@ -915,11 +917,11 @@ DEPENDENCIES
   liquid (~> 4.0)
   pg (= 0.19.0)
   pry
-  puma
-  rack (>= 2.0.6)
+  puma (>= 3.12.4)
+  rack (>= 2.0.8)
   rack-contrib
   rack-test
-  rake
+  rake (>= 12.3.3)
   recharge-api
   redis (= 3.3.5)
   resque
