@@ -1,5 +1,5 @@
 source "https://rubygems.org"
-ruby "2.5.7"
+ruby "2.6.5"
 #added Floyd Wallace 4/3/18
 gem 'sinatra-cross_origin'
 gem 'aws-sdk', '~> 3'
