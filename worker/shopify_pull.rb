@@ -4,6 +4,7 @@ require_relative '../lib/async'
 # used to fetch shopify api caching tables
 class ShopifyPull
   include Async
+  
 
   def self.all_products(options = {})
     options[:limit] ||= 250

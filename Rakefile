@@ -140,7 +140,8 @@ end
 
 desc 'sync products table'
 task :sync_products do |t|
-  ShopifyPull.async :all_products
+  #ShopifyPull.async :all_products
+  DownloadShopifyProduct::GetInfo.new.get_all_subs
 end
 #
 #load_switchable_products
