@@ -28,7 +28,7 @@ module FullBackgroundSubs
         conn.prepare('statement2', "#{my_line_item_insert}")
 
 
-        subscriptions = HTTParty.get("https://api.rechargeapps.com/subscriptions/count?status=ACTIVE", :headers => my_header)
+        subscriptions = HTTParty.get("https://api.rechargeapps.com/subscriptions/count?status=ACTIVE", :timeout => 80, :headers => my_header)
         #my_response = JSON.parse(subscriptions)
         my_response = subscriptions
         my_count = my_response['count'].to_i
@@ -38,7 +38,7 @@ module FullBackgroundSubs
         page_size = 250
         num_pages = (my_count/page_size.to_f).ceil
         1.upto(num_pages) do |page|
-          mysubs = HTTParty.get("https://api.rechargeapps.com/subscriptions?status=ACTIVE&limit=250&page=#{page}", :headers => my_header)
+          mysubs = HTTParty.get("https://api.rechargeapps.com/subscriptions?status=ACTIVE&limit=250&page=#{page}", :timeout => 80, :headers => my_header)
           #puts mysubs.inspect
           recharge_limit = mysubs.response["x-recharge-limit"]
           puts "Here recharge_limit = #{recharge_limit}"

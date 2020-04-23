@@ -103,7 +103,9 @@ module FullBackgroundOrders
                     email = order['email']
                     line_items = order['line_items'].to_json
                     raw_line_items = order['line_items'][0]
-    
+                    
+                    #fix Floyd Wallace hotfix 4/23/2020 null order line items
+                    if raw_line_items != nil 
                     shopify_variant_id = raw_line_items['shopify_variant_id']
                     title = raw_line_items['title']
                     variant_title = raw_line_items['variant_title']
@@ -112,7 +114,7 @@ module FullBackgroundOrders
                     shopify_product_id = raw_line_items['shopify_product_id']
                     product_title = raw_line_items['product_title']
                     conn.exec_prepared('statement2', [ order_id, shopify_variant_id, title, variant_title,  subscription_id, quantity, shopify_product_id, product_title ])
-    
+                    
     
                     variable_line_items = raw_line_items['properties']
                     variable_line_items.each do |myprop|
@@ -121,7 +123,8 @@ module FullBackgroundOrders
                         conn.exec_prepared('statement3', [ order_id, myname, myvalue ])
                     end
     
-    
+                   end
+                   #end hotfix    
     
                 total_price = order['total_price']
                 shipping_address = order['shipping_address'].to_json

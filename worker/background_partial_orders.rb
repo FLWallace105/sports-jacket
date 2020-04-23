@@ -92,6 +92,9 @@ module PartialBackgroundOrders
                 email = order['email']
                 line_items = order['line_items'].to_json
                 raw_line_items = order['line_items'][0]
+
+                #hotfix Floyd Wallace 4/23/2020
+                if raw_line_items != nil
     
                 shopify_variant_id = raw_line_items['shopify_variant_id']
                 title = raw_line_items['title']
@@ -111,7 +114,8 @@ module PartialBackgroundOrders
                     conn.exec_prepared('statement3', [ order_id, myname, myvalue ])
                 end
 
-
+                end
+                #end of hotfix
 
                 total_price = order['total_price']
                 shipping_address = order['shipping_address'].to_json

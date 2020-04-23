@@ -84,7 +84,7 @@ module ResqueHelper
       my_line_items = my_sub.raw_line_item_properties
       puts my_line_items.inspect
       found_collection = false
-
+      puts "About to do product collection finding"
       my_line_items.map do |mystuff|
           #Resque.logger "#{key}, #{value}"
           if mystuff['name'] == 'product_collection'
@@ -92,15 +92,19 @@ module ResqueHelper
             found_collection = true
           end
       end
+      puts "Done product collection finding"
       Resque.logger.info "my_line_items = #{my_line_items.inspect}"
       #Fix missing sports-jacket size here
+      puts "sports jacket missing sizes here"
       sports_jacket = my_line_items.select{|x| x['name'] == 'sports-jacket'}
       tops = my_line_items.select{|x| x['name'] == 'tops'}
+      
       
       if sports_jacket == [] && tops != []
         my_line_items << { "name" => "sports-jacket", "value" => tops.first['value'].upcase }
           
       end
+      puts "done sports jacket missing sizes"
 
       if found_collection == false
            #only if I did not find the product_collection property in the line items do I need to add it
@@ -113,7 +117,7 @@ module ResqueHelper
       email = { "sku" => my_new_product.sku, "product_title" => my_new_product.product_title, "shopify_product_id" => my_new_product.product_id, "shopify_variant_id" => my_new_product.variant_id, "properties" => my_line_items }
       recharge = { "properties" => my_line_items }
       stuff_to_return = { "email_info" => email, "recharge" => recharge }
-
+      puts "sending stuff back to main calling method"
       return stuff_to_return
   end
 
