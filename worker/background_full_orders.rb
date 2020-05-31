@@ -1,15 +1,17 @@
 #background_orders.rb
 
 require_relative '../lib/recharge_limit'
+require_relative '../lib/background_helper'
 
 module FullBackgroundOrders
     include ReChargeLimits
+    include BackgroundHelper
 
 
         def get_min_max
-            my_yesterday = Date.today - 1
+            my_yesterday = Date.today - 3
             my_yesterday_str = my_yesterday.strftime("%Y-%m-%d")
-            my_four_months = Date.today >> 4
+            my_four_months = Date.today >> 2
             my_four_months = my_four_months.end_of_month
             my_four_months_str = my_four_months.strftime("%Y-%m-%d")
             my_hash = Hash.new
@@ -45,27 +47,25 @@ module FullBackgroundOrders
             ActiveRecord::Base.connection.reset_pk_sequence!('order_line_items_fixed')
             OrderLineItemsVariable.delete_all
             ActiveRecord::Base.connection.reset_pk_sequence!('order_line_items_variable')
+            OrderCollectionSize.delete_all
+            ActiveRecord::Base.connection.reset_pk_sequence!('order_collection_sizes')
 
             myuri = URI.parse(uri)
             conn =  PG.connect(myuri.hostname, myuri.port, nil, nil, myuri.path[1..-1], myuri.user, myuri.password)
 
-	    my_insert = "insert into orders (order_id, transaction_id, charge_status, payment_processor, address_is_active, status, order_type, charge_id, address_id, shopify_id, shopify_order_id, shopify_order_number, shopify_cart_token, shipping_date, scheduled_at, shipped_date, processed_at, customer_id, first_name, last_name, is_prepaid, created_at, updated_at, email, line_items, total_price, shipping_address, billing_address) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28) ON CONFLICT ON CONSTRAINT ord_id DO UPDATE SET order_id = $1, transaction_id = $2, charge_status = $3, payment_processor = $4, address_is_active = $5, status = $6, order_type = $7, charge_id = $8, address_id = $9, shopify_id = $10, shopify_order_id = $11, shopify_order_number = $12, shopify_cart_token = $13, shipping_date = $14, scheduled_at = $15, shipped_date = $16, processed_at = $17, customer_id = $18, first_name = $19, last_name = $20, is_prepaid = $21, created_at = $22, updated_at = $23, email = $24, line_items = $25, total_price = $26, shipping_address = $27, billing_address = $28 WHERE orders.order_id = $1"
-            #my_insert = "insert into orders (order_id, transaction_id, charge_status, payment_processor, address_is_active, status, order_type, charge_id, address_id, shopify_id, shopify_order_id, shopify_order_number, shopify_cart_token, shipping_date, scheduled_at, shipped_date, processed_at, customer_id, first_name, last_name, is_prepaid, created_at, updated_at, email, line_items, total_price, shipping_address, billing_address) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)"
+            my_insert = "insert into orders (order_id, transaction_id, charge_status, payment_processor, address_is_active, status, order_type, charge_id, address_id, shopify_id, shopify_order_id, shopify_order_number, shopify_cart_token, shipping_date, scheduled_at, shipped_date, processed_at, customer_id, first_name, last_name, is_prepaid, created_at, updated_at, email, line_items, total_price, shipping_address, billing_address) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28) on conflict (order_id) do update set transaction_id = EXCLUDED.transaction_id, charge_status = EXCLUDED.charge_status, payment_processor = EXCLUDED.payment_processor, address_is_active = EXCLUDED.address_is_active, status = EXCLUDED.status, order_type = EXCLUDED.order_type, charge_id = EXCLUDED.charge_id, address_id = EXCLUDED.address_id, shopify_id = EXCLUDED.shopify_id, shopify_order_id = EXCLUDED.shopify_order_id, shopify_order_number = EXCLUDED.shopify_order_number, shopify_cart_token = EXCLUDED.shopify_cart_token, shipping_date = EXCLUDED.shipping_date, scheduled_at = EXCLUDED.scheduled_at, shipped_date = EXCLUDED.shipped_date, processed_at = EXCLUDED.processed_at, customer_id = EXCLUDED.customer_id, first_name = EXCLUDED.first_name, last_name = EXCLUDED.last_name, is_prepaid = EXCLUDED.is_prepaid, created_at = EXCLUDED.created_at, updated_at = EXCLUDED.updated_at, email = EXCLUDED.email, line_items = EXCLUDED.line_items, total_price = EXCLUDED.total_price, shipping_address = EXCLUDED.shipping_address, billing_address = EXCLUDED.billing_address"
             conn.prepare('statement1', "#{my_insert}")  
     
-            my_order_line_fixed_insert = "insert into order_line_items_fixed (order_id, shopify_variant_id, title, variant_title, subscription_id, quantity, shopify_product_id, product_title) values ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT ON CONSTRAINT ord_fixed DO UPDATE SET order_id = $1, shopify_variant_id = $2, title = $3, variant_title = $4, subscription_id = $5, quantity = $6, shopify_product_id = $7, product_title = $8 WHERE order_line_items_fixed.order_id = $1"
-	    # my_order_line_fixed_insert = "insert into order_line_items_fixed (order_id, shopify_variant_id, title, variant_title, subscription_id, quantity, shopify_product_id, product_title) values ($1, $2, $3, $4, $5, $6, $7, $8)"
+            my_order_line_fixed_insert = "insert into order_line_items_fixed (order_id, shopify_variant_id, title, variant_title, subscription_id, quantity, shopify_product_id, product_title) values ($1, $2, $3, $4, $5, $6, $7, $8) on conflict (order_id) do update set shopify_variant_id = EXCLUDED.shopify_variant_id, title = EXCLUDED.title, variant_title = EXCLUDED.variant_title, subscription_id = EXCLUDED.subscription_id, quantity = EXCLUDED.quantity, shopify_product_id = EXCLUDED.shopify_product_id, product_title = EXCLUDED.product_title"
             conn.prepare('statement2', "#{my_order_line_fixed_insert}") 
     
             my_order_line_variable_insert = "insert into order_line_items_variable (order_id, name, value) values ($1, $2, $3)"
             conn.prepare('statement3', "#{my_order_line_variable_insert}") 
     
-	    my_order_shipping_insert = "insert into order_shipping_address (order_id, province, city, first_name, last_name, zip, country, address1, address2, company, phone) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) ON CONFLICT ON CONSTRAINT ord_ship DO UPDATE SET order_id = $1, province = $2, city = $3, first_name = $4, last_name = $5, zip = $6, country = $7, address1 = $8, address2 = $9, company = $10, phone = $11 WHERE order_shipping_address.order_id = $1"
-            #my_order_shipping_insert = "insert into order_shipping_address (order_id, province, city, first_name, last_name, zip, country, address1, address2, company, phone) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"
+            my_order_shipping_insert = "insert into order_shipping_address (order_id, province, city, first_name, last_name, zip, country, address1, address2, company, phone) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) on conflict (order_id) do update set province = EXCLUDED.province, city = EXCLUDED.city, first_name = EXCLUDED.first_name, last_name = EXCLUDED.last_name, zip = EXCLUDED.zip, country = EXCLUDED.country, address1 = EXCLUDED.address1, address2 = EXCLUDED.address2, company = EXCLUDED.company, phone = EXCLUDED.phone"
             conn.prepare('statement4', "#{my_order_shipping_insert}") 
     
-	    my_order_billing_insert = "insert into order_billing_address (order_id, province, city, first_name, last_name, zip, country, address1, address2, company, phone) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) ON CONFLICT ON CONSTRAINT ord_bill DO UPDATE SET order_id = $1, province = $2, city = $3, first_name = $4, last_name = $5, zip = $6, country = $7, address1 = $8, address2 = $9, company = $10, phone = $11 WHERE order_billing_address.order_id = $1"
-            #my_order_billing_insert = "insert into order_billing_address (order_id, province, city, first_name, last_name, zip, country, address1, address2, company, phone) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"
+            my_order_billing_insert = "insert into order_billing_address (order_id, province, city, first_name, last_name, zip, country, address1, address2, company, phone) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) on conflict (order_id) do update set province = EXCLUDED.province, city = EXCLUDED.city, first_name = EXCLUDED.first_name, last_name = EXCLUDED.last_name, zip = EXCLUDED.zip, country = EXCLUDED.country, address1 = EXCLUDED.address1, address2 = EXCLUDED.address2, company = EXCLUDED.company, phone = EXCLUDED.phone"
             conn.prepare('statement5', "#{my_order_billing_insert}") 
 
 
@@ -107,9 +107,10 @@ module FullBackgroundOrders
                     email = order['email']
                     line_items = order['line_items'].to_json
                     raw_line_items = order['line_items'][0]
-                    
+
                     #fix Floyd Wallace hotfix 4/23/2020 null order line items
                     if raw_line_items != nil 
+    
                     shopify_variant_id = raw_line_items['shopify_variant_id']
                     title = raw_line_items['title']
                     variant_title = raw_line_items['variant_title']
@@ -127,8 +128,10 @@ module FullBackgroundOrders
                         conn.exec_prepared('statement3', [ order_id, myname, myvalue ])
                     end
     
-                   end
-                   #end hotfix    
+                my_props = create_order_properties(line_items)
+                OrderCollectionSize.create(order_id: order_id, product_collection: my_props['product_collection'], leggings: my_props['leggings'], tops: my_props['tops'], sports_bra: my_props['sports_bra'], sports_jacket: my_props['sports_bra'], gloves: my_props['gloves'], prepaid: is_prepaid, scheduled_at: scheduled_at )
+
+                end
     
                 total_price = order['total_price']
                 shipping_address = order['shipping_address'].to_json

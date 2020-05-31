@@ -14,7 +14,7 @@ module FullBackgroundCustomers
         uri = params['uri']
 
 
-        customers = HTTParty.get("https://api.rechargeapps.com/customers/count?", :headers => my_header)
+        customers = HTTParty.get("https://api.rechargeapps.com/customers/count?status=ACTIVE", :headers => my_header)
         #puts customers.inspect
         num_customers = customers['count'].to_i
         puts "We have #{num_customers} customers"
@@ -32,7 +32,7 @@ module FullBackgroundCustomers
         page_size = 250
         num_pages = (num_customers/page_size.to_f).ceil
         1.upto(num_pages) do |page|
-            customers = HTTParty.get("https://api.rechargeapps.com/customers?limit=250&page=#{page}", :headers => my_header)
+            customers = HTTParty.get("https://api.rechargeapps.com/customers?status=ACTIVE&limit=250&page=#{page}", :headers => my_header)
           my_customers = customers.parsed_response['customers']
           recharge_limit = customers.response["x-recharge-limit"]
           my_customers.each do |mycust|
