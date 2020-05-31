@@ -1,9 +1,12 @@
 #background_full_subs.rb
 
+require 'uri'
 require_relative '../lib/recharge_limit'
+require_relative '../lib/background_helper'
 
 module FullBackgroundSubs
     include ReChargeLimits
+    include BackgroundHelper
 
     def get_all_subs(params)
         Resque.logger = Logger.new("#{Dir.getwd}/logs/get_all_subs.log")
@@ -11,12 +14,17 @@ module FullBackgroundSubs
         puts "params = #{params.inspect}"
         uri = params['uri']
         my_header = params["headers"]
+        puts "I am here"
 
         #Mix of Active Record for slow stuff anyway and raw sql for things that are otherwise slower 
         Subscription.delete_all
         ActiveRecord::Base.connection.reset_pk_sequence!('subscriptions')
         SubLineItem.delete_all
         ActiveRecord::Base.connection.reset_pk_sequence!('sub_line_items')
+        SubCollectionSize.delete_all
+        ActiveRecord::Base.connection.reset_pk_sequence!('sub_collection_sizes')
+        puts "Done set up"
+        
 
         myuri = URI.parse(uri)
         conn =  PG.connect(myuri.hostname, myuri.port, nil, nil, myuri.path[1..-1], myuri.user, myuri.password)
@@ -28,7 +36,7 @@ module FullBackgroundSubs
         conn.prepare('statement2', "#{my_line_item_insert}")
 
 
-        subscriptions = HTTParty.get("https://api.rechargeapps.com/subscriptions/count", :headers => my_header)
+        subscriptions = HTTParty.get("https://api.rechargeapps.com/subscriptions/count?status=ACTIVE", :headers => my_header)
         #my_response = JSON.parse(subscriptions)
         my_response = subscriptions
         my_count = my_response['count'].to_i
@@ -38,22 +46,38 @@ module FullBackgroundSubs
         page_size = 250
         num_pages = (my_count/page_size.to_f).ceil
         1.upto(num_pages) do |page|
-          mysubs = HTTParty.get("https://api.rechargeapps.com/subscriptions?limit=250&page=#{page}", :headers => my_header)
+
+          #uri = URI("https://api.rechargeapps.com/subscriptions?status=ACTIVE&limit=250&page=#{page}")
+          #req = Net::HTTP::Get.new(uri)
+
+          #req.open_timeout = 80 # in seconds
+          #req.read_timeout = 80 # in seconds
+
+          #req['X-Recharge-Access-Token'] = ENV['RECHARGE_ACCESS_TOKEN']
+          #req['X-Recharge-Access-Token'] = ENV['ellie_recharge_api_key']
+          #res = Net::HTTP.start(uri.hostname, uri.port,:use_ssl => uri.scheme == 'https', :read_timeout => 800) {|http| http.request(req)}
+          #mysubs = JSON.parse(res.body)
+
+          #recharge_limit = res["x-recharge-limit"]
+
+
+          mysubs = HTTParty.get("https://api.rechargeapps.com/subscriptions?status=ACTIVE&limit=250&page=#{page}", :timeout => 120, :headers => my_header)
           #puts mysubs.inspect
           recharge_limit = mysubs.response["x-recharge-limit"]
           puts "Here recharge_limit = #{recharge_limit}"
-          Resque.logger.info "Here recharge_limit = #{recharge_limit}"
-          #my_limit = determine_limits(recharge_limit)
+          #Resque.logger.info "Here recharge_limit = #{recharge_limit}"
+          #my_limit = determine_limits(recharge_limit, 0.65)
 
           
           local_sub = mysubs['subscriptions']
           local_sub.each do |sub|
                 puts "-------------------"
-                puts sub.inspect
+                puts sub['id']
+                #puts sub.inspect
                 puts "------------------"
-                Resque.logger.info "-------------------"
-                Resque.logger.info sub.inspect
-                Resque.logger.info "------------------"
+                #Resque.logger.info "-------------------"
+                #Resque.logger.info sub.inspect
+                #Resque.logger.info "------------------"
 
                 subscription_id = sub['id']
 
@@ -82,23 +106,38 @@ module FullBackgroundSubs
 
 
                 insert_result = conn.exec_prepared('statement1', [ subscription_id, address_id, customer_id, created_at, updated_at, next_charge_scheduled_at, cancelled_at, product_title, price, quantity, status, shopify_product_id, shopify_variant_id, sku, order_interval_unit, order_interval_frequency, charge_interval_frequency, order_day_of_month, order_day_of_week, properties, expire_after])
-                puts insert_result.inspect
-                Resque.logger.info insert_result.inspect
+                #puts insert_result.inspect
+                #Resque.logger.info insert_result.inspect
 
                 raw_properties.each do |temp|
                     temp_name = temp['name']
                     temp_value = temp['value']
-                    puts "#{temp_name}, #{temp_value}"
+                    #puts "#{temp_name}, #{temp_value}"
                     if !temp_value.nil? && !temp_name.nil?
                       
                       sub_insert = conn.exec_prepared('statement2', [ subscription_id, temp_name, temp_value ])
-                      puts "inserted subscription #{subscription_id}"
-                      puts sub_insert.inspect
-                      Resque.logger.info "inserted subscription #{subscription_id}"
-                      Resque.logger.info sub_insert.inspect
+                      #puts "inserted subscription #{subscription_id}"
+                      #puts sub_insert.inspect
+                      #Resque.logger.info "inserted subscription #{subscription_id}"
+                      #Resque.logger.info sub_insert.inspect
                   
                     end
                 end
+
+                my_data = create_properties(raw_properties, charge_interval_frequency)
+                product_collection = my_data['product_collection']
+                leggings = my_data['leggings']
+                tops = my_data['tops']
+                sports_bra = my_data['sports_bra']
+                sports_jacket = my_data['sports_jacket']
+                gloves = my_data['gloves']
+                prepaid = my_data['prepaid']
+                SubCollectionSize.create(subscription_id: subscription_id,
+                                         product_collection: product_collection,
+                                         leggings: leggings, tops: tops,
+                                         sports_bra: sports_bra,
+                                         sports_jacket: sports_jacket,
+                                         gloves: gloves, prepaid: prepaid, next_charge_scheduled_at: next_charge_scheduled_at)
 
 
           end
@@ -108,6 +147,8 @@ module FullBackgroundSubs
           duration = (current - start).ceil
           puts "Been running #{duration} seconds"
           Resque.logger.info "Been running #{duration} seconds"
+          #puts "Sleeping 12 secs"
+          #sleep 12
           determine_limits(recharge_limit, 0.65)
         end
         puts "All done inserting new subscriptions"
