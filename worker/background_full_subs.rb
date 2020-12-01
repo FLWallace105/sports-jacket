@@ -148,8 +148,8 @@ module FullBackgroundSubs
           duration = (current - start).ceil
           puts "Been running #{duration} seconds"
           Resque.logger.info "Been running #{duration} seconds"
-          #puts "Sleeping 12 secs"
-          #sleep 12
+          puts "Sleeping 10 secs"
+          sleep 10
           determine_limits(recharge_limit, 0.65)
         end
         puts "All done inserting new subscriptions"

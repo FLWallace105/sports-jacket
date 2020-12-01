@@ -96,7 +96,7 @@ class SubscriptionSwitchPrepaid
       fixed_order[0].tap {|myh| myh.delete('shopify_variant_id')}
       fixed_order[0].tap {|myh| myh.delete('shopify_product_id')}
       fixed_order[0].tap {|myh| myh.delete('images')}
-
+      fixed_order[0].tap {|myh| myh.delete('external_inventory_policy')}
      
       
 
@@ -106,6 +106,7 @@ class SubscriptionSwitchPrepaid
 
       my_data = { "line_items" => fixed_order }
       order_body = my_data.to_json
+      
       my_details = { "sku" => new_product.sku,
                    "product_title" => new_product.product_title,
                    "shopify_product_id" => new_product.product_id,
