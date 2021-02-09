@@ -1,4 +1,4 @@
-require_relative 'init'
+# require_relative 'init'
 require_relative 'async'
 
 # used for active record callbacks to asyncronously update shopify models

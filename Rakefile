@@ -6,6 +6,9 @@ Dir['worker/**/*.rb'].each do |file|
   require_relative file
 end
 
+Dir[File.join(__dir__, 'lib', '*.rb')].each { |file| require file }
+Dir[File.join(__dir__, 'lib', 'ellie_shopify_pull', '*.rb')].each { |file| require file }
+
 Resque.logger =
   if ENV['production']
     Logger.new STDOUT, level: Logger::WARNING
@@ -159,4 +162,12 @@ end
 desc 'load alternate_products table for this month to allow customers to switch to alternate products'
 task :load_alternate_products do |t|
   DetermineInfo::InfoGetter.new.load_alternate_products
+end
+
+
+desc 'Start a console'
+task :console do
+  %w(irb irb/completion).each { |r| require r }
+  ARGV.clear
+  IRB.start
 end
