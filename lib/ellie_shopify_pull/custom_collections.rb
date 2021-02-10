@@ -1,5 +1,7 @@
 #pull_shopify_custom_collections.rb
 
+require "./lib/ellie_shopify_pull/base.rb"
+
 module EllieShopifyPull
   class CustomCollections < Base
 
