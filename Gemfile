@@ -18,7 +18,7 @@ gem 'rack-contrib'
 gem "rake", ">= 12.3.3"
 gem 'redis', '=3.3.5'
 gem 'resque'
-gem 'shopify_api'
+gem 'shopify_api', '9.2.0'
 gem 'sinatra', '>= 2.0.2', require: 'sinatra/base'
 gem 'sinatra-activerecord'
 gem 'recharge-api'
@@ -26,6 +26,8 @@ gem 'sendgrid-ruby'
 gem 'pry'
 #Added Floyd Wallace 4/3/18
 #gem 'sinatra-cross_origin'
+
+gem 'activerecord-import', '~> 1.0', '>= 1.0.4'
 
 group :development do
   gem 'pry'
