@@ -2,6 +2,8 @@
    module ReChargeLimits
         def determine_limits(recharge_header, limit)
             puts "recharge_header = #{recharge_header}"
+            puts "sleeping 1 second"
+            sleep 1
             my_numbers = recharge_header.split("/")
             my_numerator = my_numbers[0].to_f
             my_denominator = my_numbers[1].to_f

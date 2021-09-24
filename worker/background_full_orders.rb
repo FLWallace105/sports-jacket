@@ -1,15 +1,17 @@
 #background_orders.rb
 
 require_relative '../lib/recharge_limit'
+require_relative '../lib/background_helper'
 
 module FullBackgroundOrders
     include ReChargeLimits
+    include BackgroundHelper
 
 
         def get_min_max
-            my_yesterday = Date.today - 1
+            my_yesterday = Date.today - 3
             my_yesterday_str = my_yesterday.strftime("%Y-%m-%d")
-            my_four_months = Date.today >> 4
+            my_four_months = Date.today >> 2
             my_four_months = my_four_months.end_of_month
             my_four_months_str = my_four_months.strftime("%Y-%m-%d")
             my_hash = Hash.new
@@ -45,6 +47,8 @@ module FullBackgroundOrders
             ActiveRecord::Base.connection.reset_pk_sequence!('order_line_items_fixed')
             OrderLineItemsVariable.delete_all
             ActiveRecord::Base.connection.reset_pk_sequence!('order_line_items_variable')
+            OrderCollectionSize.delete_all
+            ActiveRecord::Base.connection.reset_pk_sequence!('order_collection_sizes')
 
             myuri = URI.parse(uri)
             conn =  PG.connect(myuri.hostname, myuri.port, nil, nil, myuri.path[1..-1], myuri.user, myuri.password)
@@ -61,14 +65,13 @@ module FullBackgroundOrders
             
             conn.prepare('statement3', "#{my_order_line_variable_insert}") 
 
-            my_order_shipping_insert = "insert into order_shipping_address (order_id, province, city, first_name, last_name, zip, country, address1, address2, company, phone) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) ON CONFLICT ON CONSTRAINT ord_ship DO UPDATE SET order_id = $1, province = $2, city = $3, first_name = $4, last_name = $5, zip = $6, country = $7, address1 = $8, address2 = $9, company = $10, phone = $11 WHERE order_shipping_address.order_id = $1"
-    
-
+            
+            my_order_shipping_insert = "insert into order_shipping_address (order_id, province, city, first_name, last_name, zip, country, address1, address2, company, phone) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) on conflict (order_id) do update set province = EXCLUDED.province, city = EXCLUDED.city, first_name = EXCLUDED.first_name, last_name = EXCLUDED.last_name, zip = EXCLUDED.zip, country = EXCLUDED.country, address1 = EXCLUDED.address1, address2 = EXCLUDED.address2, company = EXCLUDED.company, phone = EXCLUDED.phone"
             conn.prepare('statement4', "#{my_order_shipping_insert}") 
 
-            my_order_billing_insert = "insert into order_billing_address (order_id, province, city, first_name, last_name, zip, country, address1, address2, company, phone) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) ON CONFLICT ON CONSTRAINT ord_bill DO UPDATE SET order_id = $1, province = $2, city = $3, first_name = $4, last_name = $5, zip = $6, country = $7, address1 = $8, address2 = $9, company = $10, phone = $11 WHERE order_billing_address.order_id = $1"
-    
             
+    
+            my_order_billing_insert = "insert into order_billing_address (order_id, province, city, first_name, last_name, zip, country, address1, address2, company, phone) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) on conflict (order_id) do update set province = EXCLUDED.province, city = EXCLUDED.city, first_name = EXCLUDED.first_name, last_name = EXCLUDED.last_name, zip = EXCLUDED.zip, country = EXCLUDED.country, address1 = EXCLUDED.address1, address2 = EXCLUDED.address2, company = EXCLUDED.company, phone = EXCLUDED.phone"
             conn.prepare('statement5', "#{my_order_billing_insert}") 
 
 
@@ -110,9 +113,10 @@ module FullBackgroundOrders
                     email = order['email']
                     line_items = order['line_items'].to_json
                     raw_line_items = order['line_items'][0]
-                    
+
                     #fix Floyd Wallace hotfix 4/23/2020 null order line items
                     if raw_line_items != nil 
+    
                     shopify_variant_id = raw_line_items['shopify_variant_id']
                     title = raw_line_items['title']
                     variant_title = raw_line_items['variant_title']
@@ -121,7 +125,7 @@ module FullBackgroundOrders
                     shopify_product_id = raw_line_items['shopify_product_id']
                     product_title = raw_line_items['product_title']
                     conn.exec_prepared('statement2', [ order_id, shopify_variant_id, title, variant_title,  subscription_id, quantity, shopify_product_id, product_title ])
-                    
+                    # failing line
     
                     variable_line_items = raw_line_items['properties']
                     variable_line_items.each do |myprop|
@@ -130,8 +134,10 @@ module FullBackgroundOrders
                         conn.exec_prepared('statement3', [ order_id, myname, myvalue ])
                     end
     
-                   end
-                   #end hotfix    
+                my_props = create_order_properties(line_items)
+                OrderCollectionSize.create(order_id: order_id, product_collection: my_props['product_collection'], leggings: my_props['leggings'], tops: my_props['tops'], sports_bra: my_props['sports_bra'], sports_jacket: my_props['sports_bra'], gloves: my_props['gloves'], prepaid: is_prepaid, scheduled_at: scheduled_at )
+
+                end
     
                 total_price = order['total_price']
                 shipping_address = order['shipping_address'].to_json
@@ -150,7 +156,7 @@ module FullBackgroundOrders
                 ord_ship_company = raw_shipping_address['company']
                 ord_ship_phone = raw_shipping_address['phone']
                 conn.exec_prepared('statement4', [ order_id, ord_ship_province, ord_ship_city, ord_ship_first_name, ord_ship_last_name, ord_ship_zip, ord_ship_country, ord_ship_address1, ord_ship_address2, ord_ship_company, ord_ship_phone ])
-    
+   		# second line failing 
                 #insert billing_address sub table
                 raw_billing_address = order['billing_address']
                 ord_bill_province = raw_billing_address['province']
