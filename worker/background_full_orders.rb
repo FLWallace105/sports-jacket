@@ -49,19 +49,26 @@ module FullBackgroundOrders
             myuri = URI.parse(uri)
             conn =  PG.connect(myuri.hostname, myuri.port, nil, nil, myuri.path[1..-1], myuri.user, myuri.password)
 
-            my_insert = "insert into orders (order_id, transaction_id, charge_status, payment_processor, address_is_active, status, order_type, charge_id, address_id, shopify_id, shopify_order_id, shopify_order_number, shopify_cart_token, shipping_date, scheduled_at, shipped_date, processed_at, customer_id, first_name, last_name, is_prepaid, created_at, updated_at, email, line_items, total_price, shipping_address, billing_address) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)"
+            my_insert =  "insert into orders (order_id, transaction_id, charge_status, payment_processor, address_is_active, status, order_type, charge_id, address_id, shopify_id, shopify_order_id, shopify_order_number, shopify_cart_token, shipping_date, scheduled_at, shipped_date, processed_at, customer_id, first_name, last_name, is_prepaid, created_at, updated_at, email, line_items, total_price, shipping_address, billing_address) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28) ON CONFLICT ON CONSTRAINT ord_id DO UPDATE SET order_id = $1, transaction_id = $2, charge_status = $3, payment_processor = $4, address_is_active = $5, status = $6, order_type = $7, charge_id = $8, address_id = $9, shopify_id = $10, shopify_order_id = $11, shopify_order_number = $12, shopify_cart_token = $13, shipping_date = $14, scheduled_at = $15, shipped_date = $16, processed_at = $17, customer_id = $18, first_name = $19, last_name = $20, is_prepaid = $21, created_at = $22, updated_at = $23, email = $24, line_items = $25, total_price = $26, shipping_address = $27, billing_address = $28 WHERE orders.order_id = $1"
             conn.prepare('statement1', "#{my_insert}")  
     
-            my_order_line_fixed_insert = "insert into order_line_items_fixed (order_id, shopify_variant_id, title, variant_title, subscription_id, quantity, shopify_product_id, product_title) values ($1, $2, $3, $4, $5, $6, $7, $8)"
+            
+            my_order_line_fixed_insert = "insert into order_line_items_fixed (order_id, shopify_variant_id, title, variant_title, subscription_id, quantity, shopify_product_id, product_title) values ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT ON CONSTRAINT ord_fixed DO UPDATE SET order_id = $1, shopify_variant_id = $2, title = $3, variant_title = $4, subscription_id = $5, quantity = $6, shopify_product_id = $7, product_title = $8 WHERE order_line_items_fixed.order_id = $1"
+
             conn.prepare('statement2', "#{my_order_line_fixed_insert}") 
     
             my_order_line_variable_insert = "insert into order_line_items_variable (order_id, name, value) values ($1, $2, $3)"
+            
             conn.prepare('statement3', "#{my_order_line_variable_insert}") 
+
+            my_order_shipping_insert = "insert into order_shipping_address (order_id, province, city, first_name, last_name, zip, country, address1, address2, company, phone) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) ON CONFLICT ON CONSTRAINT ord_ship DO UPDATE SET order_id = $1, province = $2, city = $3, first_name = $4, last_name = $5, zip = $6, country = $7, address1 = $8, address2 = $9, company = $10, phone = $11 WHERE order_shipping_address.order_id = $1"
     
-            my_order_shipping_insert = "insert into order_shipping_address (order_id, province, city, first_name, last_name, zip, country, address1, address2, company, phone) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"
+
             conn.prepare('statement4', "#{my_order_shipping_insert}") 
+
+            my_order_billing_insert = "insert into order_billing_address (order_id, province, city, first_name, last_name, zip, country, address1, address2, company, phone) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) ON CONFLICT ON CONSTRAINT ord_bill DO UPDATE SET order_id = $1, province = $2, city = $3, first_name = $4, last_name = $5, zip = $6, country = $7, address1 = $8, address2 = $9, company = $10, phone = $11 WHERE order_billing_address.order_id = $1"
     
-            my_order_billing_insert = "insert into order_billing_address (order_id, province, city, first_name, last_name, zip, country, address1, address2, company, phone) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"
+            
             conn.prepare('statement5', "#{my_order_billing_insert}") 
 
 
